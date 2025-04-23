@@ -5,8 +5,31 @@ import { ChevronLeft, CheckCircle, Timer, RotateCcw, Dumbbell, SkipForward } fro
 import { Progress } from "@/components/ui/progress";
 import { useToast } from "@/hooks/use-toast";
 
+interface Exercise {
+  exercise: {
+    id: number;
+    name: string;
+    description: string;
+    muscleGroups: string[];
+  };
+  sets: number;
+  reps: number;
+  duration?: number;
+  restTime?: number;
+}
+
+interface WorkoutSession {
+  id: number;
+  planId: number;
+  planName: string;
+  startTime: string;
+  userId: number;
+  exercises: Exercise[];
+  inProgress: boolean;
+}
+
 interface WorkoutSessionProps {
-  session: any;
+  session: WorkoutSession;
   onComplete: () => void;
   onExit: () => void;
 }

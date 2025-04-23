@@ -120,7 +120,127 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Workout plans routes
   app.get("/api/workout-plans", ensureAuthenticated, async (req, res) => {
     try {
-      const plans = await storage.getWorkoutPlans(req.user.id);
+      let plans = await storage.getWorkoutPlans(req.user.id);
+      
+      // If no workout plans exist for the user, create default ones
+      if (plans.length === 0) {
+        // Get exercise data for reference
+        const allExercises = await storage.getExercises();
+        
+        // Create default workout plans
+        const defaultPlans = [
+          {
+            name: "Upper Body Strength",
+            description: "Focus on chest, shoulders and triceps with progressive overload.",
+            difficulty: "intermediate",
+            duration: 45,
+            userId: req.user.id
+          },
+          {
+            name: "Lower Body Power",
+            description: "Leg day focusing on strength and power development.",
+            difficulty: "advanced",
+            duration: 50,
+            userId: req.user.id
+          },
+          {
+            name: "Core Stability",
+            description: "Core-focused workout to improve stability and strength.",
+            difficulty: "beginner",
+            duration: 30,
+            userId: req.user.id
+          }
+        ];
+        
+        // Add default plans to database
+        for (const planData of defaultPlans) {
+          const plan = await storage.createWorkoutPlan(planData);
+          
+          // Add exercises to each plan
+          if (plan.name === "Upper Body Strength" && allExercises.length >= 3) {
+            await storage.addExerciseToWorkoutPlan({
+              workoutPlanId: plan.id,
+              exerciseId: allExercises[0].id, // Bench Press
+              sets: 4,
+              reps: 10,
+              restTime: 60,
+              order: 1
+            });
+            await storage.addExerciseToWorkoutPlan({
+              workoutPlanId: plan.id,
+              exerciseId: allExercises[1].id, // Shoulder Press
+              sets: 3,
+              reps: 12,
+              restTime: 60,
+              order: 2
+            });
+            await storage.addExerciseToWorkoutPlan({
+              workoutPlanId: plan.id,
+              exerciseId: allExercises[3].id, // Tricep Extensions
+              sets: 3,
+              reps: 15,
+              restTime: 60,
+              order: 3
+            });
+          } else if (plan.name === "Lower Body Power" && allExercises.length >= 6) {
+            await storage.addExerciseToWorkoutPlan({
+              workoutPlanId: plan.id,
+              exerciseId: allExercises[4].id, // Squats
+              sets: 4,
+              reps: 8,
+              restTime: 90,
+              order: 1
+            });
+            await storage.addExerciseToWorkoutPlan({
+              workoutPlanId: plan.id,
+              exerciseId: allExercises[5].id, // Deadlifts
+              sets: 3,
+              reps: 8,
+              restTime: 90,
+              order: 2
+            });
+            await storage.addExerciseToWorkoutPlan({
+              workoutPlanId: plan.id,
+              exerciseId: allExercises[6].id, // Lunges
+              sets: 3,
+              reps: 12,
+              restTime: 60,
+              order: 3
+            });
+          } else if (plan.name === "Core Stability" && allExercises.length >= 9) {
+            await storage.addExerciseToWorkoutPlan({
+              workoutPlanId: plan.id,
+              exerciseId: allExercises[7].id, // Planks
+              sets: 3,
+              reps: 1,
+              duration: 60,
+              restTime: 45,
+              order: 1
+            });
+            await storage.addExerciseToWorkoutPlan({
+              workoutPlanId: plan.id,
+              exerciseId: allExercises[8].id, // Russian Twists
+              sets: 3,
+              reps: 20,
+              restTime: 45,
+              order: 2
+            });
+            await storage.addExerciseToWorkoutPlan({
+              workoutPlanId: plan.id,
+              exerciseId: allExercises[9].id, // Mountain Climbers
+              sets: 3,
+              reps: 1,
+              duration: 45,
+              restTime: 30,
+              order: 3
+            });
+          }
+        }
+        
+        // Fetch the created plans
+        plans = await storage.getWorkoutPlans(req.user.id);
+      }
+      
       res.json(plans);
     } catch (error) {
       res.status(500).json({ message: "Failed to fetch workout plans" });

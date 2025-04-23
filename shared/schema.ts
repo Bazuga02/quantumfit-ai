@@ -110,6 +110,7 @@ export const workoutPlanExercises = pgTable("workout_plan_exercises", {
   reps: integer("reps").notNull(),
   weight: real("weight"),
   duration: integer("duration"),
+  restTime: integer("rest_time"),
   order: integer("order").notNull(),
 });
 
