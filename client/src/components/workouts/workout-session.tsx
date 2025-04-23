@@ -40,12 +40,21 @@ export function WorkoutSession({ session, onComplete, onExit }: WorkoutSessionPr
   const [completedExercises, setCompletedExercises] = useState<number[]>([]);
   const [timer, setTimer] = useState(0);
   const [isResting, setIsResting] = useState(false);
-  const [restTime, setRestTime] = useState(60); // 60 seconds rest between exercises
+  const [restTime, setRestTime] = useState(60); // Default rest time
   
   const totalExercises = session.exercises.length;
   const currentExercise = session.exercises[currentExerciseIndex];
   const progress = (completedExercises.length / totalExercises) * 100;
   
+  // Set rest time based on current exercise
+  useEffect(() => {
+    // When starting a rest period, update rest time to the next exercise's rest time
+    if (isResting && currentExerciseIndex < totalExercises - 1) {
+      const nextExercise = session.exercises[currentExerciseIndex + 1];
+      setRestTime(nextExercise.restTime || 60);
+    }
+  }, [isResting, currentExerciseIndex, session.exercises, totalExercises]);
+
   // Timer effect
   useEffect(() => {
     const interval = setInterval(() => {
@@ -54,7 +63,8 @@ export function WorkoutSession({ session, onComplete, onExit }: WorkoutSessionPr
           setRestTime(prev => prev - 1);
         } else {
           setIsResting(false);
-          setRestTime(60);
+          // Move to next exercise after rest period
+          setCurrentExerciseIndex(prev => prev + 1);
         }
       } else {
         setTimer(prev => prev + 1);
@@ -155,6 +165,7 @@ export function WorkoutSession({ session, onComplete, onExit }: WorkoutSessionPr
                 </p>
                 <p className="font-medium">
                   {currentExercise.sets} sets • {currentExercise.reps} reps
+                  {currentExercise.restTime ? ` • ${currentExercise.restTime}s rest` : ''}
                 </p>
               </div>
             </div>
