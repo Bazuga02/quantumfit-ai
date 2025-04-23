@@ -157,9 +157,11 @@ export const insertMealPlanSchema = createInsertSchema(mealPlans).omit({
 
 export const meals = pgTable("meals", {
   id: serial("id").primaryKey(),
-  mealPlanId: integer("meal_plan_id").notNull().references(() => mealPlans.id),
+  mealPlanId: integer("meal_plan_id").references(() => mealPlans.id),
+  userId: integer("user_id").references(() => users.id),
   name: text("name").notNull(),
   time: text("time").notNull(),
+  date: text("date"),
 });
 
 export const insertMealSchema = createInsertSchema(meals).omit({
@@ -170,8 +172,7 @@ export const mealFoods = pgTable("meal_foods", {
   id: serial("id").primaryKey(),
   mealId: integer("meal_id").notNull().references(() => meals.id),
   foodId: integer("food_id").notNull().references(() => foods.id),
-  quantity: real("quantity").notNull(),
-  unit: text("unit").notNull(),
+  servings: real("servings").notNull().default(1),
 });
 
 export const insertMealFoodSchema = createInsertSchema(mealFoods).omit({

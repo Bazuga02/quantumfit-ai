@@ -72,8 +72,26 @@ export function LogMealForm({ onSuccess }: { onSuccess: () => void }) {
 
   const logMealMutation = useMutation({
     mutationFn: async (data: LogMealFormValues) => {
-      const res = await apiRequest("POST", "/api/meals", data);
-      return await res.json();
+      // Process the data with userId from the context
+      // Create a formatted request body that matches the server endpoint requirements
+      const formattedData = {
+        name: data.name,
+        time: data.time,
+        date: data.date || new Date().toISOString().split('T')[0],
+        foods: data.foods,
+      };
+      
+      try {
+        const res = await apiRequest("POST", "/api/meals", formattedData);
+        if (!res.ok) {
+          const errorData = await res.text();
+          throw new Error(errorData || "Failed to log meal");
+        }
+        return await res.json();
+      } catch (error) {
+        console.error("Meal logging error:", error);
+        throw error;
+      }
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/meals'] });

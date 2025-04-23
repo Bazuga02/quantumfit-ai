@@ -485,6 +485,45 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.status(500).json({ message: "Failed to add food to meal" });
     }
   });
+  
+  // Direct meal logging route for standalone meals
+  app.post("/api/meals", ensureAuthenticated, async (req, res) => {
+    try {
+      // Create a meal first
+      const { name, time, date, foods } = req.body;
+      
+      // Create a meal without a meal plan
+      const mealData = insertMealSchema.parse({
+        name,
+        time,
+        date: date || new Date().toISOString().split('T')[0],
+        userId: req.user.id
+      });
+      
+      const meal = await storage.createMeal(mealData);
+      
+      // Add foods to the meal
+      if (Array.isArray(foods) && foods.length > 0) {
+        for (const food of foods) {
+          const foodData = insertMealFoodSchema.parse({
+            foodId: food.foodId,
+            servings: food.servings,
+            mealId: meal.id
+          });
+          
+          await storage.addFoodToMeal(foodData);
+        }
+      }
+      
+      res.status(200).json({ message: "Meal logged successfully", meal });
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        return res.status(400).json({ message: "Invalid input data", errors: error.errors });
+      }
+      console.error("Error logging meal:", error);
+      res.status(500).json({ message: "Failed to log meal" });
+    }
+  });
 
   // AI recommendation routes
   app.post("/api/ai/workout-recommendation", ensureAuthenticated, async (req, res) => {
