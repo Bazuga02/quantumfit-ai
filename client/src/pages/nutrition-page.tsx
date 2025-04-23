@@ -18,21 +18,26 @@ import {
 } from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
 import { NutritionSummary } from "@/components/dashboard/nutrition-summary";
+import { FoodDetail } from "@/components/nutrition/food-detail";
 
 export default function NutritionPage() {
   const { user } = useAuth();
   const [searchTerm, setSearchTerm] = useState("");
+  const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
+  const [selectedFood, setSelectedFood] = useState<any>(null);
 
   const { data: foods, isLoading: isLoadingFoods } = useQuery({
     queryKey: ['/api/foods'],
     enabled: !!user,
   });
 
-  // Filtered foods based on search term
+  // Filtered foods based on search term and category
   const filteredFoods = foods
-    ? foods.filter((food) =>
-        food.name.toLowerCase().includes(searchTerm.toLowerCase())
-      )
+    ? foods.filter((food: any) => {
+        const matchesSearch = food.name.toLowerCase().includes(searchTerm.toLowerCase());
+        const matchesCategory = selectedCategory ? food.category === selectedCategory : true;
+        return matchesSearch && matchesCategory;
+      })
     : [];
 
   // Mocked nutritional data
@@ -223,83 +228,184 @@ export default function NutritionPage() {
         </TabsContent>
 
         <TabsContent value="food-library">
-          <div className="mb-6">
-            <div className="relative">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
-              <Input
-                placeholder="Search foods..."
-                className="pl-10"
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
+          <div className="space-y-6">
+            {/* Show selected food details or food library */}
+            {selectedFood ? (
+              <FoodDetail 
+                food={selectedFood}
+                onBack={() => setSelectedFood(null)}
               />
-            </div>
-          </div>
-          
-          {isLoadingFoods ? (
-            <div className="space-y-4">
-              {[1, 2, 3, 4, 5].map((i) => (
-                <Card key={i} className="animate-pulse">
-                  <CardContent className="p-6 h-20"></CardContent>
-                </Card>
-              ))}
-            </div>
-          ) : filteredFoods.length > 0 ? (
-            <div className="space-y-4">
-              {filteredFoods.map((food) => (
-                <Card key={food.id}>
-                  <CardContent className="p-4">
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center">
-                        <div className="h-10 w-10 rounded-md bg-green-100 dark:bg-green-900/30 flex items-center justify-center text-green-600 dark:text-green-400">
-                          <Apple className="h-5 w-5" />
-                        </div>
-                        <div className="ml-3">
-                          <p className="font-medium">{food.name}</p>
-                          <p className="text-xs text-muted-foreground">
-                            {food.calories} cal | {food.servingSize} {food.servingUnit}
-                          </p>
-                        </div>
-                      </div>
-                      <div className="flex items-center gap-2">
-                        <Badge variant="outline">{food.category}</Badge>
-                        <Button variant="ghost" size="icon">
-                          <ChevronRight className="h-5 w-5" />
-                        </Button>
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
-              ))}
-            </div>
-          ) : (
-            <Card>
-              <CardContent className="p-6">
-                <div className="flex flex-col items-center justify-center py-8 text-center">
-                  <Search className="h-12 w-12 text-gray-300 mb-2" />
-                  <p className="text-muted-foreground">No foods found</p>
-                  <p className="text-sm text-muted-foreground">
-                    Try adjusting your search or add a new food
-                  </p>
+            ) : (
+              <>
+                <div className="mb-6">
+                  <div className="relative">
+                    <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
+                    <Input
+                      placeholder="Search foods..."
+                      className="pl-10"
+                      value={searchTerm}
+                      onChange={(e) => setSearchTerm(e.target.value)}
+                    />
+                  </div>
                 </div>
-              </CardContent>
-            </Card>
-          )}
+                
+                {/* Category filters */}
+                {foods && foods.length > 0 && (
+                  <div className="flex flex-wrap gap-2">
+                    {[...new Set(foods.map(food => food.category))].map((category) => (
+                      <Badge 
+                        key={category} 
+                        variant={selectedCategory === category ? "default" : "outline"}
+                        className="cursor-pointer"
+                        onClick={() => setSelectedCategory(selectedCategory === category ? null : category)}
+                      >
+                        {category}
+                      </Badge>
+                    ))}
+                  </div>
+                )}
+                
+                {isLoadingFoods ? (
+                  <div className="space-y-2">
+                    {[1, 2, 3, 4, 5].map((i) => (
+                      <Card key={i} className="animate-pulse">
+                        <CardContent className="p-4 h-14"></CardContent>
+                      </Card>
+                    ))}
+                  </div>
+                ) : filteredFoods.length > 0 ? (
+                  <div className="space-y-2">
+                    {filteredFoods.map((food) => (
+                      <Card 
+                        key={food.id} 
+                        className="cursor-pointer hover:bg-accent/50 transition-colors"
+                        onClick={() => setSelectedFood(food)}
+                      >
+                        <CardContent className="p-4 flex items-center justify-between">
+                          <div className="flex items-center gap-3">
+                            <div className="h-10 w-10 rounded-lg bg-primary-100 dark:bg-primary-900/50 flex items-center justify-center text-primary">
+                              <Utensils className="h-5 w-5" />
+                            </div>
+                            <div>
+                              <p className="font-medium">{food.name}</p>
+                              <div className="flex items-center gap-3">
+                                <span className="text-xs text-muted-foreground">
+                                  {food.calories} kcal
+                                </span>
+                                <span className="text-xs text-muted-foreground">
+                                  P: {food.protein}g • C: {food.carbs}g • F: {food.fats}g
+                                </span>
+                              </div>
+                            </div>
+                          </div>
+                          <div className="flex items-center">
+                            <Badge variant="outline" className="mr-2">
+                              {food.category}
+                            </Badge>
+                            <ChevronRight className="h-5 w-5 text-muted-foreground" />
+                          </div>
+                        </CardContent>
+                      </Card>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="flex flex-col items-center justify-center py-12 text-center">
+                    <Search className="h-12 w-12 text-gray-300 mb-4" />
+                    <p className="text-lg font-medium mb-1">No foods found</p>
+                    <p className="text-muted-foreground mb-4">
+                      Try adjusting your search term or filter
+                    </p>
+                    {selectedCategory && (
+                      <Button 
+                        variant="outline" 
+                        onClick={() => setSelectedCategory(null)}
+                      >
+                        Clear Filter
+                      </Button>
+                    )}
+                  </div>
+                )}
+              </>
+            )}
+          </div>
         </TabsContent>
 
         <TabsContent value="meal-plans">
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            <Card>
-              <CardContent className="p-6">
-                <div className="flex flex-col items-center justify-center py-8 text-center">
-                  <GanttChart className="h-12 w-12 text-gray-300 mb-2" />
-                  <p className="text-muted-foreground">No meal plans found</p>
-                  <p className="text-sm text-muted-foreground mb-4">
-                    Create your first meal plan to streamline your nutrition
-                  </p>
-                  <Button>Create Meal Plan</Button>
-                </div>
-              </CardContent>
-            </Card>
+          <div className="space-y-6">
+            <div className="flex justify-between items-center">
+              <h2 className="text-xl font-bold">Your Meal Plans</h2>
+              <Button className="flex items-center gap-1">
+                <Plus className="w-4 h-4" />
+                Create Meal Plan
+              </Button>
+            </div>
+            
+            {selectedMeal ? (
+              <MealDetail 
+                meal={selectedMeal}
+                onBack={() => setSelectedMeal(null)}
+              />
+            ) : (
+              <>
+                {(mealPlans && mealPlans.length > 0) ? (
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                    {mealPlans.map((plan: any) => (
+                      <Card key={plan.id} className="overflow-hidden hover:border-primary transition-colors cursor-pointer" onClick={() => setSelectedMealPlan(plan)}>
+                        <CardHeader className="p-4 pb-2">
+                          <CardTitle className="text-lg font-semibold flex items-center">
+                            <UtensilsCrossed className="h-5 w-5 mr-2 text-primary" />
+                            {plan.name}
+                          </CardTitle>
+                        </CardHeader>
+                        <CardContent className="p-4 pt-0">
+                          <div className="text-sm text-muted-foreground mb-4">
+                            {plan.description || "A custom meal plan with balanced nutrition"}
+                          </div>
+                          <div className="space-y-2">
+                            {plan.meals && plan.meals.slice(0, 2).map((meal: any) => (
+                              <div key={meal.id} className="flex justify-between items-center p-2 rounded-md bg-accent/50">
+                                <div className="flex items-center gap-2">
+                                  <div className="h-8 w-8 rounded-full bg-primary/10 flex items-center justify-center">
+                                    <Utensils className="h-4 w-4 text-primary" />
+                                  </div>
+                                  <span>{meal.name}</span>
+                                </div>
+                                <span className="text-xs text-muted-foreground">{meal.time}</span>
+                              </div>
+                            ))}
+                            {(!plan.meals || plan.meals.length === 0) && (
+                              <div className="py-4 text-center text-muted-foreground text-sm">
+                                No meals added yet
+                              </div>
+                            )}
+                          </div>
+                          {plan.meals && plan.meals.length > 2 && (
+                            <div className="text-xs text-center text-muted-foreground mt-2">
+                              + {plan.meals.length - 2} more meals
+                            </div>
+                          )}
+                        </CardContent>
+                      </Card>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="grid grid-cols-1">
+                    <Card>
+                      <CardContent className="p-6">
+                        <div className="flex flex-col items-center justify-center py-8 text-center">
+                          <GanttChart className="h-12 w-12 text-gray-300 mb-2" />
+                          <p className="text-lg font-medium mb-1">No meal plans found</p>
+                          <p className="text-muted-foreground mb-4">
+                            Create your first meal plan to streamline your nutrition
+                          </p>
+                          <Button>Create Meal Plan</Button>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  </div>
+                )}
+              </>
+            )}
           </div>
         </TabsContent>
       </Tabs>
