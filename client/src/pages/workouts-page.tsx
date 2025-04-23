@@ -480,34 +480,47 @@ export default function WorkoutsPage() {
           </div>
           
           {isLoadingExercises ? (
-            <div className="space-y-4">
+            <div className="space-y-2">
               {[1, 2, 3, 4, 5].map((i) => (
                 <Card key={i} className="animate-pulse">
-                  <CardContent className="p-6 h-20"></CardContent>
+                  <CardContent className="p-4 h-14"></CardContent>
                 </Card>
               ))}
             </div>
           ) : filteredExercises.length > 0 ? (
-            <div className="space-y-4">
+            <div className="space-y-2">
               {filteredExercises.map((exercise) => (
-                <Card key={exercise.id}>
-                  <CardContent className="p-4">
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center">
-                        <div className="h-10 w-10 rounded-md bg-primary-100 dark:bg-primary-900/50 flex items-center justify-center text-primary-600 dark:text-primary-400">
-                          <Dumbbell className="h-5 w-5" />
-                        </div>
-                        <div className="ml-3">
-                          <p className="font-medium">{exercise.name}</p>
-                          <p className="text-xs text-muted-foreground">
-                            {exercise.muscleGroups.join(", ")}
-                          </p>
-                        </div>
+                <Card 
+                  key={exercise.id} 
+                  className="cursor-pointer hover:bg-accent/50 transition-colors"
+                  onClick={() => setSelectedWorkout({
+                    id: 999,
+                    name: exercise.name,
+                    description: exercise.description,
+                    difficulty: exercise.difficulty || "intermediate",
+                    duration: 0,
+                    exercises: [{
+                      exercise: exercise,
+                      sets: 4,
+                      reps: 10,
+                      restTime: 60,
+                      order: 1
+                    }]
+                  })}
+                >
+                  <CardContent className="p-4 flex items-center justify-between">
+                    <div className="flex items-center gap-3">
+                      <div className="h-10 w-10 rounded-lg bg-primary-100 dark:bg-primary-900/50 flex items-center justify-center text-primary">
+                        <Dumbbell className="h-5 w-5" />
                       </div>
-                      <Button variant="ghost" size="icon">
-                        <ChevronRight className="h-5 w-5" />
-                      </Button>
+                      <div>
+                        <p className="font-medium">{exercise.name}</p>
+                        <p className="text-xs text-muted-foreground">
+                          {exercise.muscleGroups.join(", ")}
+                        </p>
+                      </div>
                     </div>
+                    <ChevronRight className="h-5 w-5 text-muted-foreground" />
                   </CardContent>
                 </Card>
               ))}
