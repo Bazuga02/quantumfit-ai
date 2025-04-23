@@ -19,12 +19,22 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { NutritionSummary } from "@/components/dashboard/nutrition-summary";
 import { FoodDetail } from "@/components/nutrition/food-detail";
+import { MealDetail } from "@/components/nutrition/meal-detail";
+import { UtensilsCrossed } from "lucide-react";
 
 export default function NutritionPage() {
   const { user } = useAuth();
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
   const [selectedFood, setSelectedFood] = useState<any>(null);
+  const [selectedMeal, setSelectedMeal] = useState<any>(null);
+  const [selectedMealPlan, setSelectedMealPlan] = useState<any>(null);
+  
+  // Query for meal plans
+  const { data: mealPlans, isLoading: isLoadingMealPlans } = useQuery({
+    queryKey: ['/api/meal-plans'],
+    enabled: !!user,
+  });
 
   const { data: foods, isLoading: isLoadingFoods } = useQuery({
     queryKey: ['/api/foods'],
