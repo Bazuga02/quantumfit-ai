@@ -19,12 +19,14 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
 import { WorkoutSession } from "@/components/workouts/workout-session";
+import { WorkoutDetail } from "@/components/workouts/workout-detail";
 
 export default function WorkoutsPage() {
   const { user } = useAuth();
   const { toast } = useToast();
   const [searchTerm, setSearchTerm] = useState("");
   const [activeWorkoutSession, setActiveWorkoutSession] = useState<any>(null);
+  const [selectedWorkout, setSelectedWorkout] = useState<any>(null);
 
   const { data: workoutPlans, isLoading: isLoadingPlans } = useQuery({
     queryKey: ['/api/workout-plans'],
@@ -74,9 +76,66 @@ export default function WorkoutsPage() {
       duration: 45,
       difficulty: "intermediate",
       exercises: [
-        { name: "Bench Press", sets: 4, reps: 10 },
-        { name: "Shoulder Press", sets: 3, reps: 12 },
-        { name: "Tricep Extensions", sets: 3, reps: 15 }
+        { 
+          exercise: { 
+            id: 1,
+            name: "Bench Press", 
+            description: "A compound chest exercise performed on a flat bench",
+            muscleGroups: ["chest", "triceps", "shoulders"],
+            equipment: ["barbell", "bench"],
+            difficulty: "intermediate",
+            instructions: [
+              "Lie on a flat bench with feet flat on the floor",
+              "Grip the barbell slightly wider than shoulder width",
+              "Lower the bar to your mid-chest",
+              "Press the bar back up to the starting position"
+            ],
+          },
+          sets: 4, 
+          reps: 10, 
+          restTime: 60,
+          order: 1 
+        },
+        { 
+          exercise: { 
+            id: 2,
+            name: "Shoulder Press", 
+            description: "A compound shoulder exercise that targets deltoids",
+            muscleGroups: ["shoulders", "triceps"],
+            equipment: ["dumbbells", "barbell"],
+            difficulty: "intermediate",
+            instructions: [
+              "Sit on a bench with back support",
+              "Hold dumbbells at shoulder height with palms facing forward",
+              "Press the weights up until your arms are fully extended",
+              "Lower the weights back to the starting position"
+            ],
+          },
+          sets: 3, 
+          reps: 12, 
+          restTime: 60,
+          order: 2 
+        },
+        { 
+          exercise: { 
+            id: 3,
+            name: "Tricep Extensions", 
+            description: "An isolation exercise that targets the triceps",
+            muscleGroups: ["triceps"],
+            equipment: ["dumbbell", "cable"],
+            difficulty: "beginner",
+            instructions: [
+              "Hold a dumbbell with both hands above your head",
+              "Lower the weight behind your head by bending at the elbows",
+              "Extend your arms to raise the weight back to starting position",
+              "Keep your upper arms stationary throughout the movement"
+            ],
+          },
+          sets: 3, 
+          reps: 15, 
+          restTime: 60,
+          order: 3 
+        }
       ]
     },
     {
@@ -86,9 +145,66 @@ export default function WorkoutsPage() {
       duration: 50,
       difficulty: "advanced",
       exercises: [
-        { name: "Squats", sets: 4, reps: 8 },
-        { name: "Deadlifts", sets: 3, reps: 8 },
-        { name: "Lunges", sets: 3, reps: 12 }
+        { 
+          exercise: { 
+            id: 4,
+            name: "Squats", 
+            description: "A compound lower body exercise",
+            muscleGroups: ["quadriceps", "hamstrings", "glutes"],
+            equipment: ["barbell", "squat rack"],
+            difficulty: "intermediate",
+            instructions: [
+              "Position the barbell on your upper back",
+              "Stand with feet shoulder-width apart",
+              "Bend your knees and hips to lower your body",
+              "Push through your heels to return to standing position"
+            ],
+          },
+          sets: 4, 
+          reps: 8, 
+          restTime: 90,
+          order: 1 
+        },
+        { 
+          exercise: { 
+            id: 5,
+            name: "Deadlifts", 
+            description: "A compound full-body exercise",
+            muscleGroups: ["back", "glutes", "hamstrings"],
+            equipment: ["barbell"],
+            difficulty: "advanced",
+            instructions: [
+              "Stand with feet hip-width apart, barbell over mid-foot",
+              "Bend at hips and knees to grasp the bar",
+              "Lift the bar by extending hips and knees",
+              "Lower the bar by hinging at the hips and bending the knees"
+            ],
+          },
+          sets: 3, 
+          reps: 8, 
+          restTime: 90,
+          order: 2
+        },
+        { 
+          exercise: { 
+            id: 6,
+            name: "Lunges", 
+            description: "A unilateral lower body exercise",
+            muscleGroups: ["quadriceps", "hamstrings", "glutes"],
+            equipment: ["dumbbells", "bodyweight"],
+            difficulty: "beginner",
+            instructions: [
+              "Stand upright with feet together",
+              "Take a step forward with one leg",
+              "Lower your body until both knees are bent at 90 degrees",
+              "Push off the front foot to return to the starting position"
+            ],
+          },
+          sets: 3, 
+          reps: 12, 
+          restTime: 60,
+          order: 3
+        }
       ]
     },
     {
@@ -98,9 +214,68 @@ export default function WorkoutsPage() {
       duration: 30,
       difficulty: "beginner",
       exercises: [
-        { name: "Planks", sets: 3, duration: "60 sec" },
-        { name: "Russian Twists", sets: 3, reps: 20 },
-        { name: "Mountain Climbers", sets: 3, duration: "45 sec" }
+        { 
+          exercise: { 
+            id: 7,
+            name: "Planks", 
+            description: "A core exercise that improves stability and strengthens the abdominals",
+            muscleGroups: ["core", "shoulders"],
+            equipment: ["bodyweight"],
+            difficulty: "beginner",
+            instructions: [
+              "Get into a push-up position with forearms on the ground",
+              "Align your body in a straight line from head to heels",
+              "Keep your core tight and avoid arching your back",
+              "Hold the position for the prescribed time"
+            ],
+          },
+          sets: 3, 
+          reps: 1, 
+          duration: 60,
+          restTime: 45,
+          order: 1
+        },
+        { 
+          exercise: { 
+            id: 8,
+            name: "Russian Twists", 
+            description: "A rotational exercise that targets the obliques and core",
+            muscleGroups: ["core", "obliques"],
+            equipment: ["weight plate", "medicine ball"],
+            difficulty: "intermediate",
+            instructions: [
+              "Sit on the floor with knees bent",
+              "Lean back slightly, keeping your back straight",
+              "Hold a weight at chest level",
+              "Rotate your torso to touch the weight to the ground on each side"
+            ],
+          },
+          sets: 3, 
+          reps: 20, 
+          restTime: 45,
+          order: 2
+        },
+        { 
+          exercise: { 
+            id: 9,
+            name: "Mountain Climbers", 
+            description: "A dynamic core exercise that also provides cardiovascular benefits",
+            muscleGroups: ["core", "shoulders", "hip flexors"],
+            equipment: ["bodyweight"],
+            difficulty: "beginner",
+            instructions: [
+              "Start in a push-up position",
+              "Bring one knee toward your chest",
+              "Quickly switch legs, like you're running in place",
+              "Keep your hips down and core engaged throughout"
+            ],
+          },
+          sets: 3, 
+          reps: 1, 
+          duration: 45,
+          restTime: 30,
+          order: 3
+        }
       ]
     }
   ];
@@ -110,7 +285,32 @@ export default function WorkoutsPage() {
 
   // Handler for starting a workout
   const handleStartWorkout = (workoutId: number) => {
-    startWorkoutMutation.mutate(workoutId);
+    if (selectedWorkout) {
+      // If we're in detail view, use the selected workout data directly
+      const workoutSession = {
+        id: Date.now(),
+        planId: selectedWorkout.id,
+        planName: selectedWorkout.name,
+        startTime: new Date().toISOString(),
+        userId: user?.id,
+        exercises: selectedWorkout.exercises,
+        inProgress: true
+      };
+      setActiveWorkoutSession(workoutSession);
+    } else {
+      // Otherwise, make the API call to get the workout plan data
+      startWorkoutMutation.mutate(workoutId);
+    }
+  };
+
+  // Handler for selecting a workout to view details
+  const handleSelectWorkout = (workout: any) => {
+    setSelectedWorkout(workout);
+  };
+
+  // Handler for going back to the workout list
+  const handleBackToList = () => {
+    setSelectedWorkout(null);
   };
 
   // Handler for completing a workout
@@ -144,6 +344,17 @@ export default function WorkoutsPage() {
           onExit={handleExitWorkout}
         />
       </MainLayout>
+    );
+  }
+
+  // If a workout is selected, show the detailed view
+  if (selectedWorkout) {
+    return (
+      <WorkoutDetail
+        workout={selectedWorkout}
+        onBack={handleBackToList}
+        onStartWorkout={handleStartWorkout}
+      />
     );
   }
 
@@ -195,7 +406,7 @@ export default function WorkoutsPage() {
           ) : displayedWorkouts.length > 0 ? (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               {displayedWorkouts.map((workout) => (
-                <Card key={workout.id}>
+                <Card key={workout.id} className="hover:shadow-md transition-shadow">
                   <CardContent className="p-6">
                     <div className="flex items-center justify-between mb-4">
                       <div className="h-10 w-10 rounded-md bg-primary-100 dark:bg-primary-900/50 flex items-center justify-center text-primary-600 dark:text-primary-400">
@@ -216,16 +427,25 @@ export default function WorkoutsPage() {
                       </div>
                       <div className="flex items-center">
                         <Users className="h-4 w-4 mr-1" />
-                        <span>{workout.exercises.length} exercises</span>
+                        <span>3 exercises</span>
                       </div>
                     </div>
-                    <Button 
-                      className="w-full flex items-center justify-center gap-2"
-                      onClick={() => handleStartWorkout(workout.id)}
-                    >
-                      <Play className="h-4 w-4" />
-                      Start Workout
-                    </Button>
+                    <div className="flex gap-2">
+                      <Button 
+                        variant="outline" 
+                        className="flex-1 flex items-center justify-center gap-2"
+                        onClick={() => handleSelectWorkout(workout)}
+                      >
+                        Details
+                      </Button>
+                      <Button 
+                        className="flex-1 flex items-center justify-center gap-2"
+                        onClick={() => handleStartWorkout(workout.id)}
+                      >
+                        <Play className="h-4 w-4" />
+                        Start
+                      </Button>
+                    </div>
                   </CardContent>
                 </Card>
               ))}
