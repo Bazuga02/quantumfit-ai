@@ -20,6 +20,7 @@ import { Badge } from "@/components/ui/badge";
 import { NutritionSummary } from "@/components/dashboard/nutrition-summary";
 import { FoodDetail } from "@/components/nutrition/food-detail";
 import { MealDetail } from "@/components/nutrition/meal-detail";
+import { LogMealForm } from "@/components/nutrition/log-meal-form";
 import { UtensilsCrossed } from "lucide-react";
 
 export default function NutritionPage() {
@@ -29,6 +30,7 @@ export default function NutritionPage() {
   const [selectedFood, setSelectedFood] = useState<any>(null);
   const [selectedMeal, setSelectedMeal] = useState<any>(null);
   const [selectedMealPlan, setSelectedMealPlan] = useState<any>(null);
+  const [isLogMealDialogOpen, setIsLogMealDialogOpen] = useState(false);
   
   // Query for meal plans
   const { data: mealPlans, isLoading: isLoadingMealPlans } = useQuery({
@@ -99,25 +101,21 @@ export default function NutritionPage() {
             <TabsTrigger value="meal-plans">Meal Plans</TabsTrigger>
           </TabsList>
 
-          <Dialog>
+          <Dialog open={isLogMealDialogOpen} onOpenChange={setIsLogMealDialogOpen}>
             <DialogTrigger asChild>
               <Button className="flex items-center gap-1">
                 <Plus className="w-4 h-4" />
                 Log Meal
               </Button>
             </DialogTrigger>
-            <DialogContent>
+            <DialogContent className="sm:max-w-[600px]">
               <DialogHeader>
                 <DialogTitle>Log Your Meal</DialogTitle>
                 <DialogDescription>
                   Record what you've eaten to track your nutrition.
                 </DialogDescription>
               </DialogHeader>
-              <div className="py-4">
-                <p className="text-center text-muted-foreground">
-                  Meal logging form goes here. This feature is coming soon!
-                </p>
-              </div>
+              <LogMealForm onSuccess={() => setIsLogMealDialogOpen(false)} />
             </DialogContent>
           </Dialog>
         </div>
@@ -227,7 +225,11 @@ export default function NutritionPage() {
                     </div>
                   ))}
                   
-                  <Button className="w-full" variant="outline">
+                  <Button 
+                    className="w-full" 
+                    variant="outline"
+                    onClick={() => setIsLogMealDialogOpen(true)}
+                  >
                     <Plus className="w-4 h-4 mr-2" />
                     Add Another Meal
                   </Button>
