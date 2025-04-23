@@ -194,6 +194,40 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.status(500).json({ message: "Failed to add exercise to workout plan" });
     }
   });
+  
+  // Start a workout session
+  app.post("/api/workout-plans/:id/start", ensureAuthenticated, async (req, res) => {
+    try {
+      const planId = parseInt(req.params.id);
+      const plan = await storage.getWorkoutPlanById(planId);
+      
+      if (!plan) {
+        return res.status(404).json({ message: "Workout plan not found" });
+      }
+      
+      if (plan.userId !== req.user.id) {
+        return res.status(403).json({ message: "Unauthorized access to this workout plan" });
+      }
+      
+      // Get all exercises in this workout plan
+      const exercises = await storage.getWorkoutPlanExercises(planId);
+      
+      // Create a workout session object with detailed exercise information
+      const workoutSession = {
+        id: Date.now(), // Generate a temporary ID for the session
+        planId,
+        planName: plan.name,
+        startTime: new Date().toISOString(),
+        userId: req.user.id,
+        exercises: exercises,
+        inProgress: true
+      };
+      
+      res.status(200).json(workoutSession);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to start workout session" });
+    }
+  });
 
   // Food and nutrition routes
   app.get("/api/foods", async (req, res) => {

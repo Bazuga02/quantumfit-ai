@@ -3,8 +3,9 @@ import { MainLayout } from "@/components/layout/main-layout";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useMutation } from "@tanstack/react-query";
 import { useAuth } from "@/hooks/use-auth";
+import { apiRequest } from "@/lib/queryClient";
 import { Calendar, ChevronRight, Dumbbell, Play, Plus, Search, Timer, Users } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import {
@@ -16,10 +17,14 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
+import { useToast } from "@/hooks/use-toast";
+import { WorkoutSession } from "@/components/workouts/workout-session";
 
 export default function WorkoutsPage() {
   const { user } = useAuth();
+  const { toast } = useToast();
   const [searchTerm, setSearchTerm] = useState("");
+  const [activeWorkoutSession, setActiveWorkoutSession] = useState<any>(null);
 
   const { data: workoutPlans, isLoading: isLoadingPlans } = useQuery({
     queryKey: ['/api/workout-plans'],
@@ -29,6 +34,28 @@ export default function WorkoutsPage() {
   const { data: exercises, isLoading: isLoadingExercises } = useQuery({
     queryKey: ['/api/exercises'],
     enabled: !!user,
+  });
+
+  // Start workout mutation
+  const startWorkoutMutation = useMutation({
+    mutationFn: async (workoutId: number) => {
+      const res = await apiRequest("POST", `/api/workout-plans/${workoutId}/start`);
+      return await res.json();
+    },
+    onSuccess: (workoutSession) => {
+      setActiveWorkoutSession(workoutSession);
+      toast({
+        title: "Workout Started",
+        description: `Starting ${workoutSession.planName}. Let's get moving!`,
+      });
+    },
+    onError: (error: Error) => {
+      toast({
+        title: "Failed to start workout",
+        description: error.message,
+        variant: "destructive",
+      });
+    },
   });
 
   // Filtered exercises based on search term
@@ -81,6 +108,45 @@ export default function WorkoutsPage() {
   // Use workoutPlans from API if available, otherwise fallback to sample data
   const displayedWorkouts = (workoutPlans && workoutPlans.length > 0) ? workoutPlans : sampleWorkouts;
 
+  // Handler for starting a workout
+  const handleStartWorkout = (workoutId: number) => {
+    startWorkoutMutation.mutate(workoutId);
+  };
+
+  // Handler for completing a workout
+  const handleCompleteWorkout = () => {
+    toast({
+      title: "Workout Completed",
+      description: "Great job! Your workout has been logged.",
+    });
+    setActiveWorkoutSession(null);
+  };
+
+  // Handler for exiting a workout
+  const handleExitWorkout = () => {
+    toast({
+      title: "Workout Exited",
+      description: "Your workout session has been ended.",
+    });
+    setActiveWorkoutSession(null);
+  };
+
+  // If there's an active workout session, show the workout session interface
+  if (activeWorkoutSession) {
+    return (
+      <MainLayout 
+        title="Active Workout" 
+        subtitle={`Currently working out: ${activeWorkoutSession.planName}`}
+      >
+        <WorkoutSession 
+          session={activeWorkoutSession}
+          onComplete={handleCompleteWorkout}
+          onExit={handleExitWorkout}
+        />
+      </MainLayout>
+    );
+  }
+
   return (
     <MainLayout 
       title="Workouts" 
@@ -118,7 +184,7 @@ export default function WorkoutsPage() {
         </div>
 
         <TabsContent value="my-workouts" className="space-y-6">
-          {isLoadingPlans ? (
+          {isLoadingPlans || startWorkoutMutation.isPending ? (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               {[1, 2, 3].map((i) => (
                 <Card key={i} className="animate-pulse">
@@ -153,7 +219,10 @@ export default function WorkoutsPage() {
                         <span>{workout.exercises.length} exercises</span>
                       </div>
                     </div>
-                    <Button className="w-full flex items-center justify-center gap-2">
+                    <Button 
+                      className="w-full flex items-center justify-center gap-2"
+                      onClick={() => handleStartWorkout(workout.id)}
+                    >
                       <Play className="h-4 w-4" />
                       Start Workout
                     </Button>
