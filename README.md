@@ -27,7 +27,7 @@ QuantumFit AI is a modern, AI-powered fitness web application that helps users a
 
 1. Clone the repo and install dependencies:
    ```bash
-   git clone https://github.com/your-username/quantumfit-ai.git
+   git clone https://github.com/Bazuga02/quantumfit-ai.git
    cd quantumfit-ai
    npm install
    ```
