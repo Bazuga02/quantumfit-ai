@@ -2,16 +2,18 @@ import { useAuth } from "@/hooks/use-auth";
 import { MainLayout } from "@/components/layout/main-layout";
 import { GreetingCard } from "@/components/dashboard/greeting-card";
 import { StatsCard } from "@/components/dashboard/stats-card";
-import { WaterTracking } from "@/components/dashboard/water-tracking";
-import { ProgressChart } from "@/components/dashboard/progress-chart";
 import { WorkoutPlan } from "@/components/dashboard/workout-plan";
 import { NutritionSummary } from "@/components/dashboard/nutrition-summary";
 import { AIRecommendations } from "@/components/dashboard/ai-recommendations";
-import { Flame, Droplets, Timer, Dumbbell } from "lucide-react";
+import { Flame, Timer, Dumbbell } from "lucide-react";
+import { FoodLibrary } from "@/components/nutrition/food-library";
+import { WaterIntake } from "@/components/water-intake";
+import { ProgressGraph } from "@/components/progress/progress-graph";
+import { useEffect, useState } from "react";
 
 export default function Dashboard() {
   const { user } = useAuth();
-  const firstName = user?.name.split(" ")[0] || "";
+  const firstName = user?.name ? user.name.split(" ")[0] : "";
   
   // Demo stats data
   const statsCards = [
@@ -23,16 +25,6 @@ export default function Dashboard() {
       trend: {
         value: "68% of goal",
         isPositive: true
-      }
-    },
-    {
-      title: "Water Intake",
-      value: "1.2L",
-      icon: <Droplets className="h-6 w-6 text-blue-500" />,
-      iconBgClass: "bg-blue-50 dark:bg-blue-900/30",
-      trend: {
-        value: "40% of goal",
-        isPositive: false
       }
     },
     {
@@ -57,6 +49,23 @@ export default function Dashboard() {
     }
   ];
 
+  // Progress measurements state
+  const [measurements, setMeasurements] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+  useEffect(() => {
+    async function fetchMeasurements() {
+      setLoading(true);
+      const res = await fetch("/api/measurements");
+      if (res.ok) {
+        setMeasurements(await res.json());
+      } else {
+        setMeasurements([]);
+      }
+      setLoading(false);
+    }
+    fetchMeasurements();
+  }, []);
+
   return (
     <MainLayout 
       title="Dashboard" 
@@ -66,7 +75,7 @@ export default function Dashboard() {
       <GreetingCard />
 
       {/* Stats cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-6">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 mb-4">
         {statsCards.map((card, index) => (
           <StatsCard
             key={index}
@@ -79,26 +88,16 @@ export default function Dashboard() {
         ))}
       </div>
 
+      {/* Progress Graph */}
+      <div className="mb-4">
+        <ProgressGraph measurements={measurements} />
+      </div>
+
       {/* Main content grid */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Water tracking widget */}
-        <div className="lg:col-span-1">
-          <WaterTracking />
-        </div>
-        
-        {/* Weekly progress chart */}
-        <div className="lg:col-span-2">
-          <ProgressChart />
-        </div>
-        
         {/* Workout plan */}
         <div className="lg:col-span-2">
           <WorkoutPlan />
-        </div>
-        
-        {/* Nutrition summary */}
-        <div className="lg:col-span-1">
-          <NutritionSummary />
         </div>
         
         {/* AI Coach recommendations */}
@@ -106,6 +105,13 @@ export default function Dashboard() {
           <AIRecommendations />
         </div>
       </div>
+
+      {/* Water Intake and Nutrition side by side */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mt-6">
+        <WaterIntake />
+        <NutritionSummary />
+      </div>
+
     </MainLayout>
   );
 }

@@ -1,4 +1,4 @@
-import { createContext, ReactNode, useContext } from "react";
+import { createContext, ReactNode, useContext, useEffect } from "react";
 import {
   useQuery,
   useMutation,
@@ -12,9 +12,9 @@ type AuthContextType = {
   user: User | null;
   isLoading: boolean;
   error: Error | null;
-  loginMutation: UseMutationResult<Omit<User, "password">, Error, LoginData>;
+  loginMutation: UseMutationResult<{ user: Omit<User, "password">; token: string }, Error, LoginData>;
   logoutMutation: UseMutationResult<void, Error, void>;
-  registerMutation: UseMutationResult<Omit<User, "password">, Error, InsertUser>;
+  registerMutation: UseMutationResult<{ user: Omit<User, "password">; token: string }, Error, InsertUser>;
 };
 
 type LoginData = {
@@ -22,11 +22,34 @@ type LoginData = {
   password: string;
 };
 
-export const AuthContext = createContext<AuthContextType | null>(null);
+const AuthContext = createContext<AuthContextType | undefined>(undefined);
+
+export function useAuth() {
+  const context = useContext(AuthContext);
+  if (!context) {
+    throw new Error("useAuth must be used within an AuthProvider");
+  }
+  return context;
+}
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const { toast } = useToast();
   
+  // Check token validity on mount
+  useEffect(() => {
+    const token = localStorage.getItem('token');
+    const tokenExpiration = localStorage.getItem('tokenExpiration');
+    
+    if (token && tokenExpiration) {
+      const expirationTime = parseInt(tokenExpiration);
+      if (Date.now() >= expirationTime) {
+        // Token expired, remove it
+        localStorage.removeItem('token');
+        localStorage.removeItem('tokenExpiration');
+      }
+    }
+  }, []);
+
   const {
     data: user,
     error,
@@ -34,18 +57,34 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   } = useQuery<User | undefined, Error>({
     queryKey: ["/api/user"],
     queryFn: getQueryFn({ on401: "returnNull" }),
+    retry: false,
+    // Add staleTime to prevent unnecessary refetches
+    staleTime: 5 * 60 * 1000, // 5 minutes
   });
 
   const loginMutation = useMutation({
     mutationFn: async (credentials: LoginData) => {
       const res = await apiRequest("POST", "/api/login", credentials);
-      return await res.json();
+      if (!res.ok) {
+        const error = await res.json();
+        throw new Error(error.message || "Login failed");
+      }
+      const data = await res.json();
+      
+      // Store token in localStorage with expiration
+      if (data.token) {
+        const expirationTime = Date.now() + 7 * 24 * 60 * 60 * 1000; // 7 days
+        localStorage.setItem('token', data.token);
+        localStorage.setItem('tokenExpiration', expirationTime.toString());
+      }
+      
+      return data;
     },
-    onSuccess: (userData: Omit<User, "password">) => {
-      queryClient.setQueryData(["/api/user"], userData);
+    onSuccess: (data) => {
+      queryClient.setQueryData(["/api/user"], data.user);
       toast({
         title: "Login Successful",
-        description: `Welcome back, ${userData.name}!`,
+        description: `Welcome back, ${data.user.name}!`,
       });
     },
     onError: (error: Error) => {
@@ -60,13 +99,26 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const registerMutation = useMutation({
     mutationFn: async (userData: InsertUser) => {
       const res = await apiRequest("POST", "/api/register", userData);
-      return await res.json();
+      if (!res.ok) {
+        const error = await res.json();
+        throw new Error(error.message || "Registration failed");
+      }
+      const data = await res.json();
+      
+      // Store token in localStorage with expiration
+      if (data.token) {
+        const expirationTime = Date.now() + 7 * 24 * 60 * 60 * 1000; // 7 days
+        localStorage.setItem('token', data.token);
+        localStorage.setItem('tokenExpiration', expirationTime.toString());
+      }
+      
+      return data;
     },
-    onSuccess: (userData: Omit<User, "password">) => {
-      queryClient.setQueryData(["/api/user"], userData);
+    onSuccess: (data) => {
+      queryClient.setQueryData(["/api/user"], data.user);
       toast({
         title: "Registration Successful",
-        description: `Welcome to QuantumFit AI, ${userData.name}!`,
+        description: `Welcome to QuantumFit AI, ${data.user.name}!`,
       });
     },
     onError: (error: Error) => {
@@ -80,7 +132,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const logoutMutation = useMutation({
     mutationFn: async () => {
-      await apiRequest("POST", "/api/logout");
+      const res = await apiRequest("POST", "/api/logout");
+      if (!res.ok) {
+        throw new Error("Logout failed");
+      }
+      // Remove token and expiration from localStorage
+      localStorage.removeItem('token');
+      localStorage.removeItem('tokenExpiration');
     },
     onSuccess: () => {
       queryClient.setQueryData(["/api/user"], null);
@@ -112,12 +170,4 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       {children}
     </AuthContext.Provider>
   );
-}
-
-export function useAuth() {
-  const context = useContext(AuthContext);
-  if (!context) {
-    throw new Error("useAuth must be used within an AuthProvider");
-  }
-  return context;
 }

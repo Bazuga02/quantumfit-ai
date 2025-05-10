@@ -41,15 +41,6 @@ export default function SettingsPage() {
     fats: user?.macros?.fats || 60
   });
   
-  const [notifications, setNotifications] = useState({
-    email: true,
-    push: true,
-    workout: true,
-    water: true,
-    nutrition: true,
-    progress: true
-  });
-  
   // User settings update mutation
   const updateSettingsMutation = useMutation({
     mutationFn: async (data: any) => {
@@ -119,10 +110,6 @@ export default function SettingsPage() {
           <TabsTrigger value="goals" className="flex items-center gap-2">
             <Flame className="h-4 w-4" />
             Goals
-          </TabsTrigger>
-          <TabsTrigger value="notifications" className="flex items-center gap-2">
-            <Bell className="h-4 w-4" />
-            Notifications
           </TabsTrigger>
           <TabsTrigger value="appearance" className="flex items-center gap-2">
             <Moon className="h-4 w-4" />
@@ -307,86 +294,6 @@ export default function SettingsPage() {
                     Save Changes
                   </>
                 )}
-              </Button>
-            </CardFooter>
-          </Card>
-        </TabsContent>
-        
-        <TabsContent value="notifications" className="space-y-6">
-          <Card>
-            <CardHeader>
-              <CardTitle>Notification Settings</CardTitle>
-              <CardDescription>
-                Configure how and when you receive notifications
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-6">
-              <div className="space-y-4">
-                <h3 className="text-sm font-medium">Notification Channels</h3>
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center space-x-2">
-                    <Mail className="h-4 w-4 text-muted-foreground" />
-                    <Label htmlFor="email-notifications">Email Notifications</Label>
-                  </div>
-                  <Switch
-                    id="email-notifications"
-                    checked={notifications.email}
-                    onCheckedChange={(checked) => setNotifications({ ...notifications, email: checked })}
-                  />
-                </div>
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center space-x-2">
-                    <Bell className="h-4 w-4 text-muted-foreground" />
-                    <Label htmlFor="push-notifications">Push Notifications</Label>
-                  </div>
-                  <Switch
-                    id="push-notifications"
-                    checked={notifications.push}
-                    onCheckedChange={(checked) => setNotifications({ ...notifications, push: checked })}
-                  />
-                </div>
-              </div>
-              
-              <div className="space-y-4">
-                <h3 className="text-sm font-medium">Notification Types</h3>
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center space-x-2">
-                    <Droplets className="h-4 w-4 text-blue-500" />
-                    <Label htmlFor="water-reminders">Water Intake Reminders</Label>
-                  </div>
-                  <Switch
-                    id="water-reminders"
-                    checked={notifications.water}
-                    onCheckedChange={(checked) => setNotifications({ ...notifications, water: checked })}
-                  />
-                </div>
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center space-x-2">
-                    <Flame className="h-4 w-4 text-orange-500" />
-                    <Label htmlFor="nutrition-updates">Nutrition Updates</Label>
-                  </div>
-                  <Switch
-                    id="nutrition-updates"
-                    checked={notifications.nutrition}
-                    onCheckedChange={(checked) => setNotifications({ ...notifications, nutrition: checked })}
-                  />
-                </div>
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center space-x-2">
-                    <MessageSquare className="h-4 w-4 text-green-500" />
-                    <Label htmlFor="progress-updates">Progress Reminders</Label>
-                  </div>
-                  <Switch
-                    id="progress-updates"
-                    checked={notifications.progress}
-                    onCheckedChange={(checked) => setNotifications({ ...notifications, progress: checked })}
-                  />
-                </div>
-              </div>
-            </CardContent>
-            <CardFooter>
-              <Button className="ml-auto">
-                Save Notification Settings
               </Button>
             </CardFooter>
           </Card>

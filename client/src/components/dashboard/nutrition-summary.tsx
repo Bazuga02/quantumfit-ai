@@ -1,68 +1,55 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Progress } from "@/components/ui/progress";
 import { Utensils } from "lucide-react";
-import { useAuth } from "@/hooks/use-auth";
+import { useQuery } from "@tanstack/react-query";
 import { Link } from "wouter";
 
 export function NutritionSummary() {
-  const { user } = useAuth();
-  
-  // Demo data
-  const nutritionData = {
-    calories: {
-      consumed: 1842,
-      goal: user?.calorieGoal || 2700,
-      remaining: (user?.calorieGoal || 2700) - 1842
+  const { data, isLoading, error } = useQuery({
+    queryKey: ["/api/nutrition-summary"],
+    queryFn: async () => {
+      const res = await fetch("/api/nutrition-summary");
+      if (!res.ok) throw new Error("Failed to fetch nutrition summary");
+      return res.json();
     },
-    macros: {
-      protein: { consumed: 98, goal: user?.macros?.protein || 150 },
-      carbs: { consumed: 210, goal: user?.macros?.carbs || 270 },
-      fats: { consumed: 45, goal: user?.macros?.fats || 60 }
-    },
-    meals: [
-      {
-        type: "Breakfast",
-        name: "Oatmeal & Protein Shake",
-        calories: 520,
-        icon: <Utensils className="h-4 w-4" />,
-        bgColor: "bg-green-100 dark:bg-green-900/50",
-        textColor: "text-green-600 dark:text-green-400"
-      },
-      {
-        type: "Lunch",
-        name: "Grilled Chicken Salad",
-        calories: 650,
-        icon: <Utensils className="h-4 w-4" />,
-        bgColor: "bg-yellow-100 dark:bg-yellow-900/50",
-        textColor: "text-yellow-600 dark:text-yellow-400"
-      }
-    ]
-  };
+    refetchOnWindowFocus: true,
+  });
 
+  if (isLoading) {
+    return (
+      <Card>
+        <CardHeader className="pb-2">
+          <CardTitle className="text-lg font-semibold">Nutrition</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="p-4 text-center text-muted-foreground">Loading nutrition summary...</div>
+        </CardContent>
+      </Card>
+    );
+  }
+
+  if (error || !data) {
+    return (
+      <Card>
+        <CardHeader className="pb-2">
+          <CardTitle className="text-lg font-semibold">Nutrition</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="p-4 text-center text-destructive">Failed to load nutrition summary</div>
+        </CardContent>
+      </Card>
+    );
+  }
+
+  const { calories, macros, meals } = data;
   const calculatePercentage = (consumed: number, goal: number) => {
     return Math.min(Math.round((consumed / goal) * 100), 100);
   };
 
-  const caloriePercentage = calculatePercentage(
-    nutritionData.calories.consumed,
-    nutritionData.calories.goal
-  );
-  
-  const proteinPercentage = calculatePercentage(
-    nutritionData.macros.protein.consumed,
-    nutritionData.macros.protein.goal
-  );
-  
-  const carbsPercentage = calculatePercentage(
-    nutritionData.macros.carbs.consumed,
-    nutritionData.macros.carbs.goal
-  );
-  
-  const fatsPercentage = calculatePercentage(
-    nutritionData.macros.fats.consumed,
-    nutritionData.macros.fats.goal
-  );
+  const caloriePercentage = calculatePercentage(calories.consumed, calories.goal);
+  const proteinPercentage = calculatePercentage(macros.protein.consumed, macros.protein.goal);
+  const carbsPercentage = calculatePercentage(macros.carbs.consumed, macros.carbs.goal);
+  const fatsPercentage = calculatePercentage(macros.fats.consumed, macros.fats.goal);
 
   return (
     <Card>
@@ -82,71 +69,73 @@ export function NutritionSummary() {
           <div className="flex justify-between items-center mb-1">
             <p className="text-sm font-medium text-gray-700 dark:text-gray-300">Calories</p>
             <p className="text-sm font-medium text-gray-700 dark:text-gray-300">
-              {nutritionData.calories.consumed} / {nutritionData.calories.goal}
+              {calories.consumed} / {calories.goal}
             </p>
           </div>
-          <Progress value={caloriePercentage} className="h-2.5" />
+          <div style={{ height: '10px', background: '#e5e7eb', borderRadius: '4px', overflow: 'hidden' }}>
+            <div style={{ width: `${caloriePercentage}%`, height: '100%', background: '#3b82f6', transition: 'width 0.3s' }} />
+          </div>
           <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
-            {nutritionData.calories.remaining} calories remaining
+            {calories.remaining} calories remaining
           </p>
         </div>
-        
         {/* Macros */}
         <div className="space-y-4">
           <div>
             <div className="flex justify-between items-center mb-1">
               <p className="text-sm font-medium text-gray-700 dark:text-gray-300">Protein</p>
               <p className="text-sm font-medium text-gray-700 dark:text-gray-300">
-                {nutritionData.macros.protein.consumed}g / {nutritionData.macros.protein.goal}g
+                {macros.protein.consumed}g / {macros.protein.goal}g
               </p>
             </div>
-            <Progress value={proteinPercentage} className="h-2.5 bg-gray-200 dark:bg-gray-700">
-              <div className="h-full bg-blue-500 rounded-full" />
-            </Progress>
+            <div style={{ height: '10px', background: '#e5e7eb', borderRadius: '4px', overflow: 'hidden' }}>
+              <div style={{ width: `${proteinPercentage}%`, height: '100%', background: '#3b82f6', transition: 'width 0.3s' }} />
+            </div>
           </div>
-          
           <div>
             <div className="flex justify-between items-center mb-1">
               <p className="text-sm font-medium text-gray-700 dark:text-gray-300">Carbs</p>
               <p className="text-sm font-medium text-gray-700 dark:text-gray-300">
-                {nutritionData.macros.carbs.consumed}g / {nutritionData.macros.carbs.goal}g
+                {macros.carbs.consumed}g / {macros.carbs.goal}g
               </p>
             </div>
-            <Progress value={carbsPercentage} className="h-2.5 bg-gray-200 dark:bg-gray-700">
-              <div className="h-full bg-green-500 rounded-full" />
-            </Progress>
+            <div style={{ height: '10px', background: '#e5e7eb', borderRadius: '4px', overflow: 'hidden' }}>
+              <div style={{ width: `${carbsPercentage}%`, height: '100%', background: '#3b82f6', transition: 'width 0.3s' }} />
+            </div>
           </div>
-          
           <div>
             <div className="flex justify-between items-center mb-1">
               <p className="text-sm font-medium text-gray-700 dark:text-gray-300">Fat</p>
               <p className="text-sm font-medium text-gray-700 dark:text-gray-300">
-                {nutritionData.macros.fats.consumed}g / {nutritionData.macros.fats.goal}g
+                {macros.fats.consumed}g / {macros.fats.goal}g
               </p>
             </div>
-            <Progress value={fatsPercentage} className="h-2.5 bg-gray-200 dark:bg-gray-700">
-              <div className="h-full bg-yellow-500 rounded-full" />
-            </Progress>
+            <div style={{ height: '10px', background: '#e5e7eb', borderRadius: '4px', overflow: 'hidden' }}>
+              <div style={{ width: `${fatsPercentage}%`, height: '100%', background: '#3b82f6', transition: 'width 0.3s' }} />
+            </div>
           </div>
         </div>
-        
         <div className="mt-6">
           <h3 className="text-sm font-semibold text-gray-900 dark:text-white mb-2">Recent Meals</h3>
           <div className="space-y-2">
-            {nutritionData.meals.map((meal, index) => (
-              <div key={index} className="flex items-center justify-between">
-                <div className="flex items-center">
-                  <div className={`h-8 w-8 rounded-md ${meal.bgColor} flex items-center justify-center ${meal.textColor}`}>
-                    {meal.icon}
+            {meals.length === 0 ? (
+              <div className="text-xs text-muted-foreground">No meals logged today.</div>
+            ) : (
+              meals.map((meal: any, index: number) => (
+                <div key={index} className="flex items-center justify-between">
+                  <div className="flex items-center">
+                    <div className={`h-8 w-8 rounded-md bg-primary/10 flex items-center justify-center text-primary`}>
+                      <Utensils className="h-4 w-4" />
+                    </div>
+                    <div className="ml-3">
+                      <p className="text-sm font-medium text-gray-900 dark:text-white">{meal.type}</p>
+                      <p className="text-xs text-gray-500 dark:text-gray-400">{meal.name}</p>
+                    </div>
                   </div>
-                  <div className="ml-3">
-                    <p className="text-sm font-medium text-gray-900 dark:text-white">{meal.type}</p>
-                    <p className="text-xs text-gray-500 dark:text-gray-400">{meal.name}</p>
-                  </div>
+                  <p className="text-sm font-medium text-gray-700 dark:text-gray-300">{meal.calories} cal</p>
                 </div>
-                <p className="text-sm font-medium text-gray-700 dark:text-gray-300">{meal.calories} cal</p>
-              </div>
-            ))}
+              ))
+            )}
           </div>
         </div>
       </CardContent>

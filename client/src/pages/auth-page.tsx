@@ -15,6 +15,14 @@ export default function AuthPage() {
     }
   }, [user, isLoading, navigate]);
 
+  if (isLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen flex flex-col md:flex-row">
       {/* Auth Form */}
@@ -31,7 +39,7 @@ export default function AuthPage() {
       </div>
 
       {/* Hero Section */}
-      <div className="flex-1 bg-primary p-10 text-white hidden md:flex flex-col justify-center">
+      <div className="hidden md:flex flex-1 items-center justify-center bg-primary text-white p-6 md:p-10">
         <div className="max-w-md">
           <h1 className="text-4xl font-bold mb-4">Your Smart Fitness Companion</h1>
           <p className="text-lg mb-6">

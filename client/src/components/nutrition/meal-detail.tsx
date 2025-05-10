@@ -4,7 +4,6 @@ import { ChevronLeft, UtensilsCrossed, Calendar, Clock, PlusCircle, Trash2 } fro
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
-import { Progress } from "@/components/ui/progress";
 
 interface MealFood {
   id: number;
@@ -121,21 +120,27 @@ export function MealDetail({ meal, onBack }: MealDetailProps) {
                     <span className="text-sm font-medium">Protein</span>
                     <span className="text-sm">{Math.round(totalProtein)}g ({proteinPercentage}%)</span>
                   </div>
-                  <Progress value={proteinPercentage} className="h-2 bg-muted" />
+                  <div style={{ height: '8px', background: '#e5e7eb', borderRadius: '4px', overflow: 'hidden' }}>
+                    <div style={{ width: `${proteinPercentage}%`, height: '100%', background: '#3b82f6', transition: 'width 0.3s' }} />
+                  </div>
                 </div>
                 <div className="space-y-2">
                   <div className="flex justify-between">
                     <span className="text-sm font-medium">Carbohydrates</span>
                     <span className="text-sm">{Math.round(totalCarbs)}g ({carbsPercentage}%)</span>
                   </div>
-                  <Progress value={carbsPercentage} className="h-2 bg-muted" />
+                  <div style={{ height: '8px', background: '#e5e7eb', borderRadius: '4px', overflow: 'hidden' }}>
+                    <div style={{ width: `${carbsPercentage}%`, height: '100%', background: '#3b82f6', transition: 'width 0.3s' }} />
+                  </div>
                 </div>
                 <div className="space-y-2">
                   <div className="flex justify-between">
                     <span className="text-sm font-medium">Fats</span>
                     <span className="text-sm">{Math.round(totalFats)}g ({fatsPercentage}%)</span>
                   </div>
-                  <Progress value={fatsPercentage} className="h-2 bg-muted" />
+                  <div style={{ height: '8px', background: '#e5e7eb', borderRadius: '4px', overflow: 'hidden' }}>
+                    <div style={{ width: `${fatsPercentage}%`, height: '100%', background: '#3b82f6', transition: 'width 0.3s' }} />
+                  </div>
                 </div>
               </div>
             </div>

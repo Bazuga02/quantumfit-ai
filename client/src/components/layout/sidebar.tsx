@@ -15,13 +15,13 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
   const [location] = useLocation();
 
   const links = [
-    { path: "/", icon: <LayoutDashboard className="mr-3 h-5 w-5" />, label: "Dashboard" },
-    { path: "/workouts", icon: <Dumbbell className="mr-3 h-5 w-5" />, label: "Workouts" },
-    { path: "/nutrition", icon: <Apple className="mr-3 h-5 w-5" />, label: "Nutrition" },
-    { path: "/water", icon: <Droplets className="mr-3 h-5 w-5" />, label: "Water Tracking" },
-    { path: "/progress", icon: <LineChart className="mr-3 h-5 w-5" />, label: "Progress" },
-    { path: "/ai-coach", icon: <BrainCircuit className="mr-3 h-5 w-5" />, label: "AI Coach" },
-    { path: "/settings", icon: <Settings className="mr-3 h-5 w-5" />, label: "Settings" },
+    { path: "/", icon: LayoutDashboard, label: "Dashboard" },
+    { path: "/workouts", icon: Dumbbell, label: "Workouts" },
+    { path: "/nutrition", icon: Apple, label: "Nutrition" },
+    { path: "/water", icon: Droplets, label: "Water Intake" },
+    { path: "/progress", icon: LineChart, label: "Progress" },
+    { path: "/ai-coach", icon: BrainCircuit, label: "AI Coach" },
+    { path: "/settings", icon: Settings, label: "Settings" },
   ];
 
   return (
@@ -48,16 +48,20 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
 
         {/* Navigation */}
         <nav className="flex-1 px-2 py-4 space-y-1">
-          {links.map((link) => (
-            <NavLink 
-              key={link.path} 
-              href={link.path} 
-              active={location === link.path}
-            >
-              {link.icon}
-              {link.label}
-            </NavLink>
-          ))}
+          {links.map((link) => {
+            const isActive = location === link.path;
+            const Icon = link.icon;
+            return (
+              <NavLink 
+                key={link.path} 
+                href={link.path} 
+                active={isActive}
+              >
+                <Icon className={`mr-3 h-5 w-5 ${isActive ? 'text-primary fill-primary' : 'text-gray-700 dark:text-gray-200'}`} />
+                {link.label}
+              </NavLink>
+            );
+          })}
         </nav>
 
         {/* Profile */}
@@ -65,12 +69,18 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
           <div className="p-4 border-t border-gray-200 dark:border-gray-700">
             <div className="flex items-center">
               <Avatar className="h-8 w-8">
-                <AvatarImage src="" />
-                <AvatarFallback className="bg-primary/10 text-primary">{user.name.charAt(0)}</AvatarFallback>
+                <AvatarImage src="" alt={user?.name || 'User'} />
+                <AvatarFallback className="bg-primary/10 text-primary">
+                  {user?.name ? user.name.charAt(0).toUpperCase() : 'U'}
+                </AvatarFallback>
               </Avatar>
               <div className="ml-3">
-                <p className="text-sm font-medium text-gray-900 dark:text-gray-100">{user.name}</p>
-                <p className="text-xs text-gray-500 dark:text-gray-400">View profile</p>
+                <p className="text-sm font-medium text-gray-900 dark:text-gray-100">
+                  {user?.name || 'User'}
+                </p>
+                <p className="text-xs text-gray-500 dark:text-gray-400">
+                  {user?.email || 'Loading...'}
+                </p>
               </div>
             </div>
           </div>

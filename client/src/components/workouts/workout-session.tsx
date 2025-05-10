@@ -2,7 +2,6 @@ import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { ChevronLeft, CheckCircle, Timer, RotateCcw, Dumbbell, SkipForward } from "lucide-react";
-import { Progress } from "@/components/ui/progress";
 import { useToast } from "@/hooks/use-toast";
 
 interface Exercise {
@@ -41,6 +40,23 @@ export function WorkoutSession({ session, onComplete, onExit }: WorkoutSessionPr
   const [timer, setTimer] = useState(0);
   const [isResting, setIsResting] = useState(false);
   const [restTime, setRestTime] = useState(60); // Default rest time
+  
+  // Ensure exercises array exists and has length
+  if (!session.exercises || session.exercises.length === 0) {
+    return (
+      <div className="flex flex-col items-center justify-center p-6">
+        <div className="text-center">
+          <h2 className="text-xl font-bold mb-2">No Exercises Found</h2>
+          <p className="text-muted-foreground mb-4">
+            This workout plan doesn't have any exercises. Please add some exercises to the plan.
+          </p>
+          <Button variant="outline" onClick={onExit}>
+            Exit Workout
+          </Button>
+        </div>
+      </div>
+    );
+  }
   
   const totalExercises = session.exercises.length;
   const currentExercise = session.exercises[currentExerciseIndex];
@@ -120,7 +136,9 @@ export function WorkoutSession({ session, onComplete, onExit }: WorkoutSessionPr
       
       <div className="flex flex-col items-center space-y-2">
         <h2 className="text-xl font-bold">{session.planName}</h2>
-        <Progress value={progress} className="w-full h-2" />
+        <div style={{ height: '8px', background: '#e5e7eb', borderRadius: '4px', overflow: 'hidden', width: '100%' }}>
+          <div style={{ width: `${progress}%`, height: '100%', background: '#3b82f6', transition: 'width 0.3s' }} />
+        </div>
         <p className="text-sm text-muted-foreground">
           {completedExercises.length} of {totalExercises} exercises completed
         </p>

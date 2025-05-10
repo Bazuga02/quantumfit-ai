@@ -1,26 +1,92 @@
-import OpenAI from "openai";
+import { GoogleGenerativeAI } from "@google/generative-ai";
 
-// the newest OpenAI model is "gpt-4o" which was released May 13, 2024. do not change this unless explicitly requested by the user
-const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY || "sk-dummy-key-for-development" });
+const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY!);
 
-export type WorkoutRecommendation = {
+interface Exercise {
+  name: string;
+  description: string;
+  sets: string;
+  reps: string;
+  restTime: string;
+}
+
+interface WorkoutRecommendation {
   title: string;
   description: string;
-  exercises: {
-    name: string;
-    description: string;
-  }[];
-};
+  exercises: Exercise[];
+}
 
-export type NutritionRecommendation = {
+interface Meal {
+  name: string;
+  description: string;
+  protein: string;
+  carbs: string;
+  fats: string;
+  calories: string;
+}
+
+interface DailyTotals {
+  protein: string;
+  carbs: string;
+  fats: string;
+  calories: string;
+}
+
+interface NutritionRecommendation {
   title: string;
   description: string;
-  meals: {
-    name: string;
-    description: string;
-    protein: number;
-  }[];
-};
+  meals: Meal[];
+  dailyTotals: DailyTotals;
+}
+
+async function geminiJsonPrompt(prompt: string): Promise<any> {
+  const model = genAI.getGenerativeModel({ model: "gemini-pro" });
+  const result = await model.generateContent(prompt);
+  try {
+    return JSON.parse(result.response.text());
+  } catch (e) {
+    console.error("Gemini raw response:", result.response.text());
+    console.error("Failed to parse Gemini response as JSON:", e);
+    throw new Error("Failed to parse Gemini response as JSON: " + result.response.text());
+  }
+}
+
+async function callGeminiAPI(prompt: string) {
+  try {
+    const response = await fetch(
+      `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${process.env.GEMINI_API_KEY}`,
+      {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          contents: [{
+            parts: [{ text: prompt }]
+          }]
+        })
+      }
+    );
+
+    if (!response.ok) {
+      throw new Error('Failed to get response from Gemini API');
+    }
+
+    const data = await response.json();
+    return data.candidates[0].content.parts[0].text;
+  } catch (error) {
+    console.error('Error calling Gemini API:', error);
+    return null;
+  }
+}
+
+function extractJson(text: string): string {
+  // Remove code block markers and extract JSON
+  const cleaned = text.replace(/```json|```/g, '').trim();
+  const match = cleaned.match(/\{[\s\S]*\}/);
+  if (match) return match[0];
+  return cleaned;
+}
 
 export async function getWorkoutRecommendation(
   userData: {
@@ -30,51 +96,45 @@ export async function getWorkoutRecommendation(
     preferredExercises?: string[];
   }
 ): Promise<WorkoutRecommendation> {
-  try {
-    const prompt = `
-      Generate a personalized workout recommendation based on the following user data:
-      - Goals: ${userData.goals}
-      - Fitness Level: ${userData.fitnessLevel}
-      - Limitations/Injuries: ${userData.limitations || "None"}
-      - Preferred Exercises: ${userData.preferredExercises?.join(", ") || "No specific preferences"}
-      
-      Please respond with a JSON object that includes:
-      1. A title for the workout recommendation
-      2. A brief description explaining the approach
-      3. A list of 3-5 recommended exercises with names and descriptions
-      
-      Format your response as: { "title": "", "description": "", "exercises": [{"name": "", "description": ""}] }
-    `;
+  const prompt = `
+    Generate a personalized workout recommendation based on the following user data:
+    - Goals: ${userData.goals}
+    - Fitness Level: ${userData.fitnessLevel}
+    - Limitations/Injuries: ${userData.limitations || "None"}
+    - Preferred Exercises: ${userData.preferredExercises?.join(", ") || "No specific preferences"}
 
-    const response = await openai.chat.completions.create({
-      model: "gpt-4o",
-      messages: [{ role: "user", content: prompt }],
-      response_format: { type: "json_object" },
-    });
-
-    const result = JSON.parse(response.choices[0].message.content) as WorkoutRecommendation;
-    return result;
-  } catch (error) {
-    console.error("Error generating workout recommendation:", error);
-    return {
-      title: "General Fitness Workout",
-      description: "A balanced workout for overall fitness when personalized recommendations aren't available.",
-      exercises: [
+    Please provide a detailed workout plan in the following JSON format:
+    {
+      "title": "Workout Plan Title",
+      "description": "Brief description of the workout plan",
+      "exercises": [
         {
-          name: "Push-ups",
-          description: "A classic bodyweight exercise for upper body strength."
-        },
-        {
-          name: "Squats",
-          description: "A fundamental lower body exercise targeting quadriceps, hamstrings and glutes."
-        },
-        {
-          name: "Plank",
-          description: "Core strengthening exercise that improves stability and posture."
+          "name": "Exercise Name",
+          "description": "Detailed description of the exercise",
+          "sets": "Number of sets",
+          "reps": "Number of reps or duration",
+          "restTime": "Rest time between sets"
         }
       ]
-    };
+    }
+
+    Respond with only the JSON object, no explanations, no markdown, no code blocks. Make sure to address the user's specific goals and limitations in the plan.
+  `;
+
+  try {
+    const response = await callGeminiAPI(prompt);
+    if (response) {
+      const jsonStr = extractJson(response);
+      const recommendation = JSON.parse(jsonStr);
+      return recommendation;
+    }
+  } catch (error) {
+    console.error('Error parsing Gemini response:', error);
+    throw new Error('Gemini API or parsing error: ' + error);
   }
+
+  // If for some reason we reach here, throw a generic error
+  throw new Error('Unknown error in getWorkoutRecommendation');
 }
 
 export async function getNutritionRecommendation(
@@ -89,55 +149,51 @@ export async function getNutritionRecommendation(
     };
   }
 ): Promise<NutritionRecommendation> {
-  try {
-    const prompt = `
-      Generate a personalized nutrition recommendation based on the following user data:
-      - Goals: ${userData.goals}
-      - Dietary Restrictions: ${userData.dietaryRestrictions?.join(", ") || "None"}
-      - Current Intake: ${userData.currentIntake ? 
-        `Calories: ${userData.currentIntake.calories}, Protein: ${userData.currentIntake.protein}g, Carbs: ${userData.currentIntake.carbs}g, Fats: ${userData.currentIntake.fats}g` 
-        : "Not specified"}
-      
-      Please respond with a JSON object that includes:
-      1. A title for the nutrition recommendation
-      2. A brief description explaining the approach
-      3. A list of 3 recommended meals with names, descriptions, and protein content in grams
-      
-      Format your response as: { "title": "", "description": "", "meals": [{"name": "", "description": "", "protein": 0}] }
-    `;
-
-    const response = await openai.chat.completions.create({
-      model: "gpt-4o",
-      messages: [{ role: "user", content: prompt }],
-      response_format: { type: "json_object" },
-    });
-
-    const result = JSON.parse(response.choices[0].message.content) as NutritionRecommendation;
-    return result;
-  } catch (error) {
-    console.error("Error generating nutrition recommendation:", error);
-    return {
-      title: "Balanced Nutrition Plan",
-      description: "A general balanced nutrition plan when personalized recommendations aren't available.",
-      meals: [
+  const prompt = `
+    Generate a personalized nutrition recommendation based on the following user data:
+    - Goals: ${userData.goals}
+    - Dietary Restrictions: ${userData.dietaryRestrictions?.join(", ") || "None"}
+    - Current Daily Intake: ${JSON.stringify(userData.currentIntake || "Not specified")}
+    
+    Please provide a detailed nutrition plan in the following JSON format:
+    {
+      "title": "Nutrition Plan Title",
+      "description": "Brief description of the nutrition plan",
+      "meals": [
         {
-          name: "High-Protein Breakfast",
-          description: "Greek yogurt with berries and a sprinkle of granola for a protein-rich start.",
-          protein: 25
-        },
-        {
-          name: "Balanced Lunch",
-          description: "Grilled chicken salad with mixed greens, vegetables, and olive oil dressing.",
-          protein: 30
-        },
-        {
-          name: "Nutrient-Dense Dinner",
-          description: "Baked salmon with sweet potato and steamed broccoli.",
-          protein: 35
+          "name": "Meal Name",
+          "description": "Detailed description of the meal",
+          "protein": "Protein content in grams",
+          "carbs": "Carbohydrate content in grams",
+          "fats": "Fat content in grams",
+          "calories": "Total calories"
         }
-      ]
-    };
+      ],
+      "dailyTotals": {
+        "protein": "Total daily protein in grams",
+        "carbs": "Total daily carbs in grams",
+        "fats": "Total daily fats in grams",
+        "calories": "Total daily calories"
+      }
+    }
+    
+    Respond with only the JSON object, no explanations, no markdown, no code blocks. Make sure to address the user's specific goals and dietary restrictions in the plan.
+  `;
+
+  try {
+    const response = await callGeminiAPI(prompt);
+    if (response) {
+      const jsonStr = extractJson(response);
+      const recommendation = JSON.parse(jsonStr);
+      return recommendation;
+    }
+  } catch (error) {
+    console.error('Error parsing Gemini response:', error);
+    throw new Error('Gemini API or parsing error: ' + error);
   }
+
+  // If for some reason we reach here, throw a generic error
+  throw new Error('Unknown error in getNutritionRecommendation');
 }
 
 export async function getProgressAnalysis(
@@ -156,37 +212,16 @@ export async function getProgressAnalysis(
     timeframe: string;
   }
 ): Promise<{ analysis: string; recommendations: string[] }> {
-  try {
-    const prompt = `
-      Analyze fitness progress based on the following user data:
-      - Starting Stats: ${JSON.stringify(userData.startingStats)}
-      - Current Stats: ${JSON.stringify(userData.currentStats)}
-      - Goal: ${userData.goal}
-      - Timeframe: ${userData.timeframe}
-      
-      Please respond with a JSON object that includes:
-      1. A brief analysis of the progress made
-      2. A list of 3 recommendations for continued improvement
-      
-      Format your response as: { "analysis": "", "recommendations": ["", "", ""] }
-    `;
-
-    const response = await openai.chat.completions.create({
-      model: "gpt-4o",
-      messages: [{ role: "user", content: prompt }],
-      response_format: { type: "json_object" },
-    });
-
-    return JSON.parse(response.choices[0].message.content);
-  } catch (error) {
-    console.error("Error generating progress analysis:", error);
-    return {
-      analysis: "Based on the information provided, it appears you're making steady progress toward your goals.",
-      recommendations: [
-        "Continue with your current workout routine, but consider increasing intensity gradually",
-        "Ensure you're meeting your daily protein requirements to support muscle recovery",
-        "Focus on quality sleep and stress management to optimize results"
-      ]
-    };
-  }
+  const prompt = `
+    Analyze fitness progress based on the following user data:
+    - Starting Stats: ${JSON.stringify(userData.startingStats)}
+    - Current Stats: ${JSON.stringify(userData.currentStats)}
+    - Goal: ${userData.goal}
+    - Timeframe: ${userData.timeframe}
+    Please respond with a JSON object that includes:
+    1. A brief analysis of the progress made
+    2. A list of 3 recommendations for continued improvement
+    Format your response as: { "analysis": "", "recommendations": ["", "", ""] }
+  `;
+  return await geminiJsonPrompt(prompt);
 }

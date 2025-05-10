@@ -3,7 +3,7 @@ import { MainLayout } from "@/components/layout/main-layout";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
-import { useQuery, useMutation } from "@tanstack/react-query";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useAuth } from "@/hooks/use-auth";
 import { apiRequest } from "@/lib/queryClient";
 import { Calendar, ChevronRight, Dumbbell, Play, Plus, Search, Timer, Users } from "lucide-react";
@@ -24,19 +24,40 @@ import { WorkoutDetail } from "@/components/workouts/workout-detail";
 export default function WorkoutsPage() {
   const { user } = useAuth();
   const { toast } = useToast();
+  const queryClient = useQueryClient();
   const [searchTerm, setSearchTerm] = useState("");
   const [activeWorkoutSession, setActiveWorkoutSession] = useState<any>(null);
   const [selectedWorkout, setSelectedWorkout] = useState<any>(null);
+  const [activeTab, setActiveTab] = useState("my-workouts");
 
-  const { data: workoutPlans, isLoading: isLoadingPlans } = useQuery({
-    queryKey: ['/api/workout-plans'],
+  // Fetch user plans
+  const { data: userPlansRaw, isLoading: isLoadingUserPlans } = useQuery({
+    queryKey: ['/api/workout-plans', { isTemplate: false }],
+    queryFn: () => apiRequest('GET', '/api/workout-plans?isTemplate=false').then(res => res.json()),
     enabled: !!user,
   });
+  const userPlans = userPlansRaw as any[] | undefined;
 
-  const { data: exercises, isLoading: isLoadingExercises } = useQuery({
+  // Fetch templates
+  const { data: templatesRaw, isLoading: isLoadingTemplates } = useQuery({
+    queryKey: ['/api/workout-plans', { isTemplate: true }],
+    queryFn: () => apiRequest('GET', '/api/workout-plans?isTemplate=true').then(res => res.json()),
+    enabled: !!user,
+  });
+  const templates = templatesRaw as any[] | undefined;
+
+  const { data: exercisesRaw, isLoading: isLoadingExercises } = useQuery({
     queryKey: ['/api/exercises'],
+    queryFn: async () => {
+      const response = await apiRequest('GET', '/api/exercises');
+      if (!response.ok) {
+        throw new Error('Failed to fetch exercises');
+      }
+      return response.json();
+    },
     enabled: !!user,
   });
+  const exercises = exercisesRaw as any[] | undefined;
 
   // Start workout mutation
   const startWorkoutMutation = useMutation({
@@ -61,8 +82,8 @@ export default function WorkoutsPage() {
   });
 
   // Filtered exercises based on search term
-  const filteredExercises = exercises
-    ? exercises.filter((exercise) =>
+  const filteredExercises = Array.isArray(exercises)
+    ? exercises.filter((exercise: any) =>
         exercise.name.toLowerCase().includes(searchTerm.toLowerCase())
       )
     : [];
@@ -281,26 +302,38 @@ export default function WorkoutsPage() {
   ];
 
   // Use workoutPlans from API if available, otherwise fallback to sample data
-  const displayedWorkouts = (workoutPlans && workoutPlans.length > 0) ? workoutPlans : sampleWorkouts;
+  const displayedWorkouts = Array.isArray(userPlans) && userPlans.length > 0 ? userPlans : sampleWorkouts;
 
   // Handler for starting a workout
-  const handleStartWorkout = (workoutId: number) => {
-    if (selectedWorkout) {
-      // If we're in detail view, use the selected workout data directly
-      const workoutSession = {
-        id: Date.now(),
-        planId: selectedWorkout.id,
-        planName: selectedWorkout.name,
-        startTime: new Date().toISOString(),
-        userId: user?.id,
-        exercises: selectedWorkout.exercises,
-        inProgress: true
-      };
-      setActiveWorkoutSession(workoutSession);
-    } else {
-      // Otherwise, make the API call to get the workout plan data
-      startWorkoutMutation.mutate(workoutId);
+  const handleStartWorkout = async (workoutId: number) => {
+    let workoutData = selectedWorkout;
+    if (!workoutData) {
+      // Fetch workout plan and its exercises if not already selected
+      const planRes = await apiRequest('GET', `/api/workout-plans/${workoutId}`);
+      if (!planRes.ok) {
+        toast({ title: 'Error', description: 'Failed to fetch workout plan.' });
+        return;
+      }
+      const plan = await planRes.json();
+      const exercisesRes = await apiRequest('GET', `/api/workout-plans/${workoutId}/exercises`);
+      if (!exercisesRes.ok) {
+        toast({ title: 'Error', description: 'Failed to fetch workout exercises.' });
+        return;
+      }
+      const exercises = await exercisesRes.json();
+      workoutData = { ...plan, exercises };
     }
+    // Create the workout session object
+    const workoutSession = {
+      id: Date.now(),
+      planId: workoutData.id,
+      planName: workoutData.name,
+      startTime: new Date().toISOString(),
+      userId: user?.id,
+      exercises: workoutData.exercises || [],
+      inProgress: true
+    };
+    setActiveWorkoutSession(workoutSession);
   };
 
   // Handler for selecting a workout to view details
@@ -329,6 +362,42 @@ export default function WorkoutsPage() {
       description: "Your workout session has been ended.",
     });
     setActiveWorkoutSession(null);
+  };
+
+  // Adopt template logic
+  const adoptTemplate = async (templateId: number) => {
+    // 1. Fetch template plan and its exercises
+    const templateRes = await apiRequest('GET', `/api/workout-plans/${templateId}`);
+    const template = await templateRes.json();
+    const exercisesRes = await apiRequest('GET', `/api/workout-plans/${templateId}/exercises`);
+    const exercises = await exercisesRes.json();
+
+    // 2. Create a new user plan
+    const newPlanRes = await apiRequest('POST', '/api/workout-plans', {
+      name: template.name,
+      description: template.description,
+      duration: template.duration,
+      difficulty: template.difficulty,
+      schedule: template.schedule,
+      isTemplate: false,
+    });
+    const newPlan = await newPlanRes.json();
+
+    // 3. Copy exercises to new plan
+    for (const ex of exercises) {
+      await apiRequest('POST', `/api/workout-plans/${newPlan.id}/exercises`, {
+        exerciseId: ex.exercise.id,
+        sets: ex.sets,
+        reps: ex.reps,
+        weight: ex.weight,
+        duration: ex.duration,
+        restTime: ex.restTime,
+        order: ex.order,
+      });
+    }
+    toast({ title: 'Template adopted!', description: 'The template has been added to your plans.' });
+    queryClient.invalidateQueries({ queryKey: ['/api/workout-plans'] });
+    setActiveTab('my-workouts');
   };
 
   // If there's an active workout session, show the workout session interface
@@ -363,11 +432,12 @@ export default function WorkoutsPage() {
       title="Workouts" 
       subtitle="Manage your workout plans and track your exercises."
     >
-      <Tabs defaultValue="my-workouts" className="space-y-6">
+      <Tabs defaultValue="my-workouts" value={activeTab} onValueChange={setActiveTab} className="space-y-6">
         <div className="flex justify-between items-center">
           <TabsList>
             <TabsTrigger value="my-workouts">My Workouts</TabsTrigger>
             <TabsTrigger value="exercise-library">Exercise Library</TabsTrigger>
+            <TabsTrigger value="templates">Templates</TabsTrigger>
             <TabsTrigger value="recommended">Recommended</TabsTrigger>
           </TabsList>
           
@@ -394,8 +464,8 @@ export default function WorkoutsPage() {
           </Dialog>
         </div>
 
-        <TabsContent value="my-workouts" className="space-y-6">
-          {isLoadingPlans || startWorkoutMutation.isPending ? (
+        <TabsContent value="my-workouts">
+          {isLoadingUserPlans || startWorkoutMutation.isPending ? (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               {[1, 2, 3].map((i) => (
                 <Card key={i} className="animate-pulse">
@@ -405,47 +475,38 @@ export default function WorkoutsPage() {
             </div>
           ) : displayedWorkouts.length > 0 ? (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {displayedWorkouts.map((workout) => (
-                <Card key={workout.id} className="hover:shadow-md transition-shadow">
-                  <CardContent className="p-6">
-                    <div className="flex items-center justify-between mb-4">
-                      <div className="h-10 w-10 rounded-md bg-primary-100 dark:bg-primary-900/50 flex items-center justify-center text-primary-600 dark:text-primary-400">
-                        <Dumbbell className="h-5 w-5" />
-                      </div>
-                      <Badge variant="outline" className="text-xs">
-                        {workout.difficulty}
-                      </Badge>
+              {displayedWorkouts.map((workout: any) => (
+                <Card key={workout.id} className="group relative overflow-visible bg-gradient-to-br from-white via-gray-50 to-gray-100 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900 border-0 shadow-md hover:shadow-xl transition-shadow duration-300 rounded-2xl hover:-translate-y-1">
+                  <CardContent className="p-7 pb-6 flex flex-col h-full">
+                    {/* Floating Difficulty Badge */}
+                    <span className="absolute top-5 right-5 z-10 px-3 py-1 rounded-full text-xs font-semibold bg-white/80 dark:bg-gray-900/80 border border-gray-200 dark:border-gray-700 shadow text-gray-700 dark:text-gray-200 group-hover:bg-primary group-hover:text-white transition-colors">{workout.difficulty}</span>
+                    {/* Icon */}
+                    <div className="h-12 w-12 rounded-xl bg-primary-100 dark:bg-primary-900/60 flex items-center justify-center text-primary-600 dark:text-primary-400 text-2xl mb-4 shadow-sm">
+                      <Dumbbell className="h-7 w-7" />
                     </div>
-                    <h3 className="font-semibold text-xl mb-2">{workout.name}</h3>
-                    <p className="text-sm text-muted-foreground mb-4">
-                      {workout.description}
-                    </p>
-                    <div className="flex items-center justify-between text-sm text-muted-foreground mb-4">
-                      <div className="flex items-center">
-                        <Timer className="h-4 w-4 mr-1" />
+                    {/* Title & Description */}
+                    <h3 className="font-bold text-2xl mb-1 text-gray-900 dark:text-white">{workout.name}</h3>
+                    <p className="text-sm text-gray-500 dark:text-gray-300 mb-4 line-clamp-2">{workout.description}</p>
+                    {/* Spacer */}
+                    <div className="flex-1" />
+                    {/* Bottom Bar */}
+                    <div className="flex items-center justify-between gap-4 text-sm font-medium mb-4">
+                      <div className="flex items-center gap-1 text-gray-700 dark:text-gray-200">
+                        <Timer className="h-4 w-4" />
                         <span>{workout.duration} min</span>
                       </div>
-                      <div className="flex items-center">
-                        <Users className="h-4 w-4 mr-1" />
-                        <span>3 exercises</span>
+                      <div className="flex items-center gap-1 text-gray-700 dark:text-gray-200">
+                        <Users className="h-4 w-4" />
+                        <span>{workout.exercises?.length ?? 3} exercises</span>
                       </div>
                     </div>
-                    <div className="flex gap-2">
-                      <Button 
-                        variant="outline" 
-                        className="flex-1 flex items-center justify-center gap-2"
-                        onClick={() => handleSelectWorkout(workout)}
-                      >
-                        Details
-                      </Button>
-                      <Button 
-                        className="flex-1 flex items-center justify-center gap-2"
-                        onClick={() => handleStartWorkout(workout.id)}
-                      >
-                        <Play className="h-4 w-4" />
-                        Start
-                      </Button>
-                    </div>
+                    {/* Details Button */}
+                    <Button 
+                      className="w-full bg-primary text-white font-semibold rounded-full py-2 mt-1 shadow-md hover:bg-primary/90 transition-colors"
+                      onClick={() => handleSelectWorkout(workout)}
+                    >
+                      Details
+                    </Button>
                   </CardContent>
                 </Card>
               ))}
@@ -489,7 +550,7 @@ export default function WorkoutsPage() {
             </div>
           ) : filteredExercises.length > 0 ? (
             <div className="space-y-2">
-              {filteredExercises.map((exercise) => (
+              {filteredExercises.map((exercise: any) => (
                 <Card 
                   key={exercise.id} 
                   className="cursor-pointer hover:bg-accent/50 transition-colors"
@@ -500,7 +561,12 @@ export default function WorkoutsPage() {
                     difficulty: exercise.difficulty || "intermediate",
                     duration: 0,
                     exercises: [{
-                      exercise: exercise,
+                      exercise: {
+                        ...exercise,
+                        muscleGroups: exercise.muscleGroups,
+                        videoUrl: exercise.videoUrl,
+                        imageUrl: exercise.imageUrl
+                      },
                       sets: 4,
                       reps: 10,
                       restTime: 60,
@@ -537,6 +603,58 @@ export default function WorkoutsPage() {
                 </div>
               </CardContent>
             </Card>
+          )}
+        </TabsContent>
+
+        <TabsContent value="templates">
+          {isLoadingTemplates ? (
+            <div>Loading templates...</div>
+          ) : templates && Array.isArray(templates) && templates.length > 0 ? (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {templates.map((template: any) => (
+                <Card key={template.id} className="hover:shadow-md transition-shadow">
+                  <CardContent className="p-6">
+                    <div className="flex items-center justify-between mb-4">
+                      <div className="h-10 w-10 rounded-md bg-primary-100 dark:bg-primary-900/50 flex items-center justify-center text-primary-600 dark:text-primary-400">
+                        <Dumbbell className="h-5 w-5" />
+                      </div>
+                      <Badge variant="outline" className="text-xs">
+                        {template.difficulty}
+                      </Badge>
+                    </div>
+                    <h3 className="font-semibold text-xl mb-2">{template.name}</h3>
+                    <p className="text-sm text-muted-foreground mb-4">
+                      {template.description}
+                    </p>
+                    <div className="flex items-center">
+                      <Timer className="h-4 w-4 mr-1" />
+                      <span>{template.duration} min</span>
+                    </div>
+                    <div className="flex items-center">
+                      <Users className="h-4 w-4 mr-1" />
+                      <span>{template.exercises ? template.exercises.length : 0} exercises</span>
+                    </div>
+                    <div className="flex gap-2 mt-4">
+                      <Button 
+                        variant="outline" 
+                        className="flex-1 flex items-center justify-center gap-2"
+                        onClick={() => handleSelectWorkout(template)}
+                      >
+                        Details
+                      </Button>
+                      <Button 
+                        className="flex-1 flex items-center justify-center gap-2"
+                        onClick={() => adoptTemplate(template.id)}
+                      >
+                        Use Template
+                      </Button>
+                    </div>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+          ) : (
+            <div>No templates found.</div>
           )}
         </TabsContent>
 

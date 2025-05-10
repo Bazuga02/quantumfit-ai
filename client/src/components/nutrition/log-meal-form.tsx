@@ -3,7 +3,7 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { useToast } from "@/hooks/use-toast";
+import { useToast } from "@/components/ui/use-toast";
 import { apiRequest } from "@/lib/queryClient";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -28,6 +28,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { useFoodSearch } from "./use-food-search";
 
 const logMealSchema = z.object({
   name: z.string().min(1, "Meal name is required"),
@@ -46,7 +47,6 @@ type LogMealFormValues = z.infer<typeof logMealSchema>;
 export function LogMealForm({ onSuccess }: { onSuccess: () => void }) {
   const { toast } = useToast();
   const queryClient = useQueryClient();
-  const [searchTerm, setSearchTerm] = useState("");
   const [selectedFoods, setSelectedFoods] = useState<any[]>([]);
 
   const form = useForm<LogMealFormValues>({
@@ -59,16 +59,14 @@ export function LogMealForm({ onSuccess }: { onSuccess: () => void }) {
     },
   });
 
-  const { data: foods, isLoading: isLoadingFoods } = useQuery({
-    queryKey: ['/api/foods'],
-  });
-
-  // Filter foods based on search
-  const filteredFoods = foods
-    ? foods.filter((food: any) => 
-        food.name.toLowerCase().includes(searchTerm.toLowerCase())
-      )
-    : [];
+  // Use the shared food search hook
+  const {
+    foods,
+    isLoading: isLoadingFoods,
+    error: foodsError,
+    searchTerm,
+    setSearchTerm,
+  } = useFoodSearch();
 
   const logMealMutation = useMutation({
     mutationFn: async (data: LogMealFormValues) => {
@@ -97,8 +95,9 @@ export function LogMealForm({ onSuccess }: { onSuccess: () => void }) {
       queryClient.invalidateQueries({ queryKey: ['/api/meals'] });
       queryClient.invalidateQueries({ queryKey: ['/api/nutrition-summary'] });
       toast({
-        title: "Meal logged successfully",
-        description: "Your meal has been added to your nutrition tracker.",
+        title: "Meal added!",
+        description: "Your meal was logged successfully.",
+        variant: "success"
       });
       onSuccess();
     },
@@ -313,9 +312,13 @@ export function LogMealForm({ onSuccess }: { onSuccess: () => void }) {
                   <div className="p-4 text-center text-muted-foreground">
                     Loading foods...
                   </div>
-                ) : filteredFoods.length > 0 ? (
+                ) : foodsError ? (
+                  <div className="p-4 text-center text-destructive">
+                    Error loading foods
+                  </div>
+                ) : foods.length > 0 ? (
                   <div className="divide-y">
-                    {filteredFoods.map((food: any) => (
+                    {foods.map((food: any) => (
                       <div
                         key={food.id}
                         className="p-3 flex items-center justify-between hover:bg-accent cursor-pointer"

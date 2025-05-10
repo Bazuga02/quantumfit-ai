@@ -7,7 +7,7 @@ import { Link } from "wouter";
 export function GreetingCard() {
   const { user } = useAuth();
   
-  const firstName = user?.name.split(" ")[0] || "there";
+  const firstName = user?.name ? user.name.split(" ")[0] : "there";
 
   return (
     <Card className="bg-primary text-white mb-6">
@@ -17,7 +17,7 @@ export function GreetingCard() {
             <h2 className="text-xl font-bold">Ready for your workout, {firstName}?</h2>
             <p className="mt-1 text-primary-100">You're on track to hit your goals this week!</p>
             <div className="mt-4">
-              <Link href="/workouts/start">
+              <Link href="/workouts">
                 <Button className="bg-white text-primary hover:bg-primary-50 font-medium shadow-sm">
                   Start Workout
                 </Button>

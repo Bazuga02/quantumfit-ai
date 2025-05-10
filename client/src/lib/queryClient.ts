@@ -1,57 +1,89 @@
-import { QueryClient, QueryFunction } from "@tanstack/react-query";
-
-async function throwIfResNotOk(res: Response) {
-  if (!res.ok) {
-    const text = (await res.text()) || res.statusText;
-    throw new Error(`${res.status}: ${text}`);
-  }
-}
-
-export async function apiRequest(
-  method: string,
-  url: string,
-  data?: unknown | undefined,
-): Promise<Response> {
-  const res = await fetch(url, {
-    method,
-    headers: data ? { "Content-Type": "application/json" } : {},
-    body: data ? JSON.stringify(data) : undefined,
-    credentials: "include",
-  });
-
-  await throwIfResNotOk(res);
-  return res;
-}
-
-type UnauthorizedBehavior = "returnNull" | "throw";
-export const getQueryFn: <T>(options: {
-  on401: UnauthorizedBehavior;
-}) => QueryFunction<T> =
-  ({ on401: unauthorizedBehavior }) =>
-  async ({ queryKey }) => {
-    const res = await fetch(queryKey[0] as string, {
-      credentials: "include",
-    });
-
-    if (unauthorizedBehavior === "returnNull" && res.status === 401) {
-      return null;
-    }
-
-    await throwIfResNotOk(res);
-    return await res.json();
-  };
+import { QueryClient } from "@tanstack/react-query";
 
 export const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
-      queryFn: getQueryFn({ on401: "throw" }),
-      refetchInterval: false,
+      retry: false,
       refetchOnWindowFocus: false,
-      staleTime: Infinity,
-      retry: false,
-    },
-    mutations: {
-      retry: false,
     },
   },
 });
+
+type GetQueryFnOptions = {
+  on401?: "throw" | "returnNull";
+};
+
+export function getQueryFn<T = any>(options: GetQueryFnOptions = {}) {
+  return async (): Promise<T> => {
+    const response = await apiRequest("GET", "/api/user");
+    if (!response.ok) {
+      if (response.status === 401) {
+        if (options.on401 === "returnNull") {
+          return null as T;
+        }
+        throw new Error("Unauthorized");
+      }
+      throw new Error("Failed to fetch user data");
+    }
+    return response.json();
+  };
+}
+
+export async function apiRequest(
+  method: string,
+  path: string,
+  body?: any
+): Promise<Response> {
+  const headers: HeadersInit = {
+    "Content-Type": "application/json",
+  };
+
+  // Check token expiration
+  const token = localStorage.getItem('token');
+  const tokenExpiration = localStorage.getItem('tokenExpiration');
+  
+  if (token && tokenExpiration) {
+    const expirationTime = parseInt(tokenExpiration);
+    if (Date.now() < expirationTime) {
+      headers.Authorization = `Bearer ${token}`;
+    } else {
+      // Token expired, remove it
+      localStorage.removeItem('token');
+      localStorage.removeItem('tokenExpiration');
+      // Only redirect to login if not already on auth page
+      if (path !== '/api/login' && path !== '/api/register' && !window.location.pathname.includes('/auth')) {
+        window.location.href = '/auth';
+        return Promise.reject(new Error('Token expired'));
+      }
+    }
+  }
+
+  
+
+  const response = await fetch(`http://localhost:3001${path}`, {
+    method,
+    headers,
+    credentials: "include",
+    body: body ? JSON.stringify(body) : undefined,
+  });
+
+  // LOGGING: Show response details
+  let responseData = null;
+  try {
+    responseData = await response.clone().json();
+  } catch (e) {
+    responseData = null;
+  }
+
+  // Handle 401 Unauthorized responses
+  if (response.status === 401) {
+    localStorage.removeItem('token');
+    localStorage.removeItem('tokenExpiration');
+    // Only redirect to login if not already on auth page
+    if (path !== '/api/login' && path !== '/api/register' && !window.location.pathname.includes('/auth')) {
+      window.location.href = '/auth';
+    }
+  }
+
+  return response;
+}

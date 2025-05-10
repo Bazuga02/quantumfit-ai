@@ -12,9 +12,9 @@ export function NavLink({ href, children, active }: NavLinkProps) {
     <Link href={href}>
       <a
         className={cn(
-          "flex items-center px-2 py-2 text-sm font-medium rounded-md group",
+          "flex items-center px-2 py-2 text-sm font-medium rounded-md group transition-colors",
           active
-            ? "bg-primary-50 dark:bg-primary-900/50 text-primary-700 dark:text-primary-100"
+            ? "bg-primary/10 text-primary"
             : "text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700"
         )}
       >

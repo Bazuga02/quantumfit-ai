@@ -10,6 +10,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { useTheme } from "@/lib/theme-provider";
+import { AnimatedRacecarBanner } from "@/components/layout/racecar-banner";
 
 interface HeaderProps {
   onToggleSidebar: () => void;
@@ -50,7 +51,9 @@ export function Header({ onToggleSidebar }: HeaderProps) {
           </div>
         </div>
 
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-3 relative w-full justify-end">
+          {/* Animated car with banner - moved to new component */}
+          <AnimatedRacecarBanner />
           {/* Search icon */}
           <Button variant="ghost" size="icon" aria-label="Search">
             <Search className="w-5 h-5" />
@@ -61,20 +64,16 @@ export function Header({ onToggleSidebar }: HeaderProps) {
             {theme === "dark" ? <Sun className="w-5 h-5" /> : <Moon className="w-5 h-5" />}
           </Button>
 
-          {/* Notifications */}
-          <Button variant="ghost" size="icon" className="relative" aria-label="Notifications">
-            <Bell className="w-5 h-5" />
-            <span className="absolute top-0 right-0 h-2 w-2 rounded-full bg-destructive" aria-hidden="true"></span>
-          </Button>
-
           {/* User menu */}
           {user && (
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <Button variant="ghost" className="relative h-8 w-8 rounded-full">
                   <Avatar className="h-8 w-8">
-                    <AvatarImage src="" alt={user.name} />
-                    <AvatarFallback className="bg-primary/10 text-primary">{user.name.charAt(0)}</AvatarFallback>
+                    <AvatarImage src="" alt={user?.name || 'User'} />
+                    <AvatarFallback className="bg-primary/10 text-primary">
+                      {user?.name ? user.name.charAt(0).toUpperCase() : 'U'}
+                    </AvatarFallback>
                   </Avatar>
                 </Button>
               </DropdownMenuTrigger>
@@ -88,6 +87,22 @@ export function Header({ onToggleSidebar }: HeaderProps) {
           )}
         </div>
       </div>
+      <style>{`
+        @keyframes car-loop {
+          0% { right: 0; }
+          100% { right: 100vw; }
+        }
+        .animate-car-loop {
+          animation: car-loop 8s linear infinite;
+        }
+        @keyframes banner-wave {
+          0%, 100% { filter: brightness(1); }
+          50% { filter: brightness(1.2); }
+        }
+        .animate-banner-wave {
+          animation: banner-wave 2s ease-in-out infinite;
+        }
+      `}</style>
     </header>
   );
 }

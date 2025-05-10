@@ -4,7 +4,6 @@ import { ChevronLeft, Utensils, Info, ArrowUpRight, PieChart } from "lucide-reac
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
-import { Progress } from "@/components/ui/progress";
 
 interface FoodDetailProps {
   food: {
@@ -96,21 +95,27 @@ export function FoodDetail({ food, onBack }: FoodDetailProps) {
                     <span className="text-sm font-medium">Protein</span>
                     <span className="text-sm">{food.protein}g ({proteinPercentage}%)</span>
                   </div>
-                  <Progress value={proteinPercentage} className="h-2 bg-muted" />
+                  <div style={{ height: '8px', background: '#e5e7eb', borderRadius: '4px', overflow: 'hidden' }}>
+                    <div style={{ width: `${proteinPercentage}%`, height: '100%', background: '#3b82f6', transition: 'width 0.3s' }} />
+                  </div>
                 </div>
                 <div className="space-y-2">
                   <div className="flex justify-between">
                     <span className="text-sm font-medium">Carbohydrates</span>
                     <span className="text-sm">{food.carbs}g ({carbsPercentage}%)</span>
                   </div>
-                  <Progress value={carbsPercentage} className="h-2 bg-muted" />
+                  <div style={{ height: '8px', background: '#e5e7eb', borderRadius: '4px', overflow: 'hidden' }}>
+                    <div style={{ width: `${carbsPercentage}%`, height: '100%', background: '#3b82f6', transition: 'width 0.3s' }} />
+                  </div>
                 </div>
                 <div className="space-y-2">
                   <div className="flex justify-between">
                     <span className="text-sm font-medium">Fats</span>
                     <span className="text-sm">{food.fats}g ({fatsPercentage}%)</span>
                   </div>
-                  <Progress value={fatsPercentage} className="h-2 bg-muted" />
+                  <div style={{ height: '8px', background: '#e5e7eb', borderRadius: '4px', overflow: 'hidden' }}>
+                    <div style={{ width: `${fatsPercentage}%`, height: '100%', background: '#3b82f6', transition: 'width 0.3s' }} />
+                  </div>
                 </div>
               </div>
             </div>

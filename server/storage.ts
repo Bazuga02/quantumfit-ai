@@ -1,6 +1,12 @@
-import { User, InsertUser, WaterIntakeLog, InsertWaterIntakeLog, Measurement, InsertMeasurement, Exercise, WorkoutPlan, InsertWorkoutPlan, WorkoutPlanExercise, InsertWorkoutPlanExercise, Food, MealPlan, InsertMealPlan, Meal, InsertMeal, MealFood, InsertMealFood } from "@shared/schema";
+import { User, InsertUser, Measurement, InsertMeasurement, Exercise, WorkoutPlan, InsertWorkoutPlan, WorkoutPlanExercise, InsertWorkoutPlanExercise, Food, MealPlan, InsertMealPlan, Meal, InsertMeal, MealFood, InsertMealFood, WaterIntake, InsertWaterIntake } from "@shared/schema";
 import createMemoryStore from "memorystore";
-import session from "express-session";
+import session, { Store } from "express-session";
+import { db } from './db';
+import * as schema from '../shared/schema';
+import { eq, and, desc, gte, lt } from 'drizzle-orm';
+import { drizzle } from "drizzle-orm/neon-http";
+import { neon } from "@neondatabase/serverless";
+import { sql } from 'drizzle-orm';
 
 const MemoryStore = createMemoryStore(session);
 
@@ -10,10 +16,6 @@ export interface IStorage {
   getUserByEmail(email: string): Promise<User | undefined>;
   createUser(user: InsertUser): Promise<User>;
   updateUser(id: number, data: Partial<User>): Promise<User | undefined>;
-  
-  // Water tracking
-  getWaterIntakeLogs(userId: number, date?: Date): Promise<WaterIntakeLog[]>;
-  addWaterIntake(log: InsertWaterIntakeLog): Promise<WaterIntakeLog>;
   
   // Measurements
   getMeasurements(userId: number): Promise<Measurement[]>;
@@ -25,7 +27,7 @@ export interface IStorage {
   searchExercises(query: string, muscleGroup?: string): Promise<Exercise[]>;
   
   // Workout plans
-  getWorkoutPlans(userId: number): Promise<WorkoutPlan[]>;
+  getWorkoutPlans(filter?: { userId?: number; isTemplate?: boolean }): Promise<WorkoutPlan[]>;
   getWorkoutPlanById(id: number): Promise<WorkoutPlan | undefined>;
   createWorkoutPlan(plan: InsertWorkoutPlan): Promise<WorkoutPlan>;
   addExerciseToWorkoutPlan(workoutExercise: InsertWorkoutPlanExercise): Promise<WorkoutPlanExercise>;
@@ -46,149 +48,114 @@ export interface IStorage {
   getMealFoods(mealId: number): Promise<(MealFood & { food: Food })[]>;
   
   // Session store for authentication
-  sessionStore: session.SessionStore;
+  sessionStore: Store;
+
+  getAllUsers(): Promise<User[]>;
+
+  // Water intake methods
+  getWaterIntakes(userId: number, date?: Date): Promise<WaterIntake[]>;
+  addWaterIntake(intake: InsertWaterIntake): Promise<WaterIntake>;
+  getTotalWaterIntake(userId: number, date?: Date): Promise<number>;
+
+  // Progress photos
+  getProgressPhotos(userId: number): Promise<schema.ProgressPhoto[]>;
+  addProgressPhoto(photo: schema.InsertProgressPhoto): Promise<schema.ProgressPhoto>;
+
+  // Trained body parts
+  getTrainedBodyParts(userId: number, date?: Date): Promise<schema.TrainedBodyPart[]>;
+  addTrainedBodyPart(entry: schema.InsertTrainedBodyPart): Promise<schema.TrainedBodyPart>;
+
+  getMealsForUserOnDate(userId: number, date: string): Promise<Meal[]>;
+
+  getTrainedBodyPartsInRange(userId: number, fromDate: Date, toDate: Date): Promise<schema.TrainedBodyPart[]>;
 }
 
-export class MemStorage implements IStorage {
-  private users: Map<number, User>;
-  private waterLogs: Map<number, WaterIntakeLog>;
-  private measurements: Map<number, Measurement>;
-  private exercises: Map<number, Exercise>;
-  private workoutPlans: Map<number, WorkoutPlan>;
-  private workoutExercises: Map<number, WorkoutPlanExercise>;
-  private foods: Map<number, Food>;
-  private mealPlans: Map<number, MealPlan>;
-  private meals: Map<number, Meal>;
-  private mealFoods: Map<number, MealFood>;
-  
-  sessionStore: session.SessionStore;
-  
-  private userId: number = 1;
-  private waterLogId: number = 1;
-  private measurementId: number = 1;
-  private exerciseId: number = 1;
-  private workoutPlanId: number = 1;
-  private workoutExerciseId: number = 1;
-  private foodId: number = 1;
-  private mealPlanId: number = 1;
-  private mealId: number = 1;
-  private mealFoodId: number = 1;
+export class PostgresStorage implements IStorage {
+  public sessionStore: Store;
 
   constructor() {
-    this.users = new Map();
-    this.waterLogs = new Map();
-    this.measurements = new Map();
-    this.exercises = new Map();
-    this.workoutPlans = new Map();
-    this.workoutExercises = new Map();
-    this.foods = new Map();
-    this.mealPlans = new Map();
-    this.meals = new Map();
-    this.mealFoods = new Map();
-    
     this.sessionStore = new MemoryStore({
       checkPeriod: 86400000 // 24h
     });
-    
-    // Pre-populate with some sample exercises
-    this.seedExercises();
-    this.seedFoods();
   }
 
-  // USER MANAGEMENT
   async getUser(id: number): Promise<User | undefined> {
-    return this.users.get(id);
+    try {
+      const result = await db.select()
+        .from(schema.users)
+        .where(eq(schema.users.id, id));
+      return result[0];
+    } catch (error) {
+      console.error('Error in getUser:', error);
+      return undefined;
+    }
   }
 
   async getUserByEmail(email: string): Promise<User | undefined> {
-    return Array.from(this.users.values()).find(
-      (user) => user.email.toLowerCase() === email.toLowerCase()
-    );
+    try {
+      const result = await db.select()
+        .from(schema.users)
+        .where(eq(schema.users.email, email));
+      return result[0];
+    } catch (error) {
+      console.error('Error in getUserByEmail:', error);
+      return undefined;
+    }
   }
 
-  async createUser(userData: InsertUser): Promise<User> {
-    const id = this.userId++;
-    const user: User = {
-      ...userData,
-      id,
-      waterIntakeGoal: 3,
-      calorieGoal: 2500,
-      macros: {
-        protein: 150,
-        carbs: 270,
-        fats: 60
-      },
-      createdAt: new Date(),
-      updatedAt: new Date()
-    };
-    this.users.set(id, user);
-    return user;
+  async createUser(user: InsertUser): Promise<User> {
+    try {
+      const result = await db.insert(schema.users)
+        .values({
+          ...user,
+          createdAt: new Date(),
+          updatedAt: new Date()
+        })
+        .returning();
+      
+      if (!result || result.length === 0) {
+        throw new Error('Failed to create user');
+      }
+      
+      return result[0];
+    } catch (error) {
+      console.error('Error in createUser:', error);
+      throw error;
+    }
   }
 
   async updateUser(id: number, data: Partial<User>): Promise<User | undefined> {
-    const user = this.users.get(id);
-    if (!user) return undefined;
-    
-    const updatedUser = {
-      ...user,
-      ...data,
-      updatedAt: new Date()
-    };
-    this.users.set(id, updatedUser);
+    const [updatedUser] = await db.update(schema.users)
+      .set(data)
+      .where(eq(schema.users.id, id))
+      .returning();
     return updatedUser;
   }
 
-  // WATER TRACKING
-  async getWaterIntakeLogs(userId: number, date?: Date): Promise<WaterIntakeLog[]> {
-    const logs = Array.from(this.waterLogs.values()).filter(log => log.userId === userId);
-    
-    if (date) {
-      return logs.filter(log => this.isSameDay(log.date, date));
-    }
-    
-    return logs;
-  }
-
-  async addWaterIntake(log: InsertWaterIntakeLog): Promise<WaterIntakeLog> {
-    const id = this.waterLogId++;
-    const waterLog: WaterIntakeLog = {
-      ...log,
-      id,
-      date: new Date()
-    };
-    this.waterLogs.set(id, waterLog);
-    return waterLog;
-  }
-
-  // MEASUREMENTS
   async getMeasurements(userId: number): Promise<Measurement[]> {
-    return Array.from(this.measurements.values())
-      .filter(measurement => measurement.userId === userId)
-      .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+    return db.select()
+      .from(schema.measurements)
+      .where(eq(schema.measurements.userId, userId))
+      .orderBy(schema.measurements.date);
   }
 
-  async addMeasurement(measurementData: InsertMeasurement): Promise<Measurement> {
-    const id = this.measurementId++;
-    const measurement: Measurement = {
-      ...measurementData,
-      id,
-      date: new Date()
-    };
-    this.measurements.set(id, measurement);
-    return measurement;
+  async addMeasurement(measurement: InsertMeasurement): Promise<Measurement> {
+    const [newMeasurement] = await db.insert(schema.measurements).values(measurement).returning();
+    return newMeasurement;
   }
 
-  // EXERCISES
   async getExercises(): Promise<Exercise[]> {
-    return Array.from(this.exercises.values());
+    return db.select().from(schema.exercises);
   }
 
   async getExerciseById(id: number): Promise<Exercise | undefined> {
-    return this.exercises.get(id);
+    const exercises = await db.select().from(schema.exercises).where(eq(schema.exercises.id, id));
+    return exercises[0];
   }
 
   async searchExercises(query: string, muscleGroup?: string): Promise<Exercise[]> {
-    return Array.from(this.exercises.values()).filter(exercise => {
+    const exercises = await db.select().from(schema.exercises);
+    return exercises.filter(exercise => {
       const nameMatch = exercise.name.toLowerCase().includes(query.toLowerCase());
       if (muscleGroup) {
         return nameMatch && exercise.muscleGroups.includes(muscleGroup);
@@ -197,325 +164,225 @@ export class MemStorage implements IStorage {
     });
   }
 
-  // WORKOUT PLANS
-  async getWorkoutPlans(userId: number): Promise<WorkoutPlan[]> {
-    return Array.from(this.workoutPlans.values())
-      .filter(plan => plan.userId === userId);
+  async getWorkoutPlans(filter?: { userId?: number; isTemplate?: boolean }): Promise<WorkoutPlan[]> {
+    let query = db.select().from(schema.workoutPlans);
+    if (filter) {
+      if (filter.userId !== undefined) {
+        query = query.where(eq(schema.workoutPlans.userId, filter.userId));
+      }
+      if (filter.isTemplate !== undefined) {
+        query = query.where(eq(schema.workoutPlans.isTemplate, filter.isTemplate));
+      }
+    }
+    return query;
   }
 
   async getWorkoutPlanById(id: number): Promise<WorkoutPlan | undefined> {
-    return this.workoutPlans.get(id);
+    const plans = await db.select()
+      .from(schema.workoutPlans)
+      .where(eq(schema.workoutPlans.id, id));
+    return plans[0];
   }
 
   async createWorkoutPlan(plan: InsertWorkoutPlan): Promise<WorkoutPlan> {
-    const id = this.workoutPlanId++;
-    const workoutPlan: WorkoutPlan = {
-      ...plan,
-      id,
-      createdAt: new Date(),
-      updatedAt: new Date()
-    };
-    this.workoutPlans.set(id, workoutPlan);
-    return workoutPlan;
+    const [newPlan] = await db.insert(schema.workoutPlans).values(plan).returning();
+    return newPlan;
   }
 
   async addExerciseToWorkoutPlan(workoutExercise: InsertWorkoutPlanExercise): Promise<WorkoutPlanExercise> {
-    const id = this.workoutExerciseId++;
-    const exercise: WorkoutPlanExercise = {
-      ...workoutExercise,
-      id
-    };
-    this.workoutExercises.set(id, exercise);
-    return exercise;
+    const [newWorkoutExercise] = await db.insert(schema.workoutPlanExercises)
+      .values(workoutExercise)
+      .returning();
+    return newWorkoutExercise;
   }
 
   async getWorkoutPlanExercises(workoutPlanId: number): Promise<(WorkoutPlanExercise & { exercise: Exercise })[]> {
-    const exercises = Array.from(this.workoutExercises.values())
-      .filter(ex => ex.workoutPlanId === workoutPlanId)
-      .sort((a, b) => a.order - b.order);
+    const exercises = await db.select()
+      .from(schema.workoutPlanExercises)
+      .where(eq(schema.workoutPlanExercises.workoutPlanId, workoutPlanId));
     
-    return exercises.map(ex => {
-      const exercise = this.exercises.get(ex.exerciseId);
-      return {
-        ...ex,
-        exercise: exercise!
-      };
-    });
+    // Fetch exercise details for each workout exercise
+    const exerciseDetails = await Promise.all(
+      exercises.map(async (we) => {
+        const exercise = await this.getExerciseById(we.exerciseId);
+        return { ...we, exercise: exercise! };
+      })
+    );
+    
+    return exerciseDetails;
   }
 
-  // FOOD AND NUTRITION
   async getFoods(category?: string): Promise<Food[]> {
+    const query = db.select().from(schema.foods);
     if (category) {
-      return Array.from(this.foods.values())
-        .filter(food => food.category === category);
+      return query.where(eq(schema.foods.category, category));
     }
-    return Array.from(this.foods.values());
+    return query;
   }
 
   async getFoodById(id: number): Promise<Food | undefined> {
-    return this.foods.get(id);
+    const foods = await db.select().from(schema.foods).where(eq(schema.foods.id, id));
+    return foods[0];
   }
 
   async searchFoods(query: string): Promise<Food[]> {
-    return Array.from(this.foods.values())
-      .filter(food => food.name.toLowerCase().includes(query.toLowerCase()));
+    const foods = await db.select().from(schema.foods);
+    return foods.filter(food => 
+      food.name.toLowerCase().includes(query.toLowerCase())
+    );
   }
 
-  // MEAL PLANS
   async getMealPlans(userId: number): Promise<MealPlan[]> {
-    return Array.from(this.mealPlans.values())
-      .filter(plan => plan.userId === userId);
+    return db.select()
+      .from(schema.mealPlans)
+      .where(eq(schema.mealPlans.userId, userId));
   }
 
   async getMealPlanById(id: number): Promise<MealPlan | undefined> {
-    return this.mealPlans.get(id);
+    const plans = await db.select()
+      .from(schema.mealPlans)
+      .where(eq(schema.mealPlans.id, id));
+    return plans[0];
   }
 
   async createMealPlan(plan: InsertMealPlan): Promise<MealPlan> {
-    const id = this.mealPlanId++;
-    const mealPlan: MealPlan = {
-      ...plan,
-      id,
-      createdAt: new Date(),
-      updatedAt: new Date()
-    };
-    this.mealPlans.set(id, mealPlan);
-    return mealPlan;
+    const [newPlan] = await db.insert(schema.mealPlans).values(plan).returning();
+    return newPlan;
   }
 
   async createMeal(meal: InsertMeal): Promise<Meal> {
-    const id = this.mealId++;
-    const newMeal: Meal = {
-      ...meal,
-      id
-    };
-    this.meals.set(id, newMeal);
+    const [newMeal] = await db.insert(schema.meals).values(meal).returning();
     return newMeal;
   }
 
   async addFoodToMeal(mealFood: InsertMealFood): Promise<MealFood> {
-    const id = this.mealFoodId++;
-    const newMealFood: MealFood = {
-      ...mealFood,
-      id
-    };
-    this.mealFoods.set(id, newMealFood);
+    const [newMealFood] = await db.insert(schema.mealFoods).values(mealFood).returning();
     return newMealFood;
   }
 
   async getMealsForPlan(mealPlanId: number): Promise<Meal[]> {
-    return Array.from(this.meals.values())
-      .filter(meal => meal.mealPlanId === mealPlanId);
+    return db.select()
+      .from(schema.meals)
+      .where(eq(schema.meals.mealPlanId, mealPlanId));
   }
 
   async getMealFoods(mealId: number): Promise<(MealFood & { food: Food })[]> {
-    const mealFoods = Array.from(this.mealFoods.values())
-      .filter(mf => mf.mealId === mealId);
+    const mealFoods = await db.select()
+      .from(schema.mealFoods)
+      .where(eq(schema.mealFoods.mealId, mealId));
     
-    return mealFoods.map(mf => {
-      const food = this.foods.get(mf.foodId);
-      return {
-        ...mf,
-        food: food!
-      };
-    });
-  }
-
-  // HELPER METHODS
-  private isSameDay(date1: Date, date2: Date): boolean {
-    return (
-      date1.getFullYear() === date2.getFullYear() &&
-      date1.getMonth() === date2.getMonth() &&
-      date1.getDate() === date2.getDate()
+    // Fetch food details for each meal food
+    const foodDetails = await Promise.all(
+      mealFoods.map(async (mf) => {
+        const food = await this.getFoodById(mf.foodId);
+        return { ...mf, food: food! };
+      })
     );
+    
+    return foodDetails;
   }
 
-  // SEED DATA
-  private seedExercises() {
-    const exercises: Exercise[] = [
-      {
-        id: this.exerciseId++,
-        name: "Bench Press",
-        description: "A compound chest exercise performed on a flat bench",
-        muscleGroups: ["chest", "triceps", "shoulders"],
-        equipment: ["barbell", "bench"],
-        difficulty: "intermediate",
-        instructions: [
-          "Lie on a flat bench with feet flat on the floor",
-          "Grip the barbell slightly wider than shoulder width",
-          "Lower the bar to your mid-chest",
-          "Press the bar back up to the starting position"
-        ],
-        videoUrl: "https://www.example.com/bench-press",
-        imageUrl: "https://www.example.com/bench-press.jpg"
-      },
-      {
-        id: this.exerciseId++,
-        name: "Shoulder Press",
-        description: "A compound shoulder exercise that targets deltoids",
-        muscleGroups: ["shoulders", "triceps"],
-        equipment: ["dumbbells", "barbell"],
-        difficulty: "intermediate",
-        instructions: [
-          "Sit on a bench with back support",
-          "Hold dumbbells at shoulder height with palms facing forward",
-          "Press the weights up until your arms are fully extended",
-          "Lower the weights back to the starting position"
-        ],
-        videoUrl: "https://www.example.com/shoulder-press",
-        imageUrl: "https://www.example.com/shoulder-press.jpg"
-      },
-      {
-        id: this.exerciseId++,
-        name: "Tricep Extensions",
-        description: "An isolation exercise that targets the triceps",
-        muscleGroups: ["triceps"],
-        equipment: ["dumbbell", "cable"],
-        difficulty: "beginner",
-        instructions: [
-          "Hold a dumbbell with both hands above your head",
-          "Lower the weight behind your head by bending at the elbows",
-          "Extend your arms to raise the weight back to starting position",
-          "Keep your upper arms stationary throughout the movement"
-        ],
-        videoUrl: "https://www.example.com/tricep-extensions",
-        imageUrl: "https://www.example.com/tricep-extensions.jpg"
-      },
-      {
-        id: this.exerciseId++,
-        name: "Squats",
-        description: "A compound lower body exercise",
-        muscleGroups: ["quadriceps", "hamstrings", "glutes"],
-        equipment: ["barbell", "bodyweight"],
-        difficulty: "intermediate",
-        instructions: [
-          "Stand with feet shoulder-width apart",
-          "Lower your body by bending your knees and hips",
-          "Keep your back straight and chest up",
-          "Return to standing position"
-        ],
-        videoUrl: "https://www.example.com/squats",
-        imageUrl: "https://www.example.com/squats.jpg"
-      },
-      {
-        id: this.exerciseId++,
-        name: "Deadlift",
-        description: "A compound full-body exercise",
-        muscleGroups: ["back", "glutes", "hamstrings"],
-        equipment: ["barbell"],
-        difficulty: "advanced",
-        instructions: [
-          "Stand with feet hip-width apart, barbell over mid-foot",
-          "Bend at hips and knees to grasp the bar",
-          "Lift the bar by extending hips and knees",
-          "Lower the bar by hinging at the hips and bending the knees"
-        ],
-        videoUrl: "https://www.example.com/deadlift",
-        imageUrl: "https://www.example.com/deadlift.jpg"
-      }
-    ];
-    
-    exercises.forEach(exercise => {
-      this.exercises.set(exercise.id, exercise);
-    });
+  async getAllUsers(): Promise<User[]> {
+    const users = await db.select()
+      .from(schema.users)
+      .orderBy(desc(schema.users.createdAt));
+    return users;
   }
 
-  private seedFoods() {
-    const foods: Food[] = [
-      {
-        id: this.foodId++,
-        name: "Chicken Breast",
-        calories: 165,
-        servingSize: 100,
-        servingUnit: "g",
-        protein: 31,
-        carbs: 0,
-        fats: 3.6,
-        category: "protein"
-      },
-      {
-        id: this.foodId++,
-        name: "Brown Rice",
-        calories: 112,
-        servingSize: 100,
-        servingUnit: "g",
-        protein: 2.6,
-        carbs: 23,
-        fats: 0.9,
-        category: "carbs"
-      },
-      {
-        id: this.foodId++,
-        name: "Avocado",
-        calories: 160,
-        servingSize: 100,
-        servingUnit: "g",
-        protein: 2,
-        carbs: 8.5,
-        fats: 14.7,
-        category: "fats"
-      },
-      {
-        id: this.foodId++,
-        name: "Oatmeal",
-        calories: 68,
-        servingSize: 100,
-        servingUnit: "g",
-        protein: 2.4,
-        carbs: 12,
-        fats: 1.4,
-        category: "carbs"
-      },
-      {
-        id: this.foodId++,
-        name: "Whey Protein",
-        calories: 113,
-        servingSize: 30,
-        servingUnit: "g",
-        protein: 24,
-        carbs: 1.5,
-        fats: 1.8,
-        category: "protein"
-      },
-      {
-        id: this.foodId++,
-        name: "Broccoli",
-        calories: 34,
-        servingSize: 100,
-        servingUnit: "g",
-        protein: 2.8,
-        carbs: 6.6,
-        fats: 0.4,
-        category: "vegetables"
-      },
-      {
-        id: this.foodId++,
-        name: "Salmon",
-        calories: 208,
-        servingSize: 100,
-        servingUnit: "g",
-        protein: 20,
-        carbs: 0,
-        fats: 13,
-        category: "protein"
-      },
-      {
-        id: this.foodId++,
-        name: "Sweet Potato",
-        calories: 86,
-        servingSize: 100,
-        servingUnit: "g",
-        protein: 1.6,
-        carbs: 20.1,
-        fats: 0.1,
-        category: "carbs"
-      }
-    ];
-    
-    foods.forEach(food => {
-      this.foods.set(food.id, food);
-    });
+  async getWaterIntakes(userId: number, date?: Date): Promise<WaterIntake[]> {
+    let whereClause = eq(schema.waterIntakes.userId, userId);
+    if (date) {
+      const start = new Date(date);
+      start.setHours(0, 0, 0, 0);
+      const end = new Date(start);
+      end.setDate(end.getDate() + 1);
+      whereClause = and(
+        eq(schema.waterIntakes.userId, userId),
+        gte(schema.waterIntakes.date, start),
+        lt(schema.waterIntakes.date, end)
+      );
+    }
+    return db.select().from(schema.waterIntakes).where(whereClause);
+  }
+
+  async addWaterIntake(intake: InsertWaterIntake): Promise<WaterIntake> {
+    const [newIntake] = await db.insert(schema.waterIntakes).values(intake).returning();
+    return newIntake;
+  }
+
+  async getTotalWaterIntake(userId: number, date?: Date): Promise<number> {
+    let whereClause = eq(schema.waterIntakes.userId, userId);
+    if (date) {
+      const start = new Date(date);
+      start.setHours(0, 0, 0, 0);
+      const end = new Date(start);
+      end.setDate(end.getDate() + 1);
+      whereClause = and(
+        eq(schema.waterIntakes.userId, userId),
+        gte(schema.waterIntakes.date, start),
+        lt(schema.waterIntakes.date, end)
+      );
+    }
+    const result = await db
+      .select({ total: sql<number>`sum(${schema.waterIntakes.amount})`.as('total') })
+      .from(schema.waterIntakes)
+      .where(whereClause);
+    return result[0]?.total || 0;
+  }
+
+  async getProgressPhotos(userId: number): Promise<schema.ProgressPhoto[]> {
+    return db.select()
+      .from(schema.progressPhotos)
+      .where(eq(schema.progressPhotos.userId, userId))
+      .orderBy(desc(schema.progressPhotos.date));
+  }
+
+  async addProgressPhoto(photo: schema.InsertProgressPhoto): Promise<schema.ProgressPhoto> {
+    const [newPhoto] = await db.insert(schema.progressPhotos).values(photo).returning();
+    return newPhoto;
+  }
+
+  async getTrainedBodyParts(userId: number, date?: Date): Promise<schema.TrainedBodyPart[]> {
+    let whereClause = eq(schema.trainedBodyParts.userId, userId);
+    if (date) {
+      const start = new Date(date);
+      start.setHours(0, 0, 0, 0);
+      const end = new Date(start);
+      end.setDate(end.getDate() + 1);
+      whereClause = and(
+        eq(schema.trainedBodyParts.userId, userId),
+        gte(schema.trainedBodyParts.date, start),
+        lt(schema.trainedBodyParts.date, end)
+      );
+    }
+    return db.select().from(schema.trainedBodyParts).where(whereClause);
+  }
+
+  async addTrainedBodyPart(entry: schema.InsertTrainedBodyPart): Promise<schema.TrainedBodyPart> {
+    const [newEntry] = await db.insert(schema.trainedBodyParts).values(entry).returning();
+    return newEntry;
+  }
+
+  async getMealsForUserOnDate(userId: number, date: string): Promise<Meal[]> {
+    return db.select()
+      .from(schema.meals)
+      .where(
+        and(
+          eq(schema.meals.userId, userId),
+          eq(schema.meals.date, date)
+        )
+      );
+  }
+
+  async getTrainedBodyPartsInRange(userId: number, fromDate: Date, toDate: Date) {
+    return db.select().from(schema.trainedBodyParts).where(
+      and(
+        eq(schema.trainedBodyParts.userId, userId),
+        gte(schema.trainedBodyParts.date, fromDate),
+        lt(schema.trainedBodyParts.date, new Date(toDate.getTime() + 24 * 60 * 60 * 1000))
+      )
+    );
   }
 }
 
-export const storage = new MemStorage();
+export const storage = new PostgresStorage();

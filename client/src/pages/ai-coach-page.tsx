@@ -151,10 +151,38 @@ export default function AICoachPage() {
           </CardContent>
         </Card>
 
-        {/* Current Recommendations */}
+        {/* General Instructions Section (replaces Current Recommendations) */}
         <div className="mb-6">
-          <h2 className="text-lg font-semibold mb-4">Current Recommendations</h2>
-          <AIRecommendations />
+          <h2 className="text-lg font-semibold mb-4">How to Use the AI Coach</h2>
+          <Card className="bg-gradient-to-br from-blue-50 to-white border-blue-200 shadow-sm dark:bg-gradient-to-br dark:from-gray-900 dark:to-gray-800 dark:border-gray-700">
+            <CardContent className="p-8 flex gap-6 items-start">
+              <div className="hidden md:block">
+                <BrainCircuit className="h-12 w-12 text-primary dark:text-primary-300" />
+              </div>
+              <div>
+                <ul className="list-disc pl-6 space-y-4 text-gray-700 text-base dark:text-gray-200">
+                  <li>
+                    <span className="font-bold text-primary dark:text-primary-300">To get a workout recommendation:</span>
+                    <span> Enter your fitness goals, select your fitness level, and mention any limitations or injuries. </span>
+                    <span className="font-semibold text-primary dark:text-primary-200">Click Generate Workout Plan</span>
+                    <span> to receive a personalized plan.</span>
+                  </li>
+                  <li>
+                    <span className="font-bold text-green-700 dark:text-green-400">To get a nutrition recommendation:</span>
+                    <span> Enter your nutrition goals and any dietary restrictions. </span>
+                    <span className="font-semibold text-green-700 dark:text-green-300">Click Generate Nutrition Plan</span>
+                    <span> to receive a personalized meal plan.</span>
+                  </li>
+                  <li>
+                    <span className="italic text-gray-500 dark:text-gray-400">You can ask for plans like: "I want to build muscle and gain weight", "I need a vegetarian meal plan for fat loss", or "I have a knee injury, suggest a safe workout".</span>
+                  </li>
+                  <li>
+                    <span className="text-gray-600 dark:text-gray-400">Try both tabs below to see how the AI can help you with your fitness journey!</span>
+                  </li>
+                </ul>
+              </div>
+            </CardContent>
+          </Card>
         </div>
 
         {/* Get New Recommendations */}
@@ -252,14 +280,19 @@ export default function AICoachPage() {
                   </CardHeader>
                   <CardContent>
                     <div className="space-y-4">
-                      {workoutMutation.data.exercises.map((exercise, index) => (
+                      {workoutMutation.data.exercises.map((exercise: any, index: number): JSX.Element => (
                         <div key={index} className="flex gap-3">
                           <div className="h-8 w-8 rounded-full bg-primary/10 flex items-center justify-center text-primary">
                             {index + 1}
                           </div>
                           <div>
                             <h4 className="font-medium">{exercise.name}</h4>
-                            <p className="text-sm text-muted-foreground">{exercise.description}</p>
+                            <p className="text-sm text-muted-foreground mb-1">{exercise.description}</p>
+                            <div className="text-xs text-muted-foreground">
+                              <span><b>Sets:</b> {exercise.sets} </span> |{" "}
+                              <span><b>Reps:</b> {exercise.reps} </span> |{" "}
+                              <span><b>Rest:</b> {exercise.restTime}</span>
+                            </div>
                           </div>
                         </div>
                       ))}
@@ -332,7 +365,7 @@ export default function AICoachPage() {
                   </CardHeader>
                   <CardContent>
                     <div className="space-y-4">
-                      {nutritionMutation.data.meals.map((meal, index) => (
+                      {nutritionMutation.data.meals.map((meal: any, index: number): JSX.Element => (
                         <div key={index} className="flex gap-3">
                           <div className="h-8 w-8 rounded-full bg-green-100 dark:bg-green-900/30 flex items-center justify-center text-green-600 dark:text-green-400">
                             <Apple className="h-4 w-4" />

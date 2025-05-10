@@ -8,8 +8,8 @@ export const users = pgTable("users", {
   name: text("name").notNull(),
   email: text("email").notNull().unique(),
   password: text("password").notNull(),
-  waterIntakeGoal: real("water_intake_goal").default(3),
   calorieGoal: integer("calorie_goal").default(2500),
+  waterIntakeGoal: real("water_intake_goal").default(3),
   macros: jsonb("macros").$type<{
     protein: number;
     carbs: number;
@@ -19,6 +19,12 @@ export const users = pgTable("users", {
     carbs: 270,
     fats: 60
   }),
+  currentWeight: real("current_weight"),
+  goalWeight: real("goal_weight"),
+  height: real("height"),
+  gender: text("gender"),
+  age: integer("age"),
+  activityLevel: text("activity_level"),
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
 });
@@ -32,19 +38,6 @@ export const insertUserSchema = createInsertSchema(users).pick({
 export const loginUserSchema = z.object({
   email: z.string().email(),
   password: z.string(),
-});
-
-// Water intake tracking
-export const waterIntakeLogs = pgTable("water_intake_logs", {
-  id: serial("id").primaryKey(),
-  userId: integer("user_id").notNull().references(() => users.id),
-  date: timestamp("date").defaultNow(),
-  amount: real("amount").notNull(),
-});
-
-export const insertWaterIntakeLogSchema = createInsertSchema(waterIntakeLogs).pick({
-  userId: true,
-  amount: true,
 });
 
 // Body measurements
@@ -86,12 +79,13 @@ export const insertExerciseSchema = createInsertSchema(exercises).omit({
 // Workout plans
 export const workoutPlans = pgTable("workout_plans", {
   id: serial("id").primaryKey(),
-  userId: integer("user_id").notNull().references(() => users.id),
+  userId: integer("user_id").references(() => users.id),
   name: text("name").notNull(),
   description: text("description").notNull(),
   duration: integer("duration").notNull(),
   difficulty: text("difficulty").notNull(),
   schedule: text("schedule").array(),
+  isTemplate: boolean("is_template").default(false),
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
 });
@@ -179,13 +173,49 @@ export const insertMealFoodSchema = createInsertSchema(mealFoods).omit({
   id: true
 });
 
-// Export types
+// Water intake tracking
+export const waterIntakes = pgTable("water_intakes", {
+  id: serial("id").primaryKey(),
+  userId: integer("user_id").notNull().references(() => users.id),
+  amount: integer("amount").notNull(), // in ml
+  date: timestamp("date").defaultNow(),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+export const insertWaterIntakeSchema = createInsertSchema(waterIntakes).omit({
+  id: true,
+  date: true,
+  createdAt: true,
+});
+
+// Progress photos
+export const progressPhotos = pgTable("progress_photos", {
+  id: serial("id").primaryKey(),
+  userId: integer("user_id").notNull().references(() => users.id),
+  url: text("url").notNull(),
+  date: timestamp("date").defaultNow(),
+  bodyPart: text("body_part"),
+  note: text("note"),
+});
+
+export const insertProgressPhotoSchema = createInsertSchema(progressPhotos).omit({
+  id: true,
+  date: true,
+});
+
+// Recently trained body parts
+export const trainedBodyParts = pgTable("trained_body_parts", {
+  id: serial("id").primaryKey(),
+  userId: integer("user_id").notNull().references(() => users.id),
+  bodyPart: text("body_part").notNull(),
+  date: timestamp("date").defaultNow(),
+});
+
+export const insertTrainedBodyPartSchema = createInsertSchema(trainedBodyParts).omit({ id: true, date: true });
+
 export type User = typeof users.$inferSelect;
 export type InsertUser = z.infer<typeof insertUserSchema>;
 export type LoginUser = z.infer<typeof loginUserSchema>;
-
-export type WaterIntakeLog = typeof waterIntakeLogs.$inferSelect;
-export type InsertWaterIntakeLog = z.infer<typeof insertWaterIntakeLogSchema>;
 
 export type Measurement = typeof measurements.$inferSelect;
 export type InsertMeasurement = z.infer<typeof insertMeasurementSchema>;
@@ -210,3 +240,12 @@ export type InsertMeal = z.infer<typeof insertMealSchema>;
 
 export type MealFood = typeof mealFoods.$inferSelect;
 export type InsertMealFood = z.infer<typeof insertMealFoodSchema>;
+
+export type WaterIntake = typeof waterIntakes.$inferSelect;
+export type InsertWaterIntake = z.infer<typeof insertWaterIntakeSchema>;
+
+export type ProgressPhoto = typeof progressPhotos.$inferSelect;
+export type InsertProgressPhoto = z.infer<typeof insertProgressPhotoSchema>;
+
+export type TrainedBodyPart = typeof trainedBodyParts.$inferSelect;
+export type InsertTrainedBodyPart = z.infer<typeof insertTrainedBodyPartSchema>;

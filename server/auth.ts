@@ -1,12 +1,10 @@
-import passport from "passport";
-import { Strategy as LocalStrategy } from "passport-local";
 import { Express } from "express";
 import session from "express-session";
-import { scrypt, randomBytes, timingSafeEqual } from "crypto";
-import { promisify } from "util";
 import { storage } from "./storage";
 import { insertUserSchema, loginUserSchema, User as SelectUser } from "@shared/schema";
 import { z } from "zod";
+import bcrypt from "bcrypt";
+import jwt from "jsonwebtoken";
 
 declare global {
   namespace Express {
@@ -14,20 +12,8 @@ declare global {
   }
 }
 
-const scryptAsync = promisify(scrypt);
-
-async function hashPassword(password: string) {
-  const salt = randomBytes(16).toString("hex");
-  const buf = (await scryptAsync(password, salt, 64)) as Buffer;
-  return `${buf.toString("hex")}.${salt}`;
-}
-
-async function comparePasswords(supplied: string, stored: string) {
-  const [hashed, salt] = stored.split(".");
-  const hashedBuf = Buffer.from(hashed, "hex");
-  const suppliedBuf = (await scryptAsync(supplied, salt, 64)) as Buffer;
-  return timingSafeEqual(hashedBuf, suppliedBuf);
-}
+const JWT_SECRET = process.env.JWT_SECRET || "quantumfit-jwt-secret-key";
+const JWT_EXPIRES_IN = "7d";
 
 export function setupAuth(app: Express) {
   const sessionSettings: session.SessionOptions = {
@@ -38,117 +24,147 @@ export function setupAuth(app: Express) {
     cookie: {
       secure: process.env.NODE_ENV === "production",
       maxAge: 1000 * 60 * 60 * 24 * 7, // 1 week
+      sameSite: 'lax',
+      httpOnly: true,
+      path: '/', // Ensure cookie is available across all paths
     }
   };
 
-  app.set("trust proxy", 1);
   app.use(session(sessionSettings));
-  app.use(passport.initialize());
-  app.use(passport.session());
 
-  passport.use(
-    new LocalStrategy(
-      {
-        usernameField: "email",
-        passwordField: "password"
-      },
-      async (email, password, done) => {
-        try {
-          const user = await storage.getUserByEmail(email);
-          if (!user || !(await comparePasswords(password, user.password))) {
-            return done(null, false);
-          } else {
-            return done(null, user);
-          }
-        } catch (error) {
-          return done(error);
-        }
-      }
-    )
-  );
-
-  passport.serializeUser((user, done) => done(null, user.id));
-  passport.deserializeUser(async (id: number, done) => {
-    try {
-      const user = await storage.getUser(id);
-      done(null, user);
-    } catch (error) {
-      done(error);
+  // Middleware to verify JWT token
+  const verifyToken = (req: any, res: any, next: any) => {
+    // First check session
+    if (req.session.user) {
+      req.user = req.session.user;
+      return next();
     }
-  });
 
-  app.post("/api/register", async (req, res, next) => {
+    // If no session, check JWT token
+    const token = req.headers.authorization?.split(' ')[1];
+    
+    if (!token) {
+      return res.status(401).json({ message: "No token provided" });
+    }
+
+    try {
+      const decoded = jwt.verify(token, JWT_SECRET);
+      // Set user in session for future requests
+      req.session.user = decoded;
+      req.user = decoded;
+      next();
+    } catch (error) {
+      return res.status(401).json({ message: "Invalid token" });
+    }
+  };
+
+  // Register endpoint
+  app.post("/api/register", async (req, res) => {
     try {
       const userData = insertUserSchema.parse(req.body);
       
+      // Check if user already exists
       const existingUser = await storage.getUserByEmail(userData.email);
       if (existingUser) {
         return res.status(400).json({ message: "Email already registered" });
       }
 
+      // Hash password
+      const hashedPassword = await bcrypt.hash(userData.password, 10);
+
+      // Create new user with hashed password
       const user = await storage.createUser({
         ...userData,
-        password: await hashPassword(userData.password),
+        password: hashedPassword,
       });
+
+      // Generate JWT token
+      const token = jwt.sign(
+        { id: user.id, email: user.email },
+        JWT_SECRET,
+        { expiresIn: JWT_EXPIRES_IN }
+      );
+
+      // Set user in session
+      req.session.user = user;
 
       // Remove password from response
       const { password, ...userWithoutPassword } = user;
-
-      req.login(user, (err) => {
-        if (err) return next(err);
-        res.status(201).json(userWithoutPassword);
+      res.status(201).json({
+        user: userWithoutPassword,
+        token
       });
     } catch (error) {
       if (error instanceof z.ZodError) {
         return res.status(400).json({ message: "Invalid input data", errors: error.errors });
       }
-      next(error);
+      console.error('Registration error:', error);
+      res.status(500).json({ message: "Registration failed" });
     }
   });
 
-  app.post("/api/login", (req, res, next) => {
+  // Login endpoint
+  app.post("/api/login", async (req, res) => {
     try {
-      loginUserSchema.parse(req.body);
+      const { email, password } = loginUserSchema.parse(req.body);
       
-      passport.authenticate("local", (err, user, info) => {
-        if (err) {
-          return next(err);
-        }
-        
-        if (!user) {
-          return res.status(401).json({ message: "Invalid email or password" });
-        }
-        
-        req.login(user, (err) => {
-          if (err) return next(err);
-          
-          // Remove password from response
-          const { password, ...userWithoutPassword } = user;
-          res.status(200).json(userWithoutPassword);
-        });
-      })(req, res, next);
+      // Find user by email
+      const user = await storage.getUserByEmail(email);
+      if (!user) {
+        return res.status(401).json({ message: "Invalid email or password" });
+      }
+
+      // Compare hashed passwords
+      const passwordMatch = await bcrypt.compare(password, user.password);
+      if (!passwordMatch) {
+        return res.status(401).json({ message: "Invalid email or password" });
+      }
+
+      // Generate JWT token
+      const token = jwt.sign(
+        { id: user.id, email: user.email },
+        JWT_SECRET,
+        { expiresIn: JWT_EXPIRES_IN }
+      );
+
+      // Set user in session
+      req.session.user = user;
+
+      // Remove password from response
+      const { password: _, ...userWithoutPassword } = user;
+      res.json({
+        user: userWithoutPassword,
+        token
+      });
     } catch (error) {
       if (error instanceof z.ZodError) {
         return res.status(400).json({ message: "Invalid input data", errors: error.errors });
       }
-      next(error);
+      console.error('Login error:', error);
+      res.status(500).json({ message: "Login failed" });
     }
   });
 
-  app.post("/api/logout", (req, res, next) => {
-    req.logout((err) => {
-      if (err) return next(err);
+  // Logout endpoint
+  app.post("/api/logout", (req, res) => {
+    req.session.destroy((err) => {
+      if (err) {
+        console.error('Logout error:', err);
+        return res.status(500).json({ message: "Logout failed" });
+      }
       res.sendStatus(200);
     });
   });
 
-  app.get("/api/user", (req, res) => {
-    if (!req.isAuthenticated()) {
+  // Get current user endpoint (supports both session and JWT)
+  app.get("/api/user", verifyToken, (req, res) => {
+    if (!req.session.user && !req.user) {
       return res.status(401).json({ message: "Not authenticated" });
     }
     
+    const user = req.session.user || req.user;
     // Remove password from response
-    const { password, ...userWithoutPassword } = req.user;
+    const { password, ...userWithoutPassword } = user;
     res.json(userWithoutPassword);
   });
 }
