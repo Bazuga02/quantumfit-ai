@@ -156,7 +156,7 @@ export function WorkoutDetail({ workout, onBack, onStartWorkout }: WorkoutDetail
                       <Separator className="my-4" />
                       
                       <div className="space-y-4">
-                        <p className="text-sm">{exerciseItem.exercise.description}</p>
+                        <p className="text-sm font-semibold">{exerciseItem.exercise.description}</p>
                         
                         {exerciseItem.exercise.imageUrl && (
                           <div className="relative h-40 rounded-md overflow-hidden">
@@ -167,20 +167,35 @@ export function WorkoutDetail({ workout, onBack, onStartWorkout }: WorkoutDetail
                         )}
                         
                         {exerciseItem.exercise.instructions && (
-                          <div className="space-y-2">
-                            <p className="text-sm font-medium">Instructions:</p>
-                            <ol className="list-decimal pl-4 text-sm space-y-1">
-                              {exerciseItem.exercise.instructions.map((instruction, idx) => (
-                                <li key={idx}>{instruction}</li>
-                              ))}
-                            </ol>
+                          <div className="relative flex ">
+                            <div className="bg-gradient-to-br from-white via-gray-50 to-gray-100 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900 border-l-4 border-primary/70 rounded-xl shadow-lg px-8 py-6 mb-2 max-w-xl w-full animate-fade-in">
+                              <div className="flex items-center gap-2 mb-4">
+                                <CheckCircle className="h-6 w-6 text-primary animate-pulse" />
+                                <span className="font-bold text-primary text-xl tracking-tight">How to Perform</span>
+                              </div>
+                              <ol className="space-y-4">
+                                {exerciseItem.exercise.instructions.map((instruction, idx) => (
+                                  <li key={idx} className="flex items-start gap-3 text-lg text-gray-800 dark:text-gray-100">
+                                    <span className="flex-shrink-0 mt-1"><CheckCircle className="h-5 w-5 text-green-500 animate-bounce" /></span>
+                                    <span>{instruction}</span>
+                                  </li>
+                                ))}
+                              </ol>
+                            </div>
                           </div>
                         )}
                         
                         {exerciseItem.exercise.equipment && (
-                          <div className="flex flex-wrap gap-2">
+                          <div className="flex flex-wrap gap-3 mt-4">
                             {exerciseItem.exercise.equipment.map((item) => (
-                              <Badge key={item} variant="secondary">{item}</Badge>
+                              <span
+                                key={item}
+                                className="inline-flex items-center gap-2 rounded-full bg-gradient-to-br from-yellow-400/90 to-yellow-500/80 text-white font-semibold px-4 py-1.5 shadow-md backdrop-blur-sm border border-yellow-300/60 text-sm transition-transform hover:scale-105"
+                                style={{ boxShadow: '0 2px 8px 0 rgba(255, 193, 7, 0.10)' }}
+                              >
+                                <svg className="h-4 w-4 text-white/90" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 20 20"><circle cx="10" cy="10" r="8" /></svg>
+                                {item}
+                              </span>
                             ))}
                           </div>
                         )}

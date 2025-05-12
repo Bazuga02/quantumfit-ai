@@ -5,35 +5,61 @@ import { StatsCard } from "@/components/dashboard/stats-card";
 import { WorkoutPlan } from "@/components/dashboard/workout-plan";
 import { NutritionSummary } from "@/components/dashboard/nutrition-summary";
 import { AIRecommendations } from "@/components/dashboard/ai-recommendations";
-import { Flame, Timer, Dumbbell } from "lucide-react";
+import { Flame, Timer, Dumbbell, Droplets } from "lucide-react";
 import { FoodLibrary } from "@/components/nutrition/food-library";
 import { WaterIntake } from "@/components/water-intake";
 import { ProgressGraph } from "@/components/progress/progress-graph";
 import { useEffect, useState } from "react";
+import { useQuery } from "@tanstack/react-query";
 
 export default function Dashboard() {
   const { user } = useAuth();
   const firstName = user?.name ? user.name.split(" ")[0] : "";
   
-  // Demo stats data
+  // Fetch nutrition summary
+  const { data: nutritionData } = useQuery({
+    queryKey: ["/api/nutrition-summary"],
+    queryFn: async () => {
+      const res = await fetch("/api/nutrition-summary");
+      if (!res.ok) throw new Error("Failed to fetch nutrition summary");
+      return res.json();
+    },
+    refetchOnWindowFocus: true,
+  });
+
+  // Fetch water intake
+  const [waterIntake, setWaterIntake] = useState(0);
+  const WATER_GOAL = 3000;
+  useEffect(() => {
+    async function fetchWater() {
+      const res = await fetch("/api/water-intake");
+      if (res.ok) {
+        const data = await res.json();
+        setWaterIntake(data.total || 0);
+      }
+    }
+    fetchWater();
+  }, []);
+
+  // Stats cards with real data
   const statsCards = [
     {
       title: "Daily Calories",
-      value: "1,842",
+      value: nutritionData ? nutritionData.calories.consumed.toLocaleString() : "-",
       icon: <Flame className="h-6 w-6 text-primary" />,
       iconBgClass: "bg-primary-50 dark:bg-primary-900/30",
       trend: {
-        value: "68% of goal",
+        value: nutritionData ? `${Math.round((nutritionData.calories.consumed / nutritionData.calories.goal) * 100)}% of goal` : "-",
         isPositive: true
       }
     },
     {
-      title: "Active Time",
-      value: "48 min",
-      icon: <Timer className="h-6 w-6 text-green-500" />,
-      iconBgClass: "bg-green-50 dark:bg-green-900/30",
+      title: "Water Intake",
+      value: `${waterIntake} ml`,
+      icon: <Droplets className="h-6 w-6 text-blue-500" />,
+      iconBgClass: "bg-blue-50 dark:bg-blue-900/30",
       trend: {
-        value: "+12% from last week",
+        value: `${Math.round((waterIntake / WATER_GOAL) * 100)}% of goal`,
         isPositive: true
       }
     },

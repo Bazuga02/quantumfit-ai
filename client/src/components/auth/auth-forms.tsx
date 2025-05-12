@@ -123,13 +123,13 @@ export function AuthForms() {
       <Card className="w-full shadow-2xl rounded-3xl">
         <Tabs defaultValue="login" value={activeTab} onValueChange={setActiveTab}>
           <div className="relative mb-2">
-            <TabsList className="grid w-full grid-cols-2 bg-gray-100 rounded-full overflow-hidden p-1">
+            <TabsList className="grid w-full grid-cols-2 bg-gray-100 dark:bg-gray-900 rounded-full overflow-hidden p-1">
               <TabsTrigger
                 value="login"
                 className={
                   activeTab === "login"
-                    ? "bg-white text-[#f74b6b] shadow-[0_2px_16px_0_#f74b6b22] font-bold z-10 transition-all duration-200 border-2 border-[#f74b6b]"
-                    : "bg-transparent text-gray-500 font-semibold transition-all duration-200"
+                    ? "bg-white dark:bg-gray-950 text-[#f74b6b] dark:text-[#f74b6b] shadow-[0_2px_16px_0_#f74b6b22] font-bold z-10 transition-all duration-200 border-2 border-[#f74b6b] dark:border-[#f74b6b]"
+                    : "bg-transparent text-gray-500 dark:text-gray-300 font-semibold transition-all duration-200"
                 }
               >
                 Login
@@ -138,8 +138,8 @@ export function AuthForms() {
                 value="register"
                 className={
                   activeTab === "register"
-                    ? "bg-white text-[#f74b6b] shadow-[0_2px_16px_0_#f74b6b22] font-bold z-10 transition-all duration-200 border-2 border-[#f74b6b]"
-                    : "bg-transparent text-gray-500 font-semibold transition-all duration-200"
+                    ? "bg-white dark:bg-gray-950 text-[#f74b6b] dark:text-[#f74b6b] shadow-[0_2px_16px_0_#f74b6b22] font-bold z-10 transition-all duration-200 border-2 border-[#f74b6b] dark:border-[#f74b6b]"
+                    : "bg-transparent text-gray-500 dark:text-gray-300 font-semibold transition-all duration-200"
                 }
               >
                 Register

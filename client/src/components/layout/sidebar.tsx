@@ -4,6 +4,14 @@ import { Activity, LayoutDashboard, Dumbbell, Apple, Droplets, LineChart, BrainC
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { useLocation } from "wouter";
+import Lottie from "lottie-react";
+import dashboardAnimation from "@/components/layout/animation/dashboard.json";
+import workoutAnimation from "@/components/layout/animation/workout.json";
+import nutritionAnimation from "@/components/layout/animation/nutrition.json";
+import waterAnimation from "@/components/layout/animation/water-intake.json";
+import progressAnimation from "@/components/layout/animation/progress.json";
+import aiAnimation from "@/components/layout/animation/ai.json";
+import settingsAnimation from "@/components/layout/animation/setting.json";
 
 interface SidebarProps {
   isOpen: boolean;
@@ -23,6 +31,18 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
     { path: "/ai-coach", icon: BrainCircuit, label: "AI Coach" },
     { path: "/settings", icon: Settings, label: "Settings" },
   ];
+
+  // Map path to animation
+  const animationMap: Record<string, any> = {
+    "/": dashboardAnimation,
+    "/workouts": workoutAnimation,
+    "/nutrition": nutritionAnimation,
+    "/water": waterAnimation,
+    "/progress": progressAnimation,
+    "/ai-coach": aiAnimation,
+    "/settings": settingsAnimation,
+  };
+  const activeAnimation = animationMap[location];
 
   return (
     <aside 
@@ -46,6 +66,13 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
           </button>
         </div>
 
+      {/* Animation for active tab - moved just below the nav tabs */}
+      {activeAnimation && (
+          <div className="flex justify-center border m-1 rounded-lg border-primary dark:bg-black items-center pt-3 py-2">
+            <Lottie animationData={activeAnimation} loop={true} style={{ width: 150, height: 150 }} />
+          </div>
+        )}
+
         {/* Navigation */}
         <nav className="flex-1 px-2 py-4 space-y-1">
           {links.map((link) => {
@@ -62,7 +89,9 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
               </NavLink>
             );
           })}
+        
         </nav>
+
 
         {/* Profile */}
         {user && (

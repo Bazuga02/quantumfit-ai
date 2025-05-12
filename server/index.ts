@@ -1,21 +1,28 @@
 import 'dotenv/config';
 import { createServer } from "http";
 import express, { type Request, Response, NextFunction } from "express";
+import path from "path";
+import { fileURLToPath } from "url";
+// Define __filename and __dirname FIRST!
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+// --- Swagger UI Express setup ---
+import swaggerUi from 'swagger-ui-express';
+import YAML from 'yamljs';
+const swaggerDocument = YAML.load(path.join(__dirname, '../swagger/openapi.yaml'));
+// --------------------------------
 import { registerRoutes } from "./routes";
 import { setupVite, serveStatic, log } from "./vite";
 import { PostgresStorage } from "./storage";
-import path from "path";
-import { fileURLToPath } from "url";
 const app = express();
 const storage = new PostgresStorage();
-
-// Load environment variables
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
 
 // Basic middleware
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
+
+// Serve Swagger UI at /api-doc
+app.use('/api-doc', swaggerUi.serve, swaggerUi.setup(swaggerDocument));
 
 // Add CORS headers in development
 if (process.env.NODE_ENV === 'development') {

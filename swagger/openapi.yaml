@@ -1,0 +1,1048 @@
+openapi: 3.0.0
+info:
+  title: QuantumFit API
+  version: 1.0.0
+  description: |
+    QuantumFit API documentation for all endpoints.
+servers:
+  - url: http://localhost:3001
+paths:
+  /api/register:
+    post:
+      summary: Register a new user
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/RegisterUser"
+      responses:
+        "201":
+          description: User registered successfully
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AuthResponse"
+        "400":
+          description: Invalid input or email already registered
+        "500":
+          description: Registration failed
+  /api/login:
+    post:
+      summary: Login user
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/LoginUser"
+      responses:
+        "200":
+          description: Login successful
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AuthResponse"
+        "401":
+          description: Invalid credentials
+        "500":
+          description: Login failed
+  /api/logout:
+    post:
+      summary: Logout user
+      responses:
+        "200":
+          description: Logout successful
+        "500":
+          description: Logout failed
+  /api/user:
+    get:
+      summary: Get current user
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: Current user info
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/User"
+        "401":
+          description: Not authenticated
+    patch:
+      summary: Update user profile/settings
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateUser"
+      responses:
+        "200":
+          description: User updated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/User"
+        "400":
+          description: No valid fields to update
+        "404":
+          description: User not found
+        "500":
+          description: Failed to update user
+  /api/measurements:
+    get:
+      summary: Get all measurements for the current user
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: List of measurements
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Measurement"
+        "500":
+          description: Failed to fetch measurements
+    post:
+      summary: Add a new measurement
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/MeasurementInput"
+      responses:
+        "201":
+          description: Measurement added
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Measurement"
+        "400":
+          description: Invalid input data
+        "500":
+          description: Failed to add measurement
+  /api/exercises:
+    get:
+      summary: List all exercises
+      parameters:
+        - in: query
+          name: query
+          schema:
+            type: string
+          description: Search query
+        - in: query
+          name: muscleGroup
+          schema:
+            type: string
+          description: Filter by muscle group
+      responses:
+        "200":
+          description: List of exercises
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Exercise"
+        "500":
+          description: Failed to fetch exercises
+  /api/exercises/{id}:
+    get:
+      summary: Get a single exercise by ID
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Exercise details
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Exercise"
+        "404":
+          description: Exercise not found
+        "500":
+          description: Failed to fetch exercise
+  /api/workout-plans:
+    get:
+      summary: List all workout plans for the user (or templates)
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: List of workout plans
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/WorkoutPlan"
+        "500":
+          description: Failed to fetch workout plans
+    post:
+      summary: Create a new workout plan
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/WorkoutPlanInput"
+      responses:
+        "201":
+          description: Workout plan created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/WorkoutPlan"
+        "400":
+          description: Invalid input data
+        "500":
+          description: Failed to create workout plan
+  /api/workout-plans/{id}/exercises:
+    post:
+      summary: Add exercise to a workout plan
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/WorkoutPlanExerciseInput"
+      responses:
+        "201":
+          description: Exercise added to workout plan
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/WorkoutPlanExercise"
+        "400":
+          description: Invalid input data
+        "500":
+          description: Failed to add exercise
+  /api/workout-plans/{id}/start:
+    post:
+      summary: Start a workout session from a plan
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Workout session started
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/WorkoutSession"
+        "400":
+          description: Workout plan has no exercises
+        "403":
+          description: Unauthorized access
+        "404":
+          description: Workout plan not found
+        "500":
+          description: Failed to start workout
+  /api/meal-plans:
+    get:
+      summary: List all meal plans for the user
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: List of meal plans
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/MealPlan"
+        "500":
+          description: Failed to fetch meal plans
+    post:
+      summary: Create a new meal plan
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/MealPlanInput"
+      responses:
+        "201":
+          description: Meal plan created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/MealPlan"
+        "400":
+          description: Invalid input data
+        "500":
+          description: Failed to create meal plan
+  /api/meal-plans/{id}:
+    get:
+      summary: Get a meal plan (with meals and foods)
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Meal plan details
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/MealPlan"
+        "403":
+          description: Unauthorized access
+        "404":
+          description: Meal plan not found
+        "500":
+          description: Failed to fetch meal plan
+  /api/meal-plans/{id}/meals:
+    post:
+      summary: Add a meal to a meal plan
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/MealInput"
+      responses:
+        "201":
+          description: Meal added
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Meal"
+        "400":
+          description: Invalid input data
+        "403":
+          description: Unauthorized access
+        "404":
+          description: Meal plan not found
+        "500":
+          description: Failed to add meal
+  /api/meals/{id}/foods:
+    post:
+      summary: Add food to a meal
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/MealFoodInput"
+      responses:
+        "201":
+          description: Food added to meal
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/MealFood"
+        "400":
+          description: Invalid input data
+        "500":
+          description: Failed to add food
+  /api/meals:
+    post:
+      summary: Log a standalone meal (not in a plan)
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/MealInput"
+      responses:
+        "200":
+          description: Meal logged
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Meal"
+        "400":
+          description: Invalid input data
+        "500":
+          description: Failed to log meal
+  /api/foods:
+    get:
+      summary: List all foods (with optional category or search)
+      parameters:
+        - in: query
+          name: category
+          schema:
+            type: string
+          description: Filter by category
+        - in: query
+          name: search
+          schema:
+            type: string
+          description: Search query
+      responses:
+        "200":
+          description: List of foods
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Food"
+        "500":
+          description: Failed to fetch foods
+  /api/foods/{id}:
+    get:
+      summary: Get a single food by ID
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Food details
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Food"
+        "404":
+          description: Food not found
+        "500":
+          description: Failed to fetch food
+  /api/foods/search:
+    get:
+      summary: Search foods by query
+      parameters:
+        - in: query
+          name: query
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: List of foods
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Food"
+        "400":
+          description: Search query is required
+        "500":
+          description: Failed to search foods
+  /api/ai/workout-recommendation:
+    post:
+      summary: Get AI-generated workout plan
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                goals:
+                  type: string
+                fitnessLevel:
+                  type: string
+                limitations:
+                  type: string
+                preferredExercises:
+                  type: array
+                  items:
+                    type: string
+      responses:
+        "200":
+          description: AI workout recommendation
+          content:
+            application/json:
+              schema:
+                type: object
+        "400":
+          description: Goals and fitness level are required
+        "500":
+          description: Failed to generate recommendation
+  /api/ai/nutrition-recommendation:
+    post:
+      summary: Get AI-generated nutrition plan
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                goals:
+                  type: string
+                dietaryRestrictions:
+                  type: string
+                currentIntake:
+                  type: string
+      responses:
+        "200":
+          description: AI nutrition recommendation
+          content:
+            application/json:
+              schema:
+                type: object
+        "400":
+          description: Goals are required
+        "500":
+          description: Failed to generate recommendation
+  /api/ai/progress-analysis:
+    post:
+      summary: Get AI progress analysis
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                startingStats:
+                  type: object
+                currentStats:
+                  type: object
+                goal:
+                  type: string
+                timeframe:
+                  type: string
+      responses:
+        "200":
+          description: AI progress analysis
+          content:
+            application/json:
+              schema:
+                type: object
+        "400":
+          description: All fields are required
+        "500":
+          description: Failed to generate analysis
+  /api/water-intake:
+    get:
+      summary: Get today's water intake and total for the user
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: Water intake info
+          content:
+            application/json:
+              schema:
+                type: object
+        "401":
+          description: Unauthorized
+        "500":
+          description: Internal server error
+    post:
+      summary: Add a water intake entry
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                amount:
+                  type: number
+      responses:
+        "200":
+          description: Water intake added
+          content:
+            application/json:
+              schema:
+                type: object
+        "400":
+          description: Invalid amount
+        "401":
+          description: Unauthorized
+        "500":
+          description: Internal server error
+  /api/nutrition-summary:
+    get:
+      summary: Get today's nutrition summary (calories/macros/meals)
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: Nutrition summary
+          content:
+            application/json:
+              schema:
+                type: object
+        "401":
+          description: Unauthorized
+        "500":
+          description: Failed to fetch nutrition summary
+  /api/progress-photos:
+    get:
+      summary: List all progress photos for the user
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: List of progress photos
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/ProgressPhoto"
+        "401":
+          description: Unauthorized
+        "500":
+          description: Failed to fetch progress photos
+    post:
+      summary: Add a new progress photo
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ProgressPhotoInput"
+      responses:
+        "201":
+          description: Progress photo added
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ProgressPhoto"
+        "401":
+          description: Unauthorized
+        "400":
+          description: Missing fields
+        "500":
+          description: Failed to save progress photo
+  /api/trained-body-parts:
+    get:
+      summary: Get trained body parts (optionally for a date range)
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: query
+          name: from
+          schema:
+            type: string
+            format: date
+          description: Start date for range
+      responses:
+        "200":
+          description: List of trained body parts
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/TrainedBodyPart"
+        "401":
+          description: Unauthorized
+        "500":
+          description: Failed to fetch trained body parts
+    post:
+      summary: Log a trained body part
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/TrainedBodyPartInput"
+      responses:
+        "201":
+          description: Trained body part logged
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TrainedBodyPart"
+        "401":
+          description: Unauthorized
+        "400":
+          description: Missing body_part
+        "500":
+          description: Failed to log trained body part
+  /api/cloudinary-signature:
+    post:
+      summary: Get a Cloudinary signature for secure uploads
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                timestamp:
+                  type: integer
+                upload_preset:
+                  type: string
+      responses:
+        "200":
+          description: Cloudinary signature
+          content:
+            application/json:
+              schema:
+                type: object
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+  schemas:
+    RegisterUser:
+      type: object
+      properties:
+        name:
+          type: string
+        email:
+          type: string
+        password:
+          type: string
+      required: [name, email, password]
+    LoginUser:
+      type: object
+      properties:
+        email:
+          type: string
+        password:
+          type: string
+      required: [email, password]
+    AuthResponse:
+      type: object
+      properties:
+        user:
+          $ref: "#/components/schemas/User"
+        token:
+          type: string
+    User:
+      type: object
+      properties:
+        id:
+          type: integer
+        name:
+          type: string
+        email:
+          type: string
+    UpdateUser:
+      type: object
+      properties:
+        name:
+          type: string
+        email:
+          type: string
+        waterIntakeGoal:
+          type: number
+        calorieGoal:
+          type: number
+        macros:
+          type: object
+          properties:
+            protein:
+              type: number
+            carbs:
+              type: number
+            fats:
+              type: number
+    Measurement:
+      type: object
+      properties:
+        id:
+          type: integer
+        userId:
+          type: integer
+        date:
+          type: string
+          format: date
+        weight:
+          type: number
+        bodyFat:
+          type: number
+        muscleMass:
+          type: number
+    MeasurementInput:
+      type: object
+      properties:
+        date:
+          type: string
+          format: date
+        weight:
+          type: number
+        bodyFat:
+          type: number
+        muscleMass:
+          type: number
+      required: [date, weight]
+    Exercise:
+      type: object
+      properties:
+        id:
+          type: integer
+        name:
+          type: string
+        description:
+          type: string
+        muscleGroups:
+          type: array
+          items:
+            type: string
+        equipment:
+          type: array
+          items:
+            type: string
+        difficulty:
+          type: string
+        instructions:
+          type: array
+          items:
+            type: string
+    WorkoutPlan:
+      type: object
+      properties:
+        id:
+          type: integer
+        name:
+          type: string
+        description:
+          type: string
+        difficulty:
+          type: string
+        duration:
+          type: integer
+        exercises:
+          type: array
+          items:
+            $ref: "#/components/schemas/Exercise"
+    WorkoutPlanInput:
+      type: object
+      properties:
+        name:
+          type: string
+        description:
+          type: string
+        difficulty:
+          type: string
+        duration:
+          type: integer
+      required: [name, description, difficulty, duration]
+    WorkoutPlanExerciseInput:
+      type: object
+      properties:
+        exerciseId:
+          type: integer
+        sets:
+          type: integer
+        reps:
+          type: integer
+        restTime:
+          type: integer
+      required: [exerciseId, sets, reps]
+    WorkoutPlanExercise:
+      type: object
+      properties:
+        id:
+          type: integer
+        exerciseId:
+          type: integer
+        sets:
+          type: integer
+        reps:
+          type: integer
+        restTime:
+          type: integer
+    WorkoutSession:
+      type: object
+      properties:
+        id:
+          type: integer
+        planId:
+          type: integer
+        planName:
+          type: string
+        startTime:
+          type: string
+        userId:
+          type: integer
+        exercises:
+          type: array
+          items:
+            $ref: "#/components/schemas/WorkoutPlanExercise"
+        inProgress:
+          type: boolean
+    MealPlan:
+      type: object
+      properties:
+        id:
+          type: integer
+        name:
+          type: string
+        userId:
+          type: integer
+        meals:
+          type: array
+          items:
+            $ref: "#/components/schemas/Meal"
+    MealPlanInput:
+      type: object
+      properties:
+        name:
+          type: string
+      required: [name]
+    Meal:
+      type: object
+      properties:
+        id:
+          type: integer
+        name:
+          type: string
+        time:
+          type: string
+        date:
+          type: string
+        mealPlanId:
+          type: integer
+        foods:
+          type: array
+          items:
+            $ref: "#/components/schemas/MealFood"
+    MealInput:
+      type: object
+      properties:
+        name:
+          type: string
+        time:
+          type: string
+        date:
+          type: string
+      required: [name, time, date]
+    MealFoodInput:
+      type: object
+      properties:
+        foodId:
+          type: integer
+        servings:
+          type: number
+      required: [foodId, servings]
+    MealFood:
+      type: object
+      properties:
+        id:
+          type: integer
+        foodId:
+          type: integer
+        servings:
+          type: number
+        mealId:
+          type: integer
+        food:
+          $ref: "#/components/schemas/Food"
+    Food:
+      type: object
+      properties:
+        id:
+          type: integer
+        name:
+          type: string
+        category:
+          type: string
+        calories:
+          type: number
+        protein:
+          type: number
+        carbs:
+          type: number
+        fats:
+          type: number
+    ProgressPhoto:
+      type: object
+      properties:
+        id:
+          type: integer
+        userId:
+          type: integer
+        url:
+          type: string
+        bodyPart:
+          type: string
+        note:
+          type: string
+    ProgressPhotoInput:
+      type: object
+      properties:
+        url:
+          type: string
+        body_part:
+          type: string
+        note:
+          type: string
+      required: [url, body_part]
+    TrainedBodyPart:
+      type: object
+      properties:
+        id:
+          type: integer
+        userId:
+          type: integer
+        bodyPart:
+          type: string
+        date:
+          type: string
+    TrainedBodyPartInput:
+      type: object
+      properties:
+        body_part:
+          type: string
+      required: [body_part]

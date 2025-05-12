@@ -118,16 +118,16 @@ export function WaterIntake() {
             </div>
           </div>
           {/* Content overlay */}
-          <div className="text-center">
+            <div className="text-center">
             <h3 className="text-5xl font-bold text-white dark:text-blue-200">{totalIntake}</h3>
             <p className="text-sm opacity-80 text-white dark:text-blue-100">of {WATER_GOAL}ml</p>
             <div className="mt-2 text-xs font-medium text-white dark:text-blue-100">
-              {percentage}% of daily goal
+                {percentage}% of daily goal
             </div>
           </div>
         </div>
       </div>
-      <div className="p-6 bg-white dark:bg-gray-900">
+      <div className="p-6 bg-white dark:bg-black">
         <div className="grid grid-cols-3 gap-3 mb-6">
           <Button
             className="rounded-full bg-white dark:bg-gray-900 border-2 border-[#ff3a54] text-[#ff3a54] hover:bg-[#ff3a54]/10 dark:hover:bg-[#ff3a54]/20"
@@ -152,26 +152,26 @@ export function WaterIntake() {
           </Button>
         </div>
         <h3 className="font-medium flex items-center gap-1 mb-3 text-gray-700 dark:text-gray-200">
-          <Clock className="h-4 w-4" /> Recent Activity
-        </h3>
-        <div className="space-y-2 max-h-[120px] overflow-y-auto pr-2">
-          {isLoading ? (
+            <Clock className="h-4 w-4" /> Recent Activity
+          </h3>
+          <div className="space-y-2 max-h-[120px] overflow-y-auto pr-2">
+            {isLoading ? (
             <div className="text-center text-gray-400 dark:text-gray-500 py-4">Loading...</div>
-          ) : intakes.length > 0 ? (
-            [...intakes].reverse().map((entry, index) => (
+            ) : intakes.length > 0 ? (
+              [...intakes].reverse().map((entry, index) => (
               <div key={index} className="flex items-center p-3 rounded-lg bg-gray-50 dark:bg-gray-800 border border-gray-100 dark:border-gray-800">
-                <div className="h-8 w-8 rounded-full bg-[#0099ff]/20 flex items-center justify-center mr-3">
-                  <Droplets className="h-4 w-4 text-[#0099ff]" />
-                </div>
-                <div className="flex-1">
+                  <div className="h-8 w-8 rounded-full bg-[#0099ff]/20 flex items-center justify-center mr-3">
+                    <Droplets className="h-4 w-4 text-[#0099ff]" />
+                  </div>
+                  <div className="flex-1">
                   <p className="text-sm font-medium text-gray-700 dark:text-gray-200">+{entry.amount}ml</p>
                   <p className="text-xs text-gray-500 dark:text-gray-400">{format(new Date(entry.date), "HH:mm")}</p>
+                  </div>
                 </div>
-              </div>
-            ))
-          ) : (
+              ))
+            ) : (
             <div className="text-center text-gray-400 dark:text-gray-500 py-4">No water intake recorded today</div>
-          )}
+            )}
         </div>
       </div>
       <style>{`

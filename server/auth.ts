@@ -12,6 +12,12 @@ declare global {
   }
 }
 
+declare module 'express-session' {
+  interface Session {
+    user?: any;
+  }
+}
+
 const JWT_SECRET = process.env.JWT_SECRET || "quantumfit-jwt-secret-key";
 const JWT_EXPIRES_IN = "7d";
 

@@ -10,6 +10,7 @@ interface Exercise {
     name: string;
     description: string;
     muscleGroups: string[];
+    instructions?: string[];
   };
   sets: number;
   reps: number;
@@ -145,21 +146,31 @@ export function WorkoutSession({ session, onComplete, onExit }: WorkoutSessionPr
       </div>
       
       {isResting ? (
-        <Card className="border-2 border-primary">
-          <CardHeader className="pb-2 text-center">
-            <CardTitle>Rest Period</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-6 text-center">
-            <div className="text-5xl font-bold">{restTime}s</div>
-            <p className="text-muted-foreground">
-              Take a breather before the next exercise
-            </p>
-            <div className="flex justify-center">
-              <Button onClick={skipRest}>
-                <SkipForward className="mr-2 h-4 w-4" />
-                Skip Rest
-              </Button>
+        <Card className="border-2 border-primary bg-gradient-to-br from-blue-50 to-white dark:from-gray-900 dark:to-gray-800 shadow-2xl rounded-2xl flex items-center justify-center min-h-[400px] w-full max-w-md mx-auto">
+          <CardContent className="flex flex-col items-center justify-center w-full py-10 px-4">
+            <Dumbbell className="h-12 w-12 text-primary mb-6 animate-bounce" />
+            <CardTitle className="text-3xl font-extrabold tracking-tight mb-4 text-center">Rest Period</CardTitle>
+            <div className="relative flex items-center justify-center mb-6" style={{ width: 120, height: 120 }}>
+              <svg className="absolute top-0 left-0" width="120" height="120">
+                <circle cx="60" cy="60" r="54" stroke="#e5e7eb" strokeWidth="10" fill="none" />
+                <circle
+                  cx="60" cy="60" r="54"
+                  stroke="#3b82f6"
+                  strokeWidth="10"
+                  fill="none"
+                  strokeDasharray={2 * Math.PI * 54}
+                  strokeDashoffset={(1 - restTime / (session.exercises[currentExerciseIndex + 1]?.restTime || 60)) * 2 * Math.PI * 54}
+                  style={{ transition: 'stroke-dashoffset 1s linear' }}
+                  strokeLinecap="round"
+                />
+              </svg>
+              <span className="text-5xl font-extrabold z-10 text-primary drop-shadow-lg flex items-center justify-center w-full h-full">{restTime}s</span>
             </div>
+            <p className="text-lg text-muted-foreground font-medium mb-8 text-center max-w-xs mx-auto">Take a breather before the next exercise</p>
+            <Button onClick={skipRest} className="px-10 py-3 text-lg font-semibold rounded-full shadow-md hover:scale-105 transition-transform flex items-center gap-2 mt-2">
+              <SkipForward className="mr-2 h-5 w-5" />
+              Skip Rest
+            </Button>
           </CardContent>
         </Card>
       ) : (
@@ -189,7 +200,24 @@ export function WorkoutSession({ session, onComplete, onExit }: WorkoutSessionPr
             </div>
             
             <div className="border-t border-b border-border py-4">
-              <p className="text-sm">{currentExercise.exercise.description}</p>
+              <p className="text-sm mb-4">{currentExercise.exercise.description}</p>
+              <hr className="my-6 border-gray-200 dark:border-gray-700" />
+              {currentExercise.exercise.instructions && currentExercise.exercise.instructions.length > 0 && (
+                <div className="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-800 shadow-sm px-6 py-4 mb-2 max-w-2xl mx-auto">
+                  <div className="flex items-center gap-2 mb-3">
+                    <CheckCircle className="h-5 w-5 text-primary animate-pulse" />
+                    <span className="font-semibold text-primary text-lg">How to Perform</span>
+                  </div>
+                  <ol className="space-y-2">
+                    {currentExercise.exercise.instructions.map((instruction: string, idx: number) => (
+                      <li key={idx} className="flex items-start gap-2 text-base text-gray-700 dark:text-gray-200">
+                        <span className="mt-1"><CheckCircle className="h-4 w-4 text-green-500 animate-bounce" /></span>
+                        <span>{instruction}</span>
+                      </li>
+                    ))}
+                  </ol>
+                </div>
+              )}
             </div>
             
             <div className="grid grid-cols-2 gap-4">

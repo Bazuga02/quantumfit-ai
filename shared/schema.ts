@@ -9,7 +9,7 @@ export const users = pgTable("users", {
   email: text("email").notNull().unique(),
   password: text("password").notNull(),
   calorieGoal: integer("calorie_goal").default(2500),
-  waterIntakeGoal: real("water_intake_goal").default(3),
+  // waterIntakeGoal: real("water_intake_goal").default(3),
   macros: jsonb("macros").$type<{
     protein: number;
     carbs: number;
