@@ -8,6 +8,36 @@ import { drizzle } from "drizzle-orm/neon-http";
 import { neon } from "@neondatabase/serverless";
 import { sql } from 'drizzle-orm';
 
+// Add retry utility function
+const sleep = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
+
+async function withRetry<T>(
+  operation: () => Promise<T>,
+  maxRetries: number = 3,
+  initialDelay: number = 1000
+): Promise<T> {
+  let lastError: Error | null = null;
+  
+  for (let attempt = 0; attempt < maxRetries; attempt++) {
+    try {
+      return await operation();
+    } catch (error: any) {
+      lastError = error;
+      // Check if it's a rate limit error
+      if (error?.message?.includes('rate limit')) {
+        const delay = initialDelay * Math.pow(2, attempt);
+        console.log(`Rate limit hit, retrying in ${delay}ms... (attempt ${attempt + 1}/${maxRetries})`);
+        await sleep(delay);
+        continue;
+      }
+      // If it's not a rate limit error, throw immediately
+      throw error;
+    }
+  }
+  
+  throw lastError;
+}
+
 const MemoryStore = createMemoryStore(session);
 
 export interface IStorage {
@@ -93,10 +123,12 @@ export class PostgresStorage implements IStorage {
 
   async getUserByEmail(email: string): Promise<User | undefined> {
     try {
-      const result = await db.select()
-        .from(schema.users)
-        .where(eq(schema.users.email, email));
-      return result[0];
+      return await withRetry(async () => {
+        const result = await db.select()
+          .from(schema.users)
+          .where(eq(schema.users.email, email));
+        return result[0];
+      });
     } catch (error) {
       console.error('Error in getUserByEmail:', error);
       return undefined;
@@ -105,19 +137,21 @@ export class PostgresStorage implements IStorage {
 
   async createUser(user: InsertUser): Promise<User> {
     try {
-      const result = await db.insert(schema.users)
-        .values({
-          ...user,
-          createdAt: new Date(),
-          updatedAt: new Date()
-        })
-        .returning();
-      
-      if (!result || result.length === 0) {
-        throw new Error('Failed to create user');
-      }
-      
-      return result[0];
+      return await withRetry(async () => {
+        const result = await db.insert(schema.users)
+          .values({
+            ...user,
+            createdAt: new Date(),
+            updatedAt: new Date()
+          })
+          .returning();
+        
+        if (!result || result.length === 0) {
+          throw new Error('Failed to create user');
+        }
+        
+        return result[0];
+      });
     } catch (error) {
       console.error('Error in createUser:', error);
       throw error;
@@ -165,16 +199,17 @@ export class PostgresStorage implements IStorage {
   }
 
   async getWorkoutPlans(filter?: { userId?: number; isTemplate?: boolean }): Promise<WorkoutPlan[]> {
-    let query = db.select().from(schema.workoutPlans);
-    if (filter) {
-      if (filter.userId !== undefined) {
-        query = query.where(eq(schema.workoutPlans.userId, filter.userId));
-      }
-      if (filter.isTemplate !== undefined) {
-        query = query.where(eq(schema.workoutPlans.isTemplate, filter.isTemplate));
-      }
+    const baseQuery = db.select().from(schema.workoutPlans);
+    
+    if (filter?.userId !== undefined) {
+      return baseQuery.where(eq(schema.workoutPlans.userId, filter.userId));
     }
-    return query;
+    
+    if (filter?.isTemplate !== undefined) {
+      return baseQuery.where(eq(schema.workoutPlans.isTemplate, filter.isTemplate));
+    }
+    
+    return baseQuery;
   }
 
   async getWorkoutPlanById(id: number): Promise<WorkoutPlan | undefined> {
@@ -290,19 +325,24 @@ export class PostgresStorage implements IStorage {
   }
 
   async getWaterIntakes(userId: number, date?: Date): Promise<WaterIntake[]> {
-    let whereClause = eq(schema.waterIntakes.userId, userId);
-    if (date) {
-      const start = new Date(date);
-      start.setHours(0, 0, 0, 0);
-      const end = new Date(start);
-      end.setDate(end.getDate() + 1);
-      whereClause = and(
-        eq(schema.waterIntakes.userId, userId),
+    const baseWhereClause = eq(schema.waterIntakes.userId, userId);
+    
+    if (!date) {
+      return db.select().from(schema.waterIntakes).where(baseWhereClause);
+    }
+    
+    const start = new Date(date);
+    start.setHours(0, 0, 0, 0);
+    const end = new Date(start);
+    end.setDate(end.getDate() + 1);
+    
+    return db.select().from(schema.waterIntakes).where(
+      and(
+        baseWhereClause,
         gte(schema.waterIntakes.date, start),
         lt(schema.waterIntakes.date, end)
-      );
-    }
-    return db.select().from(schema.waterIntakes).where(whereClause);
+      )
+    );
   }
 
   async addWaterIntake(intake: InsertWaterIntake): Promise<WaterIntake> {
@@ -311,22 +351,31 @@ export class PostgresStorage implements IStorage {
   }
 
   async getTotalWaterIntake(userId: number, date?: Date): Promise<number> {
-    let whereClause = eq(schema.waterIntakes.userId, userId);
-    if (date) {
-      const start = new Date(date);
-      start.setHours(0, 0, 0, 0);
-      const end = new Date(start);
-      end.setDate(end.getDate() + 1);
-      whereClause = and(
-        eq(schema.waterIntakes.userId, userId),
-        gte(schema.waterIntakes.date, start),
-        lt(schema.waterIntakes.date, end)
-      );
+    const baseWhereClause = eq(schema.waterIntakes.userId, userId);
+    
+    if (!date) {
+      const result = await db
+        .select({ total: sql<number>`sum(${schema.waterIntakes.amount})`.as('total') })
+        .from(schema.waterIntakes)
+        .where(baseWhereClause);
+      return result[0]?.total || 0;
     }
+    
+    const start = new Date(date);
+    start.setHours(0, 0, 0, 0);
+    const end = new Date(start);
+    end.setDate(end.getDate() + 1);
+    
     const result = await db
       .select({ total: sql<number>`sum(${schema.waterIntakes.amount})`.as('total') })
       .from(schema.waterIntakes)
-      .where(whereClause);
+      .where(
+        and(
+          baseWhereClause,
+          gte(schema.waterIntakes.date, start),
+          lt(schema.waterIntakes.date, end)
+        )
+      );
     return result[0]?.total || 0;
   }
 
@@ -343,19 +392,24 @@ export class PostgresStorage implements IStorage {
   }
 
   async getTrainedBodyParts(userId: number, date?: Date): Promise<schema.TrainedBodyPart[]> {
-    let whereClause = eq(schema.trainedBodyParts.userId, userId);
-    if (date) {
-      const start = new Date(date);
-      start.setHours(0, 0, 0, 0);
-      const end = new Date(start);
-      end.setDate(end.getDate() + 1);
-      whereClause = and(
-        eq(schema.trainedBodyParts.userId, userId),
+    const baseWhereClause = eq(schema.trainedBodyParts.userId, userId);
+    
+    if (!date) {
+      return db.select().from(schema.trainedBodyParts).where(baseWhereClause);
+    }
+    
+    const start = new Date(date);
+    start.setHours(0, 0, 0, 0);
+    const end = new Date(start);
+    end.setDate(end.getDate() + 1);
+    
+    return db.select().from(schema.trainedBodyParts).where(
+      and(
+        baseWhereClause,
         gte(schema.trainedBodyParts.date, start),
         lt(schema.trainedBodyParts.date, end)
-      );
-    }
-    return db.select().from(schema.trainedBodyParts).where(whereClause);
+      )
+    );
   }
 
   async addTrainedBodyPart(entry: schema.InsertTrainedBodyPart): Promise<schema.TrainedBodyPart> {

@@ -1,5 +1,7 @@
 import { QueryClient } from "@tanstack/react-query";
 
+const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
+
 export const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
@@ -60,7 +62,7 @@ export async function apiRequest(
 
   
 
-  const response = await fetch(`http://localhost:3001${path}`, {
+  const response = await fetch(`${API_URL}${path}`, {
     method,
     headers,
     credentials: "include",
