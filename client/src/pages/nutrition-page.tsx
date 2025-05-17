@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useAuth } from "@/hooks/use-auth";
+import { apiRequest } from "@/lib/queryClient";
 import { Apple, Calendar, ChevronRight, GanttChart, PieChart, Plus, Search, Utensils } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import {
@@ -34,16 +35,16 @@ export default function NutritionPage() {
   const [isLoggingMeal, setIsLoggingMeal] = useState(false);
 
   // Fetch meal plans
-  const { data: mealPlans, isLoading: isLoadingMealPlans } = useQuery({
+  const { data: mealPlans } = useQuery({
     queryKey: ['/api/meal-plans'],
-    queryFn: () => apiRequest('GET', '/api/meal-plans').then(res => res.json()),
+    queryFn: () => apiRequest('GET', '/api/meal-plans').then((res: Response) => res.json()),
     enabled: !!user,
   });
 
   // Fetch nutrition summary
   const { data: nutritionSummary, isLoading: isLoadingSummary, error: errorSummary } = useQuery({
     queryKey: ['/api/nutrition/summary'],
-    queryFn: () => apiRequest('GET', '/api/nutrition/summary').then(res => res.json()),
+    queryFn: () => apiRequest('GET', '/api/nutrition/summary').then((res: Response) => res.json()),
     enabled: !!user,
   });
 
