@@ -18,14 +18,24 @@ export default function SettingsPage() {
   const { theme, setTheme } = useTheme();
   const queryClient = useQueryClient();
   
+  const defaultSettings = {
+    calorieGoal: user?.calorieGoal || 2000,
+    waterIntakeGoal: 3, // Default to 3 liters
+    macros: user?.macros || {
+      protein: 150,
+      carbs: 200,
+      fats: 65
+    }
+  };
+  
   const [formData, setFormData] = useState({
     name: user?.name || "",
     email: user?.email || "",
-    waterIntakeGoal: user?.waterIntakeGoal || 3,
-    calorieGoal: user?.calorieGoal || 2500,
-    protein: user?.macros?.protein || 150,
-    carbs: user?.macros?.carbs || 270,
-    fats: user?.macros?.fats || 60
+    waterIntakeGoal: defaultSettings.waterIntakeGoal,
+    calorieGoal: defaultSettings.calorieGoal,
+    protein: defaultSettings.macros.protein,
+    carbs: defaultSettings.macros.carbs,
+    fats: defaultSettings.macros.fats
   });
   
   // User settings update mutation

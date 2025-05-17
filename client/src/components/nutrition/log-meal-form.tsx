@@ -95,9 +95,9 @@ export function LogMealForm({ onSuccess }: { onSuccess: () => void }) {
       queryClient.invalidateQueries({ queryKey: ['/api/meals'] });
       queryClient.invalidateQueries({ queryKey: ['/api/nutrition-summary'] });
       toast({
-        title: "Meal added!",
-        description: "Your meal was logged successfully.",
-        variant: "success"
+        title: "Meal logged successfully",
+        description: "Your meal has been added to your nutrition log.",
+        variant: "default"
       });
       onSuccess();
     },

@@ -2,7 +2,7 @@ import { IStorage } from './storage';
 import { drizzle } from 'drizzle-orm/neon-http';
 import { neon } from '@neondatabase/serverless';
 import * as schema from '../shared/schema';
-import { eq, desc, and, gte, lt } from 'drizzle-orm';
+import { eq, desc, and, gte, lt, lte } from 'drizzle-orm';
 import createMemoryStore from "memorystore";
 import session, { Store } from "express-session";
 import { 
@@ -24,7 +24,11 @@ import {
   InsertMealFood, 
   WaterIntake,
   InsertWaterIntake,
-  waterIntakes
+  waterIntakes,
+  ProgressPhoto,
+  progressPhotos,
+  meals,
+  TrainedBodyPart
 } from "@shared/schema";
 
 const MemoryStore = createMemoryStore(session);
@@ -287,23 +291,63 @@ export class DbStorage implements IStorage {
   }
 
   async getTrainedBodyParts(userId: number, date?: Date): Promise<schema.TrainedBodyPart[]> {
-    let whereClause = eq(schema.trainedBodyParts.userId, userId);
-    if (date) {
-      const start = new Date(date);
-      start.setHours(0, 0, 0, 0);
-      const end = new Date(start);
-      end.setDate(end.getDate() + 1);
-      whereClause = and(
-        eq(schema.trainedBodyParts.userId, userId),
+    const baseWhere = eq(schema.trainedBodyParts.userId, userId);
+    if (!date) {
+      return db.select().from(schema.trainedBodyParts).where(baseWhere);
+    }
+
+    const start = new Date(date);
+    start.setHours(0, 0, 0, 0);
+    const end = new Date(start);
+    end.setDate(end.getDate() + 1);
+
+    return db.select().from(schema.trainedBodyParts).where(
+      and(
+        baseWhere,
         gte(schema.trainedBodyParts.date, start),
         lt(schema.trainedBodyParts.date, end)
-      );
-    }
-    return db.select().from(schema.trainedBodyParts).where(whereClause);
+      )
+    );
   }
 
   async addTrainedBodyPart(entry: schema.InsertTrainedBodyPart): Promise<schema.TrainedBodyPart> {
     const [newEntry] = await db.insert(schema.trainedBodyParts).values(entry).returning();
     return newEntry;
+  }
+
+  async getProgressPhotos(userId: number): Promise<ProgressPhoto[]> {
+    const photos = await db.select().from(progressPhotos).where(eq(progressPhotos.userId, userId));
+    return photos;
+  }
+
+  async addProgressPhoto(photo: { url: string; userId: number; note?: string | null; bodyPart?: string | null; }): Promise<ProgressPhoto> {
+    const [newPhoto] = await db.insert(progressPhotos).values({
+      userId: photo.userId,
+      url: photo.url,
+      note: photo.note,
+      bodyPart: photo.bodyPart,
+      date: new Date()
+    }).returning();
+    return newPhoto;
+  }
+
+  async getMealsForUserOnDate(userId: number, date: string): Promise<Meal[]> {
+    const mealsList = await db.select().from(meals).where(
+      and(
+        eq(meals.userId, userId),
+        eq(meals.date, date)
+      )
+    );
+    return mealsList;
+  }
+
+  async getTrainedBodyPartsInRange(userId: number, fromDate: Date, toDate: Date): Promise<TrainedBodyPart[]> {
+    return db.select().from(schema.trainedBodyParts).where(
+      and(
+        eq(schema.trainedBodyParts.userId, userId),
+        gte(schema.trainedBodyParts.date, fromDate),
+        lte(schema.trainedBodyParts.date, toDate)
+      )
+    );
   }
 } 

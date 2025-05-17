@@ -1,13 +1,12 @@
 import { useState } from "react";
 import { MainLayout } from "@/components/layout/main-layout";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useQuery } from "@tanstack/react-query";
 import { useAuth } from "@/hooks/use-auth";
 import { apiRequest } from "@/lib/queryClient";
-import { Apple, Calendar, ChevronRight, GanttChart, PieChart, Plus, Search, Utensils } from "lucide-react";
-import { Input } from "@/components/ui/input";
+import { Calendar, GanttChart, Plus, Utensils } from "lucide-react";
 import {
   Dialog,
   DialogContent,
@@ -16,23 +15,16 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
-import { Badge } from "@/components/ui/badge";
 import { NutritionSummary } from "@/components/dashboard/nutrition-summary";
-import { FoodDetail } from "@/components/nutrition/food-detail";
 import { MealDetail } from "@/components/nutrition/meal-detail";
 import { LogMealForm } from "@/components/nutrition/log-meal-form";
 import { UtensilsCrossed } from "lucide-react";
 import { FoodLibrary } from "@/components/nutrition/food-library";
-import { useToast } from "@/components/ui/use-toast";
 
 export default function NutritionPage() {
   const { user } = useAuth();
-  const { toast } = useToast();
-  const queryClient = useQueryClient();
   const [selectedMeal, setSelectedMeal] = useState<any>(null);
-  const [selectedMealPlan, setSelectedMealPlan] = useState<any>(null);
   const [isLogMealDialogOpen, setIsLogMealDialogOpen] = useState(false);
-  const [isLoggingMeal, setIsLoggingMeal] = useState(false);
 
   // Fetch meal plans
   const { data: mealPlans } = useQuery({
@@ -47,42 +39,6 @@ export default function NutritionPage() {
     queryFn: () => apiRequest('GET', '/api/nutrition/summary').then((res: Response) => res.json()),
     enabled: !!user,
   });
-
-  // Mocked nutritional data
-  const nutritionData = {
-    calories: {
-      consumed: 1842,
-      goal: user?.calorieGoal || 2700,
-      remaining: (user?.calorieGoal || 2700) - 1842
-    },
-    macros: {
-      protein: { consumed: 98, goal: user?.macros?.protein || 150 },
-      carbs: { consumed: 210, goal: user?.macros?.carbs || 270 },
-      fats: { consumed: 45, goal: user?.macros?.fats || 60 }
-    },
-    pieChart: [
-      { name: "Protein", value: 98 * 4, color: "#3b82f6" },  // 4 calories per gram
-      { name: "Carbs", value: 210 * 4, color: "#22c55e" },   // 4 calories per gram
-      { name: "Fats", value: 45 * 9, color: "#eab308" }      // 9 calories per gram
-    ],
-    meals: [
-      {
-        name: "Breakfast",
-        time: "7:30 AM",
-        foods: [
-          { name: "Oatmeal", quantity: 1, unit: "cup", calories: 300 },
-          { name: "Protein Shake", quantity: 1, unit: "serving", calories: 220 }
-        ]
-      },
-      {
-        name: "Lunch",
-        time: "12:30 PM",
-        foods: [
-          { name: "Grilled Chicken Salad", quantity: 1, unit: "bowl", calories: 650 }
-        ]
-      }
-    ]
-  };
 
   return (
     <MainLayout
@@ -149,9 +105,6 @@ export default function NutritionPage() {
                             </div>
                           );
                         }
-                        const proteinPct = totalCals ? Math.round((proteinCals / totalCals) * 100) : 0;
-                        const carbsPct = totalCals ? Math.round((carbsCals / totalCals) * 100) : 0;
-                        const fatsPct = totalCals ? Math.round((fatsCals / totalCals) * 100) : 0;
                         // For SVG donut chart
                         const circ = 2 * Math.PI * 45; // r=45
                         const proteinFrac = proteinCals / totalCals;
@@ -185,9 +138,6 @@ export default function NutritionPage() {
                     const carbsCals = nutritionSummary.macros.carbs.consumed * 4;
                     const fatsCals = nutritionSummary.macros.fats.consumed * 9;
                     const totalCals = proteinCals + carbsCals + fatsCals;
-                    const proteinPct = totalCals ? Math.round((proteinCals / totalCals) * 100) : 0;
-                    const carbsPct = totalCals ? Math.round((carbsCals / totalCals) * 100) : 0;
-                    const fatsPct = totalCals ? Math.round((fatsCals / totalCals) * 100) : 0;
                     return (
                       <div className="flex flex-col gap-2 w-full">
                         <div className="flex items-center justify-between">
@@ -195,21 +145,21 @@ export default function NutritionPage() {
                             <div className="w-3 h-3 bg-blue-500 rounded-full mr-2"></div>
                             <span className="text-sm">Protein</span>
                           </div>
-                          <span className="text-sm font-medium">{proteinPct}%</span>
+                          <span className="text-sm font-medium">{Math.round((proteinCals / totalCals) * 100)}%</span>
                         </div>
                         <div className="flex items-center justify-between">
                           <div className="flex items-center">
                             <div className="w-3 h-3 bg-green-500 rounded-full mr-2"></div>
                             <span className="text-sm">Carbs</span>
                           </div>
-                          <span className="text-sm font-medium">{carbsPct}%</span>
+                          <span className="text-sm font-medium">{Math.round((carbsCals / totalCals) * 100)}%</span>
                         </div>
                         <div className="flex items-center justify-between">
                           <div className="flex items-center">
                             <div className="w-3 h-3 bg-yellow-500 rounded-full mr-2"></div>
                             <span className="text-sm">Fats</span>
                           </div>
-                          <span className="text-sm font-medium">{fatsPct}%</span>
+                          <span className="text-sm font-medium">{Math.round((fatsCals / totalCals) * 100)}%</span>
                         </div>
                       </div>
                     );
@@ -244,7 +194,6 @@ export default function NutritionPage() {
                             </div>
                             <div className="ml-3">
                               <p className="text-sm font-medium">{meal.type}</p>
-                              {/* Optionally show time if available in meal */}
                               {meal.time && <p className="text-xs text-muted-foreground">{meal.time}</p>}
                             </div>
                           </div>
@@ -300,7 +249,7 @@ export default function NutritionPage() {
                 {(Array.isArray(mealPlans) && mealPlans.length > 0) ? (
                   <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                     {Array.isArray(mealPlans) ? mealPlans.map((plan: any) => (
-                      <Card key={plan.id} className="overflow-hidden hover:border-primary transition-colors cursor-pointer" onClick={() => setSelectedMealPlan(plan)}>
+                      <Card key={plan.id} className="overflow-hidden hover:border-primary transition-colors cursor-pointer" onClick={() => setSelectedMeal(plan)}>
                         <CardHeader className="p-4 pb-2">
                           <CardTitle className="text-lg font-semibold flex items-center">
                             <UtensilsCrossed className="h-5 w-5 mr-2 text-primary" />
