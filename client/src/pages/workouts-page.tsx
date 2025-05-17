@@ -21,6 +21,34 @@ import { useToast } from "@/hooks/use-toast";
 import { WorkoutSession } from "@/components/workouts/workout-session";
 import { WorkoutDetail } from "@/components/workouts/workout-detail";
 
+// Add type for response
+interface ApiResponse {
+  data: any;
+  error?: string;
+}
+
+// Update the response handlers
+const handleResponse = (res: ApiResponse) => {
+  if (res.error) {
+    toast({
+      title: "Error",
+      description: res.error,
+      variant: "destructive",
+    });
+    return null;
+  }
+  return res.data;
+};
+
+// Update the error handler
+const handleError = (e: Error) => {
+  toast({
+    title: "Error",
+    description: e.message,
+    variant: "destructive",
+  });
+};
+
 export default function WorkoutsPage() {
   const { user } = useAuth();
   const { toast } = useToast();
