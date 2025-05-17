@@ -14,7 +14,7 @@
     "db:seed": "tsx scripts/push-db.ts",
     "db:update-password": "tsx scripts/update-password.ts",
     "cleanup:exercises": "tsx scripts/cleanup-exercises.ts",
-    "vercel-build": "node scripts/update-api-url.js && npm run build"
+    "vercel-build": "tsx scripts/update-api-url.js && npm run build"
   },
   "dependencies": {
     "@emailjs/browser": "^4.4.1",

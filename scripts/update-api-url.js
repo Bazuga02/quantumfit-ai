@@ -1,6 +1,3 @@
-const fs = require("fs");
-const path = require("path");
-
 // Get the Vercel deployment URL from environment
 const vercelUrl = process.env.VERCEL_URL;
 
