@@ -1,19 +1,22 @@
 import { useState } from "react";
 import { MainLayout } from "@/components/layout/main-layout";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { useAuth } from "@/hooks/use-auth";
 import { useToast } from "@/hooks/use-toast";
+import { useTheme } from "@/lib/theme-provider";
 import { apiRequest } from "@/lib/queryClient";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { Calendar, Lock, Moon, Sun, User } from "lucide-react";
+import { Calendar, Lock, Moon, Sun, User, Flame, LogOut, Save, Loader2, Droplets } from "lucide-react";
 
 export default function SettingsPage() {
   const { toast } = useToast();
   const { user, logoutMutation } = useAuth();
+  const { theme, setTheme } = useTheme();
+  const queryClient = useQueryClient();
   
   const [formData, setFormData] = useState({
     name: user?.name || "",

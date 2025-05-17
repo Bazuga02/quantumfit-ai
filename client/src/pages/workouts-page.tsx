@@ -6,7 +6,7 @@ import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useAuth } from "@/hooks/use-auth";
 import { apiRequest } from "@/lib/queryClient";
-import { Calendar, ChevronRight, Dumbbell, Search, Timer, Users } from "lucide-react";
+import { Calendar, ChevronRight, Dumbbell, Search, Timer, Users, Plus } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import {
   Dialog,
@@ -20,34 +20,6 @@ import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
 import { WorkoutSession } from "@/components/workouts/workout-session";
 import { WorkoutDetail } from "@/components/workouts/workout-detail";
-
-// Add type for response
-interface ApiResponse {
-  data: any;
-  error?: string;
-}
-
-// Update the response handlers
-const handleResponse = (res: ApiResponse) => {
-  if (res.error) {
-    toast({
-      title: "Error",
-      description: res.error,
-      variant: "destructive",
-    });
-    return null;
-  }
-  return res.data;
-};
-
-// Update the error handler
-const handleError = (e: Error) => {
-  toast({
-    title: "Error",
-    description: e.message,
-    variant: "destructive",
-  });
-};
 
 export default function WorkoutsPage() {
   const { user } = useAuth();
