@@ -1,7 +1,10 @@
 import { MainLayout } from "@/components/layout/main-layout";
-import { WaterIntake } from "@/components/water-intake";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Droplets } from "lucide-react";
+import { Card } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useAuth } from "@/hooks/use-auth";
+import { apiRequest } from "@/lib/queryClient";
+import { Droplets, Plus, Minus } from "lucide-react";
 
 export default function WaterPage() {
   return (

@@ -1,35 +1,19 @@
 import { useState } from "react";
 import { MainLayout } from "@/components/layout/main-layout";
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Switch } from "@/components/ui/switch";
-import { useToast } from "@/hooks/use-toast";
+import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { useAuth } from "@/hooks/use-auth";
-import { useTheme } from "@/lib/theme-provider";
-import { useMutation } from "@tanstack/react-query";
-import { apiRequest, queryClient } from "@/lib/queryClient";
-import { 
-  User, 
-  Bell, 
-  Moon, 
-  Sun, 
-  Lock, 
-  LogOut, 
-  Droplets, 
-  Flame,
-  MessageSquare, 
-  Mail,
-  Save,
-  Loader2
-} from "lucide-react";
+import { useToast } from "@/hooks/use-toast";
+import { apiRequest } from "@/lib/queryClient";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { Calendar, Lock, Moon, Sun, User } from "lucide-react";
 
 export default function SettingsPage() {
   const { toast } = useToast();
   const { user, logoutMutation } = useAuth();
-  const { theme, setTheme } = useTheme();
   
   const [formData, setFormData] = useState({
     name: user?.name || "",

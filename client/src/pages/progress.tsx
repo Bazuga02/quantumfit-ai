@@ -1,6 +1,10 @@
 import { MainLayout } from "@/components/layout/main-layout";
-import { ProgressSection } from "@/components/progress/progress-section";
-import { LineChart } from "lucide-react";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
+import { useQuery } from "@tanstack/react-query";
+import { useAuth } from "@/hooks/use-auth";
+import { apiRequest } from "@/lib/queryClient";
+import { Activity, Calendar, TrendingUp, Weight } from "lucide-react";
 
 export default function ProgressPage() {
   return (

@@ -3,7 +3,7 @@ import { MainLayout } from "@/components/layout/main-layout";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useAuth } from "@/hooks/use-auth";
 import { Apple, Calendar, ChevronRight, GanttChart, PieChart, Plus, Search, Utensils } from "lucide-react";
 import { Input } from "@/components/ui/input";
@@ -22,28 +22,29 @@ import { MealDetail } from "@/components/nutrition/meal-detail";
 import { LogMealForm } from "@/components/nutrition/log-meal-form";
 import { UtensilsCrossed } from "lucide-react";
 import { FoodLibrary } from "@/components/nutrition/food-library";
+import { useToast } from "@/components/ui/use-toast";
 
 export default function NutritionPage() {
   const { user } = useAuth();
+  const { toast } = useToast();
+  const queryClient = useQueryClient();
   const [selectedMeal, setSelectedMeal] = useState<any>(null);
   const [selectedMealPlan, setSelectedMealPlan] = useState<any>(null);
   const [isLogMealDialogOpen, setIsLogMealDialogOpen] = useState(false);
-  
-  // Query for meal plans
+  const [isLoggingMeal, setIsLoggingMeal] = useState(false);
+
+  // Fetch meal plans
   const { data: mealPlans, isLoading: isLoadingMealPlans } = useQuery({
     queryKey: ['/api/meal-plans'],
+    queryFn: () => apiRequest('GET', '/api/meal-plans').then(res => res.json()),
     enabled: !!user,
   });
 
-  // Fetch nutrition summary for today's meals
+  // Fetch nutrition summary
   const { data: nutritionSummary, isLoading: isLoadingSummary, error: errorSummary } = useQuery({
-    queryKey: ["/api/nutrition-summary"],
-    queryFn: async () => {
-      const res = await fetch("/api/nutrition-summary");
-      if (!res.ok) throw new Error("Failed to fetch nutrition summary");
-      return res.json();
-    },
-    refetchOnWindowFocus: true,
+    queryKey: ['/api/nutrition/summary'],
+    queryFn: () => apiRequest('GET', '/api/nutrition/summary').then(res => res.json()),
+    enabled: !!user,
   });
 
   // Mocked nutritional data
