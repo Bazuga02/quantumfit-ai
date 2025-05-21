@@ -28,23 +28,20 @@ export function ProtectedRoute({
     }
   }, []);
 
+  // Show loading state while auth is initializing
   if (isLoading) {
     return (
-      <Route path={path}>
-        <div className="flex items-center justify-center min-h-screen">
-          <Loader2 className="h-8 w-8 animate-spin text-primary" />
-        </div>
-      </Route>
+      <div className="flex items-center justify-center min-h-screen">
+        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+      </div>
     );
   }
 
+  // If no user is found, redirect to auth page
   if (!user) {
-    return (
-      <Route path={path}>
-        <Redirect to="/auth" />
-      </Route>
-    );
+    return <Redirect to="/auth" />;
   }
 
+  // If user is authenticated, render the protected component
   return <Route path={path} component={Component} />;
 }

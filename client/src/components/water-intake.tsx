@@ -84,7 +84,7 @@ export function WaterIntake() {
 
   return (
     <Card className="max-w-md w-full overflow-hidden border-0 shadow-xl rounded-3xl">
-      <div className="p-6 bg-gradient-to-br from-[#ff3a54] to-[#ff5b71]">
+      <div className="p-6 bg-gradient-to-br from-[#2A6DFF] to-[#42a5f5]">
         <div className="flex items-center justify-between mb-4">
           <h2 className="text-xl font-bold text-white flex items-center">
             <Droplets className="h-5 w-5 mr-2" />
@@ -96,7 +96,7 @@ export function WaterIntake() {
           {/* Liquid container */}
           <div className="absolute inset-0 flex items-end justify-center overflow-hidden">
             <div
-              className="w-full bg-gradient-to-t from-[#0099ff] to-[#42a5f5] dark:from-blue-900 dark:to-blue-600 transition-all duration-1000 ease-out"
+              className="w-full bg-gradient-to-t from-[#2A6DFF] to-[#42a5f5] dark:from-blue-900 dark:to-blue-600 transition-all duration-1000 ease-out"
               style={{ height: `${percentage}%` }}
             >
               {/* Bubbles animation */}
@@ -130,21 +130,21 @@ export function WaterIntake() {
       <div className="p-6 bg-white dark:bg-black">
         <div className="grid grid-cols-3 gap-3 mb-6">
           <Button
-            className="rounded-full bg-white dark:bg-gray-900 border-2 border-[#ff3a54] text-[#ff3a54] hover:bg-[#ff3a54]/10 dark:hover:bg-[#ff3a54]/20"
+            className="rounded-full bg-white dark:bg-gray-900 border-2 border-[#2A6DFF] text-[#2A6DFF] hover:bg-[#2A6DFF]/10 dark:hover:bg-[#2A6DFF]/20"
             onClick={() => addWaterIntake(100)}
             disabled={isAdding}
           >
             +100ml
           </Button>
           <Button
-            className="rounded-full bg-white dark:bg-gray-900 border-2 border-[#ff3a54] text-[#ff3a54] hover:bg-[#ff3a54]/10 dark:hover:bg-[#ff3a54]/20"
+            className="rounded-full bg-white dark:bg-gray-900 border-2 border-[#2A6DFF] text-[#2A6DFF] hover:bg-[#2A6DFF]/10 dark:hover:bg-[#2A6DFF]/20"
             onClick={() => addWaterIntake(250)}
             disabled={isAdding}
           >
             +250ml
           </Button>
           <Button
-            className="rounded-full bg-white dark:bg-gray-900 border-2 border-[#ff3a54] text-[#ff3a54] hover:bg-[#ff3a54]/10 dark:hover:bg-[#ff3a54]/20"
+            className="rounded-full bg-white dark:bg-gray-900 border-2 border-[#2A6DFF] text-[#2A6DFF] hover:bg-[#2A6DFF]/10 dark:hover:bg-[#2A6DFF]/20"
             onClick={() => addWaterIntake(500)}
             disabled={isAdding}
           >
@@ -160,8 +160,8 @@ export function WaterIntake() {
             ) : intakes.length > 0 ? (
               [...intakes].reverse().map((entry, index) => (
               <div key={index} className="flex items-center p-3 rounded-lg bg-gray-50 dark:bg-gray-800 border border-gray-100 dark:border-gray-800">
-                  <div className="h-8 w-8 rounded-full bg-[#0099ff]/20 flex items-center justify-center mr-3">
-                    <Droplets className="h-4 w-4 text-[#0099ff]" />
+                  <div className="h-8 w-8 rounded-full bg-[#2A6DFF]/20 flex items-center justify-center mr-3">
+                    <Droplets className="h-4 w-4 text-[#2A6DFF]" />
                   </div>
                   <div className="flex-1">
                   <p className="text-sm font-medium text-gray-700 dark:text-gray-200">+{entry.amount}ml</p>

@@ -35,8 +35,8 @@ export default function NutritionPage() {
 
   // Fetch nutrition summary
   const { data: nutritionSummary, isLoading: isLoadingSummary, error: errorSummary } = useQuery({
-    queryKey: ['/api/nutrition/summary'],
-    queryFn: () => apiRequest('GET', '/api/nutrition/summary').then((res: Response) => res.json()),
+    queryKey: ['/api/nutrition-summary'],
+    queryFn: () => apiRequest('GET', '/api/nutrition-summary').then((res: Response) => res.json()),
     enabled: !!user,
   });
 
