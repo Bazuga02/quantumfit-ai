@@ -38,13 +38,6 @@ export default function WorkoutsPage() {
   });
   const userPlans = userPlansRaw as any[] | undefined;
 
-  // Fetch templates
-  const { data: templatesRaw, isLoading: isLoadingTemplates } = useQuery({
-    queryKey: ['/api/workout-plans', { isTemplate: true }],
-    queryFn: () => apiRequest('GET', '/api/workout-plans?isTemplate=true').then(res => res.json()),
-    enabled: !!user,
-  });
-  const templates = templatesRaw as any[] | undefined;
 
   const { data: exercisesRaw, isLoading: isLoadingExercises } = useQuery({
     queryKey: ['/api/exercises'],
@@ -437,7 +430,6 @@ export default function WorkoutsPage() {
           <TabsList>
             <TabsTrigger value="my-workouts">My Workouts</TabsTrigger>
             <TabsTrigger value="exercise-library">Exercise Library</TabsTrigger>
-            <TabsTrigger value="templates">Templates</TabsTrigger>
             <TabsTrigger value="recommended">Recommended</TabsTrigger>
           </TabsList>
           
@@ -606,57 +598,6 @@ export default function WorkoutsPage() {
           )}
         </TabsContent>
 
-        <TabsContent value="templates">
-          {isLoadingTemplates ? (
-            <div>Loading templates...</div>
-          ) : templates && Array.isArray(templates) && templates.length > 0 ? (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {templates.map((template: any) => (
-                <Card key={template.id} className="hover:shadow-md transition-shadow">
-                  <CardContent className="p-6">
-                    <div className="flex items-center justify-between mb-4">
-                      <div className="h-10 w-10 rounded-md bg-primary-100 dark:bg-primary-900/50 flex items-center justify-center text-primary-600 dark:text-primary-400">
-                        <Dumbbell className="h-5 w-5" />
-                      </div>
-                      <Badge variant="outline" className="text-xs">
-                        {template.difficulty}
-                      </Badge>
-                    </div>
-                    <h3 className="font-semibold text-xl mb-2">{template.name}</h3>
-                    <p className="text-sm text-muted-foreground mb-4">
-                      {template.description}
-                    </p>
-                    <div className="flex items-center">
-                      <Timer className="h-4 w-4 mr-1" />
-                      <span>{template.duration} min</span>
-                    </div>
-                    <div className="flex items-center">
-                      <Users className="h-4 w-4 mr-1" />
-                      <span>{template.exercises ? template.exercises.length : 0} exercises</span>
-                    </div>
-                    <div className="flex gap-2 mt-4">
-                      <Button 
-                        variant="outline" 
-                        className="flex-1 flex items-center justify-center gap-2"
-                        onClick={() => handleSelectWorkout(template)}
-                      >
-                        Details
-                      </Button>
-                      <Button 
-                        className="flex-1 flex items-center justify-center gap-2"
-                        onClick={() => adoptTemplate(template.id)}
-                      >
-                        Use Template
-                      </Button>
-                    </div>
-                  </CardContent>
-                </Card>
-              ))}
-            </div>
-          ) : (
-            <div>No templates found.</div>
-          )}
-        </TabsContent>
 
         <TabsContent value="recommended">
           <Card>

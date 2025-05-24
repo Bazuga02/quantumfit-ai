@@ -23,15 +23,9 @@ import { FoodLibrary } from "@/components/nutrition/food-library";
 
 export default function NutritionPage() {
   const { user } = useAuth();
-  const [selectedMeal, setSelectedMeal] = useState<any>(null);
   const [isLogMealDialogOpen, setIsLogMealDialogOpen] = useState(false);
 
-  // Fetch meal plans
-  const { data: mealPlans } = useQuery({
-    queryKey: ['/api/meal-plans'],
-    queryFn: () => apiRequest('GET', '/api/meal-plans').then((res: Response) => res.json()),
-    enabled: !!user,
-  });
+
 
   // Fetch nutrition summary
   const { data: nutritionSummary, isLoading: isLoadingSummary, error: errorSummary } = useQuery({
@@ -50,7 +44,6 @@ export default function NutritionPage() {
           <TabsList>
             <TabsTrigger value="summary">Daily Summary</TabsTrigger>
             <TabsTrigger value="food-library">Food Library</TabsTrigger>
-            <TabsTrigger value="meal-plans">Meal Plans</TabsTrigger>
           </TabsList>
 
           <Dialog open={isLogMealDialogOpen} onOpenChange={setIsLogMealDialogOpen}>
@@ -229,84 +222,7 @@ export default function NutritionPage() {
           <FoodLibrary />
         </TabsContent>
 
-        <TabsContent value="meal-plans">
-          <div className="space-y-6">
-            <div className="flex justify-between items-center">
-              <h2 className="text-xl font-bold">Your Meal Plans</h2>
-              <Button className="flex items-center gap-1">
-                <Plus className="w-4 h-4" />
-                Create Meal Plan
-              </Button>
-            </div>
-            
-            {selectedMeal ? (
-              <MealDetail 
-                meal={selectedMeal}
-                onBack={() => setSelectedMeal(null)}
-              />
-            ) : (
-              <>
-                {(Array.isArray(mealPlans) && mealPlans.length > 0) ? (
-                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                    {Array.isArray(mealPlans) ? mealPlans.map((plan: any) => (
-                      <Card key={plan.id} className="overflow-hidden hover:border-primary transition-colors cursor-pointer" onClick={() => setSelectedMeal(plan)}>
-                        <CardHeader className="p-4 pb-2">
-                          <CardTitle className="text-lg font-semibold flex items-center">
-                            <UtensilsCrossed className="h-5 w-5 mr-2 text-primary" />
-                            {plan.name}
-                          </CardTitle>
-                        </CardHeader>
-                        <CardContent className="p-4 pt-0">
-                          <div className="text-sm text-muted-foreground mb-4">
-                            {plan.description || "A custom meal plan with balanced nutrition"}
-                          </div>
-                          <div className="space-y-2">
-                            {plan.meals && plan.meals.slice(0, 2).map((meal: any) => (
-                              <div key={meal.id} className="flex justify-between items-center p-2 rounded-md bg-accent/50">
-                                <div className="flex items-center gap-2">
-                                  <div className="h-8 w-8 rounded-full bg-primary/10 flex items-center justify-center">
-                                    <Utensils className="h-4 w-4 text-primary" />
-                                  </div>
-                                  <span>{meal.name}</span>
-                                </div>
-                                <span className="text-xs text-muted-foreground">{meal.time}</span>
-                              </div>
-                            ))}
-                            {(!plan.meals || plan.meals.length === 0) && (
-                              <div className="py-4 text-center text-muted-foreground text-sm">
-                                No meals added yet
-                              </div>
-                            )}
-                          </div>
-                          {plan.meals && plan.meals.length > 2 && (
-                            <div className="text-xs text-center text-muted-foreground mt-2">
-                              + {plan.meals.length - 2} more meals
-                            </div>
-                          )}
-                        </CardContent>
-                      </Card>
-                    )) : null}
-                  </div>
-                ) : (
-                  <div className="grid grid-cols-1">
-                    <Card>
-                      <CardContent className="p-6">
-                        <div className="flex flex-col items-center justify-center py-8 text-center">
-                          <GanttChart className="h-12 w-12 text-gray-300 mb-2" />
-                          <p className="text-lg font-medium mb-1">No meal plans found</p>
-                          <p className="text-muted-foreground mb-4">
-                            Create your first meal plan to streamline your nutrition
-                          </p>
-                          <Button>Create Meal Plan</Button>
-                        </div>
-                      </CardContent>
-                    </Card>
-                  </div>
-                )}
-              </>
-            )}
-          </div>
-        </TabsContent>
+       
       </Tabs>
     </MainLayout>
   );

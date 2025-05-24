@@ -1,6 +1,19 @@
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
-import { CheckIcon, DumbbellIcon, BarChart3Icon, CalendarIcon } from "lucide-react";
-import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid } from 'recharts';
+import {
+  CheckIcon,
+  DumbbellIcon,
+  BarChart3Icon,
+  CalendarIcon,
+} from "lucide-react";
+import {
+  BarChart,
+  Bar,
+  XAxis,
+  YAxis,
+  Tooltip,
+  ResponsiveContainer,
+  CartesianGrid,
+} from "recharts";
 
 export function ProgressBodyPartsTab({
   trainedToday,
@@ -8,7 +21,7 @@ export function ProgressBodyPartsTab({
   logBodyPart,
   recentStats,
   calendarData,
-  bodyPartsList
+  bodyPartsList,
 }: {
   trainedToday: string[];
   logging: boolean;
@@ -38,15 +51,19 @@ export function ProgressBodyPartsTab({
                 key={bp}
                 type="button"
                 className={`relative p-1.5 rounded-lg font-medium text-center transition-all duration-200
-                  ${trainedToday.includes(bp)
-                    ? "bg-primary text-white"
-                    : "bg-gray-100 border border-black dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700"}
+                  ${
+                    trainedToday.includes(bp)
+                      ? "bg-primary text-white"
+                      : "bg-gray-100 border border-black dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700"
+                  }
                 `}
                 disabled={logging || trainedToday.includes(bp)}
                 onClick={() => logBodyPart(bp)}
               >
                 {bp}
-                {trainedToday.includes(bp) && <CheckIcon className="absolute top-1 right-1 h-3.5 w-3.5" />}
+                {trainedToday.includes(bp) && (
+                  <CheckIcon className="absolute top-1 right-1 h-3.5 w-3.5" />
+                )}
               </button>
             ))}
           </div>
@@ -70,12 +87,15 @@ export function ProgressBodyPartsTab({
             <CardContent>
               <div className="h-64 w-full">
                 <ResponsiveContainer width="100%" height={180}>
-                  <BarChart data={recentStats} margin={{ top: 10, right: 20, left: 0, bottom: 0 }}>
+                  <BarChart
+                    data={recentStats}
+                    margin={{ top: 10, right: 20, left: 0, bottom: 0 }}
+                  >
                     <CartesianGrid strokeDasharray="3 3" />
                     <XAxis dataKey="bodyPart" fontSize={12} />
                     <YAxis allowDecimals={false} />
                     <Tooltip />
-                    <Bar dataKey="count" fill="#e11d48" radius={[8,8,0,0]} />
+                    <Bar dataKey="count" fill="blue" radius={[8, 8, 0, 0]} />
                   </BarChart>
                 </ResponsiveContainer>
               </div>
@@ -93,18 +113,28 @@ export function ProgressBodyPartsTab({
             <CardContent>
               <div className="grid grid-cols-7 gap-2 mb-2">
                 {weekDays.map((day) => (
-                  <div key={day} className="text-center font-medium text-gray-500 dark:text-gray-400">
+                  <div
+                    key={day}
+                    className="text-center font-medium text-gray-500 dark:text-gray-400"
+                  >
                     {day}
                   </div>
                 ))}
                 {calendarDates.map((date, i) => (
                   <div
                     key={date}
-                    title={date + (calendarData[date] > 0 ? `: ${calendarData[date]} part(s)` : '')}
+                    title={
+                      date +
+                      (calendarData[date] > 0
+                        ? `: ${calendarData[date]} part(s)`
+                        : "")
+                    }
                     className={`aspect-square flex items-center justify-center rounded-lg text-sm font-medium
-                      ${calendarData[date] > 0
-                        ? "bg-primary text-white"
-                        : "bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300"}
+                      ${
+                        calendarData[date] > 0
+                          ? "bg-primary text-white"
+                          : "bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300"
+                      }
                     `}
                   >
                     {new Date(date).getDate()}
@@ -117,4 +147,4 @@ export function ProgressBodyPartsTab({
       </div>
     </>
   );
-} 
+}

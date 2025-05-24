@@ -103,11 +103,7 @@ export default function SettingsPage() {
           <TabsTrigger value="profile" className="flex items-center gap-2">
             <User className="h-4 w-4" />
             Profile
-          </TabsTrigger>
-          <TabsTrigger value="goals" className="flex items-center gap-2">
-            <Flame className="h-4 w-4" />
-            Goals
-          </TabsTrigger>
+          </TabsTrigger>  
           <TabsTrigger value="appearance" className="flex items-center gap-2">
             <Moon className="h-4 w-4" />
             Appearance
@@ -170,131 +166,10 @@ export default function SettingsPage() {
             </CardFooter>
           </Card>
           
-          <Card>
-            <CardHeader>
-              <CardTitle>Password</CardTitle>
-              <CardDescription>
-                Change your password to keep your account secure
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="space-y-2">
-                <Label htmlFor="current-password">Current Password</Label>
-                <Input id="current-password" type="password" />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="new-password">New Password</Label>
-                <Input id="new-password" type="password" />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="confirm-password">Confirm New Password</Label>
-                <Input id="confirm-password" type="password" />
-              </div>
-            </CardContent>
-            <CardFooter>
-              <Button className="ml-auto">
-                <Lock className="mr-2 h-4 w-4" />
-                Update Password
-              </Button>
-            </CardFooter>
-          </Card>
+         
         </TabsContent>
         
-        <TabsContent value="goals" className="space-y-6">
-          <Card>
-            <CardHeader>
-              <CardTitle>Fitness Goals</CardTitle>
-              <CardDescription>
-                Configure your daily targets and nutritional goals
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-6">
-              <div className="space-y-2">
-                <Label htmlFor="waterIntakeGoal" className="flex items-center gap-2">
-                  <Droplets className="h-4 w-4 text-blue-500" />
-                  Daily Water Intake Goal (Liters)
-                </Label>
-                <Input 
-                  id="waterIntakeGoal" 
-                  name="waterIntakeGoal"
-                  type="number" 
-                  step="0.1" 
-                  value={formData.waterIntakeGoal}
-                  onChange={handleInputChange}
-                />
-              </div>
-              
-              <div className="space-y-2">
-                <Label htmlFor="calorieGoal" className="flex items-center gap-2">
-                  <Flame className="h-4 w-4 text-orange-500" />
-                  Daily Calorie Goal
-                </Label>
-                <Input 
-                  id="calorieGoal" 
-                  name="calorieGoal"
-                  type="number" 
-                  value={formData.calorieGoal}
-                  onChange={handleInputChange}
-                />
-              </div>
-              
-              <div>
-                <h3 className="text-sm font-medium mb-3">Macro Nutrient Goals (grams)</h3>
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="protein">Protein</Label>
-                    <Input 
-                      id="protein" 
-                      name="protein"
-                      type="number" 
-                      value={formData.protein}
-                      onChange={handleInputChange}
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="carbs">Carbohydrates</Label>
-                    <Input 
-                      id="carbs" 
-                      name="carbs"
-                      type="number" 
-                      value={formData.carbs}
-                      onChange={handleInputChange}
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="fats">Fats</Label>
-                    <Input 
-                      id="fats" 
-                      name="fats"
-                      type="number" 
-                      value={formData.fats}
-                      onChange={handleInputChange}
-                    />
-                  </div>
-                </div>
-              </div>
-            </CardContent>
-            <CardFooter>
-              <Button 
-                className="ml-auto"
-                onClick={handleSaveProfile}
-                disabled={updateSettingsMutation.isPending}
-              >
-                {updateSettingsMutation.isPending ? (
-                  <>
-                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    Saving...
-                  </>
-                ) : (
-                  <>
-                    <Save className="mr-2 h-4 w-4" />
-                    Save Changes
-                  </>
-                )}
-              </Button>
-            </CardFooter>
-          </Card>
-        </TabsContent>
+       
         
         <TabsContent value="appearance" className="space-y-6">
           <Card>

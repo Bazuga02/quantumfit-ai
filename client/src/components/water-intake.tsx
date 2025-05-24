@@ -96,7 +96,7 @@ export function WaterIntake() {
           {/* Liquid container */}
           <div className="absolute inset-0 flex items-end justify-center overflow-hidden">
             <div
-              className="w-full bg-gradient-to-t from-[#2A6DFF] to-[#42a5f5] dark:from-blue-900 dark:to-blue-600 transition-all duration-1000 ease-out"
+              className="w-full bg-blue-600 dark:from-blue-900 dark:to-blue-600 transition-all duration-1000 ease-out"
               style={{ height: `${percentage}%` }}
             >
               {/* Bubbles animation */}
