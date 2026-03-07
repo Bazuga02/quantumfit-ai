@@ -2,7 +2,6 @@ import { useAuth } from "@/hooks/use-auth";
 import { NavLink } from "./nav-link";
 import { Activity, LayoutDashboard, Dumbbell, Apple, Droplets, LineChart, BrainCircuit, Settings, X } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Button } from "@/components/ui/button";
 import { useLocation } from "wouter";
 import Lottie from "lottie-react";
 import dashboardAnimation from "@/components/layout/animation/dashboard.json";

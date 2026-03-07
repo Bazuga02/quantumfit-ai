@@ -7,7 +7,6 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { useMutation } from "@tanstack/react-query";
-import { useAuth } from "@/hooks/use-auth";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
 import {
@@ -15,17 +14,13 @@ import {
   Dumbbell,
   Apple,
   LineChart,
-  MessageSquare,
   CheckCircle,
   Clock,
-  ArrowRight,
   Sparkles,
   Loader2
 } from "lucide-react";
-import { AIRecommendations } from "@/components/dashboard/ai-recommendations";
 
 export default function AICoachPage() {
-  const { user } = useAuth();
   const { toast } = useToast();
   const [workoutGoals, setWorkoutGoals] = useState("");
   const [fitnessLevel, setFitnessLevel] = useState("intermediate");

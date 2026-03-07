@@ -10,7 +10,7 @@ import { useToast } from "@/hooks/use-toast";
 import { useTheme } from "@/lib/theme-provider";
 import { apiRequest } from "@/lib/queryClient";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { Lock, Moon, Sun, User, Flame, LogOut, Save, Loader2, Droplets } from "lucide-react";
+import { Moon, Sun, User, LogOut, Save, Loader2 } from "lucide-react";
 
 export default function SettingsPage() {
   const { toast } = useToast();

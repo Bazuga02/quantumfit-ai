@@ -2,12 +2,10 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { useAuth } from "@/hooks/use-auth";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useToast } from "@/components/ui/use-toast";
 
 export function MeasurementForm({ onSuccess }: { onSuccess?: () => void }) {
-  const { user } = useAuth();
   const queryClient = useQueryClient();
   const { toast } = useToast();
   const [formData, setFormData] = useState({

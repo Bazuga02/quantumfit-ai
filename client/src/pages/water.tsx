@@ -19,7 +19,7 @@ export default function WaterPage() {
         <div className="flex-1 min-w-[320px] max-w-md">
           <Card className="max-w-md w-full overflow-hidden border-0 shadow-xl rounded-3xl">
             {/* Gradient Header */}
-            <div className="p-6 bg-gradient-to-br from-[#3a8bff] to-[#5bbcff] dark:from-blue-900 dark:to-blue-700">
+            <div className="p-6 bg-gradient-to-br from-[#FF3A54] to-[#ff6b7d] dark:from-[#FF3A54] dark:to-[#ff6b7d]">
               <div className="flex items-center justify-between mb-2">
                 <h2 className="text-xl font-bold text-white flex items-center">
                   <Droplets className="h-5 w-5 mr-2" />
@@ -31,7 +31,7 @@ export default function WaterPage() {
             <div className="p-6 bg-white dark:bg-gray-900 rounded-b-3xl">
               <div className="space-y-5">
                 <div>
-                  <h3 className="font-semibold text-blue-700 dark:text-blue-300 mb-2">Why Stay Hydrated?</h3>
+                  <h3 className="font-semibold text-[#FF3A54] dark:text-[#ff6b7d] mb-2">Why Stay Hydrated?</h3>
                   <ul className="list-disc pl-5 text-gray-700 dark:text-gray-200 space-y-1">
                     <li>Improves physical performance</li>
                     <li>Boosts energy levels and brain function</li>
@@ -41,7 +41,7 @@ export default function WaterPage() {
                   </ul>
                 </div>
                 <div>
-                  <h3 className="font-semibold text-blue-700 dark:text-blue-300 mb-2">Daily Water Intake Guidelines</h3>
+                  <h3 className="font-semibold text-[#FF3A54] dark:text-[#ff6b7d] mb-2">Daily Water Intake Guidelines</h3>
                   <p className="text-gray-700 dark:text-gray-200 mb-2">The general recommendation is to drink 2-3 liters (8-12 cups) of water per day. However, your needs may vary based on:</p>
                   <ul className="list-disc pl-5 text-gray-700 dark:text-gray-200 space-y-1">
                     <li>Your activity level</li>
@@ -51,7 +51,7 @@ export default function WaterPage() {
                   </ul>
                 </div>
                 <div>
-                  <h3 className="font-semibold text-blue-700 dark:text-blue-300 mb-2">Tips for Staying Hydrated</h3>
+                  <h3 className="font-semibold text-[#FF3A54] dark:text-[#ff6b7d] mb-2">Tips for Staying Hydrated</h3>
                   <ul className="list-disc pl-5 text-gray-700 dark:text-gray-200 space-y-1">
                     <li>Carry a water bottle with you</li>
                     <li>Set reminders to drink water</li>

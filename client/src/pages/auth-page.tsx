@@ -6,7 +6,7 @@ import { Activity } from "lucide-react";
 
 export default function AuthPage() {
   const { user, isLoading } = useAuth();
-  const [location, navigate] = useLocation();
+  const [, navigate] = useLocation();
 
   // Redirect to dashboard if user is already logged in
   useEffect(() => {

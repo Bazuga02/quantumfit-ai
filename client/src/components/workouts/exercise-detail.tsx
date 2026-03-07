@@ -1,4 +1,3 @@
-import React from "react";
 import { Button } from "@/components/ui/button";
 import { ChevronLeft, Info, Check, Play, Clock, Dumbbell } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";

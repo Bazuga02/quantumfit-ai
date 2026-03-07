@@ -20,7 +20,6 @@ import {
 import {
   Form,
   FormControl,
-  FormDescription,
   FormField,
   FormItem,
   FormLabel,
@@ -29,9 +28,8 @@ import {
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { motion, AnimatePresence } from "framer-motion";
-import { Dialog, DialogTrigger, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 
 // Extended schema for login
 const loginSchema = z.object({
@@ -60,7 +58,7 @@ type RegisterFormValues = z.infer<typeof registerSchema>;
 export function AuthForms() {
   const [activeTab, setActiveTab] = useState<string>("login");
   const { loginMutation, registerMutation } = useAuth();
-  const [location, navigate] = useLocation();
+  const [, navigate] = useLocation();
   const [privacyOpen, setPrivacyOpen] = useState(false);
 
   // Login form
@@ -127,7 +125,7 @@ export function AuthForms() {
                 value="login"
                 className={
                   activeTab === "login"
-                    ? "bg-white dark:bg-gray-950 text-[#2A6DFF] dark:text-[#2A6DFF] shadow-[0_2px_16px_0_#2A6DFF22] font-bold z-10 transition-all duration-200 border-2 border-[#2A6DFF] dark:border-[#2A6DFF]"
+                    ? "bg-white dark:bg-gray-950 text-[#FF3A54] dark:text-[#FF3A54] shadow-[0_2px_16px_0_#FF3A5422] font-bold z-10 transition-all duration-200 border-2 border-[#FF3A54] dark:border-[#FF3A54]"
                     : "bg-transparent text-gray-500 dark:text-gray-300 font-semibold transition-all duration-200"
                 }
               >
@@ -137,7 +135,7 @@ export function AuthForms() {
                 value="register"
                 className={
                   activeTab === "register"
-                    ? "bg-white dark:bg-gray-950 text-[#2A6DFF] dark:text-[#2A6DFF] shadow-[0_2px_16px_0_#2A6DFF22] font-bold z-10 transition-all duration-200 border-2 border-[#2A6DFF] dark:border-[#2A6DFF]"
+                    ? "bg-white dark:bg-gray-950 text-[#FF3A54] dark:text-[#FF3A54] shadow-[0_2px_16px_0_#FF3A5422] font-bold z-10 transition-all duration-200 border-2 border-[#FF3A54] dark:border-[#FF3A54]"
                     : "bg-transparent text-gray-500 dark:text-gray-300 font-semibold transition-all duration-200"
                 }
               >
@@ -174,7 +172,7 @@ export function AuthForms() {
                                 <Input
                                   placeholder="you@example.com"
                                   {...field}
-                                  className="transition-all duration-300 focus:shadow-[0_0_0_3px_#2A6DFF44] focus:border-[#2A6DFF]"
+                                  className="transition-all duration-300 focus:shadow-[0_0_0_3px_#FF3A5444] focus:border-[#FF3A54]"
                                 />
                               </FormControl>
                               <FormMessage />
@@ -192,7 +190,7 @@ export function AuthForms() {
                                   type="password"
                                   placeholder="********"
                                   {...field}
-                                  className="transition-all duration-300 focus:shadow-[0_0_0_3px_#2A6DFF44] focus:border-[#2A6DFF]"
+                                  className="transition-all duration-300 focus:shadow-[0_0_0_3px_#FF3A5444] focus:border-[#FF3A54]"
                                 />
                               </FormControl>
                               <FormMessage />
@@ -215,11 +213,11 @@ export function AuthForms() {
                               </FormItem>
                             )}
                           />
-                          <Button variant="link" className="p-0 h-auto text-sm text-[#2A6DFF] hover:underline">Forgot password?</Button>
+                          <Button variant="link" className="p-0 h-auto text-sm text-[#FF3A54] hover:underline">Forgot password?</Button>
                         </div>
                         <motion.button
                           type="submit"
-                          className="w-full bg-[#2A6DFF] hover:bg-[#1e56cc] text-white font-semibold py-3 rounded-full shadow-lg transition-transform duration-200 active:scale-95"
+                          className="w-full bg-[#FF3A54] hover:bg-[#e63346] text-white font-semibold py-3 rounded-full shadow-lg transition-transform duration-200 active:scale-95"
                           disabled={loginMutation.isPending}
                           whileHover={{ scale: 1.03 }}
                           whileTap={{ scale: 0.97 }}
@@ -260,7 +258,7 @@ export function AuthForms() {
                                 <Input
                                   placeholder="John Doe"
                                   {...field}
-                                  className="transition-all duration-300 focus:shadow-[0_0_0_3px_#2A6DFF44] focus:border-[#2A6DFF]"
+                                  className="transition-all duration-300 focus:shadow-[0_0_0_3px_#FF3A5444] focus:border-[#FF3A54]"
                                 />
                               </FormControl>
                               <FormMessage />
@@ -277,7 +275,7 @@ export function AuthForms() {
                                 <Input
                                   placeholder="you@example.com"
                                   {...field}
-                                  className="transition-all duration-300 focus:shadow-[0_0_0_3px_#2A6DFF44] focus:border-[#2A6DFF]"
+                                  className="transition-all duration-300 focus:shadow-[0_0_0_3px_#FF3A5444] focus:border-[#FF3A54]"
                                 />
                               </FormControl>
                               <FormMessage />
@@ -295,7 +293,7 @@ export function AuthForms() {
                                   type="password"
                                   placeholder="********"
                                   {...field}
-                                  className="transition-all duration-300 focus:shadow-[0_0_0_3px_#2A6DFF44] focus:border-[#2A6DFF]"
+                                  className="transition-all duration-300 focus:shadow-[0_0_0_3px_#FF3A5444] focus:border-[#FF3A54]"
                                 />
                               </FormControl>
                               <FormMessage />
@@ -313,7 +311,7 @@ export function AuthForms() {
                                   type="password"
                                   placeholder="********"
                                   {...field}
-                                  className="transition-all duration-300 focus:shadow-[0_0_0_3px_#2A6DFF44] focus:border-[#2A6DFF]"
+                                  className="transition-all duration-300 focus:shadow-[0_0_0_3px_#FF3A5444] focus:border-[#FF3A54]"
                                 />
                               </FormControl>
                               <FormMessage />
@@ -337,7 +335,7 @@ export function AuthForms() {
                                   <Button
                                     type="button"
                                     variant="link"
-                                    className="p-0 h-auto text-sm text-[#2A6DFF] hover:underline"
+                                    className="p-0 h-auto text-sm text-[#FF3A54] hover:underline"
                                     onClick={() => setPrivacyOpen(true)}
                                   >
                                     Terms
@@ -346,7 +344,7 @@ export function AuthForms() {
                                   <Button
                                     type="button"
                                     variant="link"
-                                    className="p-0 h-auto text-sm text-[#2A6DFF] hover:underline"
+                                    className="p-0 h-auto text-sm text-[#FF3A54] hover:underline"
                                     onClick={() => setPrivacyOpen(true)}
                                   >
                                     Privacy Policy
@@ -361,7 +359,7 @@ export function AuthForms() {
                                     <DialogDescription>
                                       <div className="text-left space-y-4 mt-2">
                                         <p>
-                                          <span className="font-semibold text-[#2A6DFF]">QuantumFit AI</span> is committed to protecting your privacy and personal data. We will never sell, misuse, or share your information with third parties for advertising or malicious purposes.
+                                          <span className="font-semibold text-[#FF3A54]">QuantumFit AI</span> is committed to protecting your privacy and personal data. We will never sell, misuse, or share your information with third parties for advertising or malicious purposes.
                                         </p>
                                         <ul className="list-disc pl-5 space-y-2">
                                           <li>
@@ -393,7 +391,7 @@ export function AuthForms() {
                         />
                         <motion.button
                           type="submit"
-                          className="w-full bg-[#2A6DFF] hover:bg-[#1e56cc] text-white font-semibold py-3 rounded-full shadow-lg transition-transform duration-200 active:scale-95"
+                          className="w-full bg-[#FF3A54] hover:bg-[#e63346] text-white font-semibold py-3 rounded-full shadow-lg transition-transform duration-200 active:scale-95"
                           disabled={registerMutation.isPending}
                           whileHover={{ scale: 1.03 }}
                           whileTap={{ scale: 0.97 }}

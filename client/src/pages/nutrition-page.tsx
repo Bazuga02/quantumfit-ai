@@ -6,7 +6,7 @@ import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { useQuery } from "@tanstack/react-query";
 import { useAuth } from "@/hooks/use-auth";
 import { apiRequest } from "@/lib/queryClient";
-import { Calendar, GanttChart, Plus, Utensils } from "lucide-react";
+import { Calendar, Plus, Utensils } from "lucide-react";
 import {
   Dialog,
   DialogContent,
@@ -16,9 +16,7 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import { NutritionSummary } from "@/components/dashboard/nutrition-summary";
-import { MealDetail } from "@/components/nutrition/meal-detail";
 import { LogMealForm } from "@/components/nutrition/log-meal-form";
-import { UtensilsCrossed } from "lucide-react";
 import { FoodLibrary } from "@/components/nutrition/food-library";
 
 export default function NutritionPage() {

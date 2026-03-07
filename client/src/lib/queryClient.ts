@@ -69,14 +69,6 @@ export async function apiRequest(
     body: body ? JSON.stringify(body) : undefined,
   });
 
-  // LOGGING: Show response details
-  let responseData = null;
-  try {
-    responseData = await response.clone().json();
-  } catch (e) {
-    responseData = null;
-  }
-
   // Handle 401 Unauthorized responses
   if (response.status === 401) {
     localStorage.removeItem('token');

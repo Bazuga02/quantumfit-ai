@@ -3,7 +3,7 @@ import { MainLayout } from "@/components/layout/main-layout";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useQuery, useMutation } from "@tanstack/react-query";
 import { useAuth } from "@/hooks/use-auth";
 import { apiRequest } from "@/lib/queryClient";
 import { Calendar, ChevronRight, Dumbbell, Search, Timer, Users, Plus } from "lucide-react";
@@ -16,7 +16,6 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
-import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
 import { WorkoutSession } from "@/components/workouts/workout-session";
 import { WorkoutDetail } from "@/components/workouts/workout-detail";
@@ -24,7 +23,6 @@ import { WorkoutDetail } from "@/components/workouts/workout-detail";
 export default function WorkoutsPage() {
   const { user } = useAuth();
   const { toast } = useToast();
-  const queryClient = useQueryClient();
   const [searchTerm, setSearchTerm] = useState("");
   const [activeWorkoutSession, setActiveWorkoutSession] = useState<any>(null);
   const [selectedWorkout, setSelectedWorkout] = useState<any>(null);
@@ -355,42 +353,6 @@ export default function WorkoutsPage() {
       description: "Your workout session has been ended.",
     });
     setActiveWorkoutSession(null);
-  };
-
-  // Adopt template logic
-  const adoptTemplate = async (templateId: number) => {
-    // 1. Fetch template plan and its exercises
-    const templateRes = await apiRequest('GET', `/api/workout-plans/${templateId}`);
-    const template = await templateRes.json();
-    const exercisesRes = await apiRequest('GET', `/api/workout-plans/${templateId}/exercises`);
-    const exercises = await exercisesRes.json();
-
-    // 2. Create a new user plan
-    const newPlanRes = await apiRequest('POST', '/api/workout-plans', {
-      name: template.name,
-      description: template.description,
-      duration: template.duration,
-      difficulty: template.difficulty,
-      schedule: template.schedule,
-      isTemplate: false,
-    });
-    const newPlan = await newPlanRes.json();
-
-    // 3. Copy exercises to new plan
-    for (const ex of exercises) {
-      await apiRequest('POST', `/api/workout-plans/${newPlan.id}/exercises`, {
-        exerciseId: ex.exercise.id,
-        sets: ex.sets,
-        reps: ex.reps,
-        weight: ex.weight,
-        duration: ex.duration,
-        restTime: ex.restTime,
-        order: ex.order,
-      });
-    }
-    toast({ title: 'Template adopted!', description: 'The template has been added to your plans.' });
-    queryClient.invalidateQueries({ queryKey: ['/api/workout-plans'] });
-    setActiveTab('my-workouts');
   };
 
   // If there's an active workout session, show the workout session interface

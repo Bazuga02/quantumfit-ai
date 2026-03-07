@@ -1,6 +1,6 @@
-import React, { useState } from "react";
+import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { Search, Dumbbell, ChevronRight, Plus } from "lucide-react";
+import { Search, Dumbbell, Plus } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -58,10 +58,6 @@ export function ExerciseLibrary() {
     return matchesSearch && matchesMuscleGroup;
   });
 
-
-  const handleExerciseClick = (exercise: Exercise) => {
-    setSelectedExercise(exercise);
-  };
 
   const handleBackToList = () => {
     setSelectedExercise(null);

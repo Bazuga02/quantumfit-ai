@@ -1,5 +1,5 @@
 import { useAuth } from "@/hooks/use-auth";
-import { Bell, Menu, Moon, Search, Sun, Activity } from "lucide-react";
+import { Menu, Moon, Search, Sun, Activity } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import {

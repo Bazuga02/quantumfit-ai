@@ -22,9 +22,10 @@
       "@/components/*": ["src/components/*"],
       "@/lib/*": ["src/lib/*"],
       "@/hooks/*": ["src/hooks/*"],
-      "@/pages/*": ["src/pages/*"]
+      "@/pages/*": ["src/pages/*"],
+      "@shared/*": ["../../shared/*"]
     }
   },
-  "include": ["src"],
+  "include": ["src", "../../shared"],
   "references": [{ "path": "./tsconfig.node.json" }]
 } 

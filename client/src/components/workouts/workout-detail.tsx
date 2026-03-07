@@ -5,8 +5,6 @@ import { Button } from "@/components/ui/button";
 import { ArrowLeft, CheckCircle, Clock, Dumbbell, Users } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
-import { WorkoutSession } from "./workout-session";
-import { useToast } from "@/hooks/use-toast";
 
 interface Exercise {
   exercise: {
@@ -43,7 +41,6 @@ interface WorkoutDetailProps {
 }
 
 export function WorkoutDetail({ workout, onBack, onStartWorkout }: WorkoutDetailProps) {
-  const { toast } = useToast();
   const [showingExerciseId, setShowingExerciseId] = useState<number | null>(null);
 
   // Show detailed exercise instructions

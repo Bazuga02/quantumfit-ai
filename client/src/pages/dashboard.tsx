@@ -5,8 +5,7 @@ import { StatsCard } from "@/components/dashboard/stats-card";
 import { WorkoutPlan } from "@/components/dashboard/workout-plan";
 import { NutritionSummary } from "@/components/dashboard/nutrition-summary";
 import { AIRecommendations } from "@/components/dashboard/ai-recommendations";
-import { Flame, Timer, Dumbbell, Droplets } from "lucide-react";
-import { FoodLibrary } from "@/components/nutrition/food-library";
+import { Flame, Dumbbell, Droplets } from "lucide-react";
 import { WaterIntake } from "@/components/water-intake";
 import { ProgressGraph } from "@/components/progress/progress-graph";
 import { useEffect, useState } from "react";
@@ -77,17 +76,14 @@ export default function Dashboard() {
 
   // Progress measurements state
   const [measurements, setMeasurements] = useState<any[]>([]);
-  const [loading, setLoading] = useState(true);
   useEffect(() => {
     async function fetchMeasurements() {
-      setLoading(true);
       const res = await fetch("/api/measurements");
       if (res.ok) {
         setMeasurements(await res.json());
       } else {
         setMeasurements([]);
       }
-      setLoading(false);
     }
     fetchMeasurements();
   }, []);

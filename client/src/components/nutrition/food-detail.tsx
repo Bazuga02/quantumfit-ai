@@ -1,4 +1,3 @@
-import React from "react";
 import { Button } from "@/components/ui/button";
 import { ChevronLeft, Utensils, Info, ArrowUpRight, PieChart } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
@@ -25,7 +24,6 @@ interface FoodDetailProps {
 
 export function FoodDetail({ food, onBack }: FoodDetailProps) {
   // Calculate macronutrient percentages
-  const totalMacros = food.protein + food.carbs + food.fats;
   const proteinPercentage = Math.round((food.protein * 4 / food.calories) * 100);
   const carbsPercentage = Math.round((food.carbs * 4 / food.calories) * 100);
   const fatsPercentage = Math.round((food.fats * 9 / food.calories) * 100);

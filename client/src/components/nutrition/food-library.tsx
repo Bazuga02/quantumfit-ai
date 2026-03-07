@@ -1,14 +1,12 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { Search, Utensils, ChevronRight, SlidersHorizontal } from "lucide-react";
+import { Search, Utensils, ChevronRight } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { Separator } from "@/components/ui/separator";
 import { Badge } from "@/components/ui/badge";
 import { FoodDetail } from "./food-detail";
-import { MainLayout } from "@/components/layout/main-layout";
-import type { Food } from "@shared/schema";
+import type { Food } from "../../../../shared/schema";
 
 async function fetchFoods(category?: string, query?: string) {
   const params = new URLSearchParams();

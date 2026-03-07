@@ -120,7 +120,7 @@ export function ProgressBodyPartsTab({
                     {day}
                   </div>
                 ))}
-                {calendarDates.map((date, i) => (
+                {calendarDates.map((date) => (
                   <div
                     key={date}
                     title={

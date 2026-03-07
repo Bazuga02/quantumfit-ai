@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
-import type { Food } from "@shared/schema";
+import type { Food } from "../../../../shared/schema";
 
 export function useFoodSearch() {
   const [searchTerm, setSearchTerm] = useState("");
