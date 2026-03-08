@@ -1,7 +1,16 @@
 import type { Express, Request, Response, NextFunction } from "express";
 import { createServer, type Server } from "http";
+
+const timestamp = new Date().toISOString();
+console.log(`[${timestamp}] [routes] ===== ROUTES MODULE INITIALIZATION =====`);
+
+console.log(`[${timestamp}] [routes] Importing storage module...`);
 import { storage as dbStorage } from "./storage";
+
+console.log(`[${timestamp}] [routes] Importing auth module...`);
 import { setupAuth } from "./auth";
+
+console.log(`[${timestamp}] [routes] Importing schemas...`);
 import {
   insertMeasurementSchema,
   insertWorkoutPlanSchema,
@@ -11,11 +20,15 @@ import {
   insertMealFoodSchema,
   User
 } from "@shared/schema";
+
+console.log(`[${timestamp}] [routes] Importing OpenAI modules...`);
 import {
   getWorkoutRecommendation,
   getNutritionRecommendation,
   getProgressAnalysis
 } from "./openai";
+
+console.log(`[${timestamp}] [routes] Importing other dependencies...`);
 import { z } from "zod";
 import multer from 'multer';
 import path from 'path';
@@ -25,6 +38,8 @@ import fs from 'fs';
 import express from 'express';
 import jwt from "jsonwebtoken";
 import crypto from "crypto";
+
+console.log(`[${timestamp}] [routes] All imports successful`);
 
 // Ensure uploads directory exists
 const uploadsDir = path.join(process.cwd(), 'uploads', 'progress-photos');

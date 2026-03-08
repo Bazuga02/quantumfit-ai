@@ -2,25 +2,49 @@ import 'dotenv/config';
 import express, { type Request, Response } from "express";
 import { registerRoutes } from "../server/routes";
 
-const app = express();
-
-// Basic middleware
-app.use(express.json());
-app.use(express.urlencoded({ extended: false }));
-
-// Add CORS headers
-app.use((req, res, next) => {
-  res.header('Access-Control-Allow-Origin', '*');
-  res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, PATCH');
-  res.header('Access-Control-Allow-Headers', 'Content-Type, Authorization');
-  if (req.method === 'OPTIONS') {
-    return res.sendStatus(200);
-  }
-  next();
+const timestamp = new Date().toISOString();
+console.log(`[${timestamp}] [api] ===== MODULE INITIALIZATION =====`);
+console.log(`[${timestamp}] [api] Starting API module import...`);
+console.log(`[${timestamp}] [api] Environment check:`, {
+  NODE_ENV: process.env.NODE_ENV,
+  DATABASE_URL: !!process.env.DATABASE_URL,
+  JWT_SECRET: !!process.env.JWT_SECRET,
+  SESSION_SECRET: !!process.env.SESSION_SECRET
 });
 
-// Register routes once (cached for serverless)
+// Declare variables outside try block
+let app: express.Express;
 let routesInitialized = false;
+
+try {
+  console.log(`[${timestamp}] [api] Creating Express app...`);
+  app = express();
+
+  // Basic middleware
+  app.use(express.json());
+  app.use(express.urlencoded({ extended: false }));
+
+  // Add CORS headers
+  app.use((req, res, next) => {
+    res.header('Access-Control-Allow-Origin', '*');
+    res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, PATCH');
+    res.header('Access-Control-Allow-Headers', 'Content-Type, Authorization');
+    if (req.method === 'OPTIONS') {
+      return res.sendStatus(200);
+    }
+    next();
+  });
+
+  console.log(`[${timestamp}] [api] Module initialization completed successfully`);
+
+} catch (initError) {
+  console.error(`[${timestamp}] [api] ===== INITIALIZATION ERROR =====`);
+  console.error(`[${timestamp}] [api] Module initialization failed:`, initError);
+  console.error(`[${timestamp}] [api] Error stack:`, initError instanceof Error ? initError.stack : 'No stack');
+  throw initError;
+}
+
+// Register routes once (cached for serverless)
 async function ensureRoutes() {
   if (!routesInitialized) {
     console.log('[api] Initializing routes (first request)...');
