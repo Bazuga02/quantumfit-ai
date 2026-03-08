@@ -29,7 +29,7 @@ import {
   progressPhotos,
   meals,
   TrainedBodyPart
-} from "@shared/schema";
+} from "../shared/schema.js";
 
 const MemoryStore = createMemoryStore(session);
 

@@ -1,4 +1,4 @@
-import { User, InsertUser, Measurement, InsertMeasurement, Exercise, WorkoutPlan, InsertWorkoutPlan, WorkoutPlanExercise, InsertWorkoutPlanExercise, Food, MealPlan, InsertMealPlan, Meal, InsertMeal, MealFood, InsertMealFood, WaterIntake, InsertWaterIntake } from "@shared/schema";
+import { User, InsertUser, Measurement, InsertMeasurement, Exercise, WorkoutPlan, InsertWorkoutPlan, WorkoutPlanExercise, InsertWorkoutPlanExercise, Food, MealPlan, InsertMealPlan, Meal, InsertMeal, MealFood, InsertMealFood, WaterIntake, InsertWaterIntake } from "../shared/schema.js";
 import createMemoryStore from "memorystore";
 import session, { Store } from "express-session";
 import { db } from './db.js';

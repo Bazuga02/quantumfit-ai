@@ -22,7 +22,7 @@ import {
   insertMealSchema,
   insertMealFoodSchema,
   User
-} from "@shared/schema";
+} from "../shared/schema.js";
 
 console.log(`[${timestamp}] [routes] Importing OpenAI modules...`);
 import {

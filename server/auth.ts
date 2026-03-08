@@ -1,7 +1,7 @@
 import { Express } from "express";
 import session from "express-session";
 import { storage } from "./storage.js";
-import { insertUserSchema, loginUserSchema, User as SelectUser } from "@shared/schema";
+import { insertUserSchema, loginUserSchema, User as SelectUser } from "../shared/schema.js";
 import { z } from "zod";
 import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
