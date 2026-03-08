@@ -7,8 +7,8 @@ import { fileURLToPath } from "url";
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-import { registerRoutes } from "../routes";
-import { PostgresStorage } from "../storage";
+import { registerRoutes } from "../routes.js";
+import { PostgresStorage } from "../storage.js";
 
 const app = express();
 const storage = new PostgresStorage();

@@ -3,7 +3,7 @@ console.log('=== DATABASE MODULE LOADING START ===');
 
 import { drizzle } from "drizzle-orm/neon-http";
 import { neon } from "@neondatabase/serverless";
-import * as schema from "../shared/schema";
+import * as schema from "../shared/schema.js";
 
 const timestamp = new Date().toISOString();
 console.log(`[${timestamp}] [db] ===== DATABASE INITIALIZATION =====`);

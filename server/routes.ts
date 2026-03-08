@@ -8,10 +8,10 @@ const timestamp = new Date().toISOString();
 console.log(`[${timestamp}] [routes] ===== ROUTES MODULE INITIALIZATION =====`);
 
 console.log(`[${timestamp}] [routes] Importing storage module...`);
-import { storage as dbStorage } from "./storage";
+import { storage as dbStorage } from "./storage.js";
 
 console.log(`[${timestamp}] [routes] Importing auth module...`);
-import { setupAuth } from "./auth";
+import { setupAuth } from "./auth.js";
 
 console.log(`[${timestamp}] [routes] Importing schemas...`);
 import {
@@ -29,7 +29,7 @@ import {
   getWorkoutRecommendation,
   getNutritionRecommendation,
   getProgressAnalysis
-} from "./openai";
+} from "./openai.js";
 
 console.log(`[${timestamp}] [routes] Importing other dependencies...`);
 import { z } from "zod";

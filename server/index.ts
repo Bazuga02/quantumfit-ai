@@ -11,9 +11,9 @@ import swaggerUi from 'swagger-ui-express';
 import YAML from 'yamljs';
 const swaggerDocument = YAML.load(path.join(__dirname, '../swagger/openapi.yaml'));
 // --------------------------------
-import { registerRoutes } from "./routes";
-import { setupVite, serveStatic, log } from "./vite";
-import { PostgresStorage } from "./storage";
+import { registerRoutes } from "./routes.js";
+import { setupVite, serveStatic, log } from "./vite.js";
+import { PostgresStorage } from "./storage.js";
 const app = express();
 const storage = new PostgresStorage();
 

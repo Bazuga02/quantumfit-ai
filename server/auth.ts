@@ -1,6 +1,6 @@
 import { Express } from "express";
 import session from "express-session";
-import { storage } from "./storage";
+import { storage } from "./storage.js";
 import { insertUserSchema, loginUserSchema, User as SelectUser } from "@shared/schema";
 import { z } from "zod";
 import bcrypt from "bcrypt";
