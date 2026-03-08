@@ -1,11 +1,20 @@
 import { QueryClient } from "@tanstack/react-query";
 
-// Resolve at request time so it runs in the browser; on localhost always use same origin to avoid CORS.
+const PRODUCTION_API = 'https://quantumfit-ai.vercel.app';
+
+// Resolve at request time so it runs in the browser.
+// - Localhost → same origin (local dev).
+// - Vercel preview (*.vercel.app but not production) → always use production API so auth/session works.
+// - Production domain → same origin.
 function getApiUrl(): string {
-  if (typeof window !== 'undefined' && (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1')) {
-    return '';
+  if (typeof window === 'undefined') {
+    return import.meta.env.VITE_API_URL ?? import.meta.env.NEXT_PUBLIC_API_URL ?? PRODUCTION_API;
   }
-  return import.meta.env.VITE_API_URL ?? import.meta.env.NEXT_PUBLIC_API_URL ?? 'https://quantumfit-ai.vercel.app';
+  const host = window.location.hostname;
+  if (host === 'localhost' || host === '127.0.0.1') return '';
+  if (host === 'quantumfit-ai.vercel.app') return '';
+  if (host.endsWith('.vercel.app')) return PRODUCTION_API;
+  return import.meta.env.VITE_API_URL ?? import.meta.env.NEXT_PUBLIC_API_URL ?? PRODUCTION_API;
 }
 
 export const queryClient = new QueryClient({
