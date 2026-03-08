@@ -161,7 +161,7 @@ export function setupAuth(app: Express) {
       
       res.json({
         user: userWithoutPassword,
-        token
+        token: token
       });
     } catch (error) {
       console.error(`[${timestamp}] [auth] ===== LOGIN ERROR =====`);
