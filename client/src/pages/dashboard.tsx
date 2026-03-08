@@ -10,6 +10,7 @@ import { WaterIntake } from "@/components/water-intake";
 import { ProgressGraph } from "@/components/progress/progress-graph";
 import { useEffect, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
+import { apiRequest } from "@/lib/queryClient";
 
 export default function Dashboard() {
   const { user } = useAuth();
@@ -19,8 +20,7 @@ export default function Dashboard() {
   const { data: nutritionData } = useQuery({
     queryKey: ["/api/nutrition-summary"],
     queryFn: async () => {
-      const res = await fetch("/api/nutrition-summary");
-      if (!res.ok) throw new Error("Failed to fetch nutrition summary");
+      const res = await apiRequest("GET", "/api/nutrition-summary");
       return res.json();
     },
     refetchOnWindowFocus: true,
@@ -31,10 +31,12 @@ export default function Dashboard() {
   const WATER_GOAL = 3000;
   useEffect(() => {
     async function fetchWater() {
-      const res = await fetch("/api/water-intake");
-      if (res.ok) {
+      try {
+        const res = await apiRequest("GET", "/api/water-intake");
         const data = await res.json();
         setWaterIntake(data.total || 0);
+      } catch (error) {
+        console.error("Failed to fetch water intake:", error);
       }
     }
     fetchWater();
@@ -78,10 +80,11 @@ export default function Dashboard() {
   const [measurements, setMeasurements] = useState<any[]>([]);
   useEffect(() => {
     async function fetchMeasurements() {
-      const res = await fetch("/api/measurements");
-      if (res.ok) {
+      try {
+        const res = await apiRequest("GET", "/api/measurements");
         setMeasurements(await res.json());
-      } else {
+      } catch (error) {
+        console.error("Failed to fetch measurements:", error);
         setMeasurements([]);
       }
     }

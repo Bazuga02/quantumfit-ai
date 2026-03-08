@@ -119,6 +119,22 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Attach user for all /api routes
   app.use('/api', attachUser);
 
+  // Get current user endpoint
+  app.get("/api/user", async (req, res) => {
+    try {
+      if (!req.user) {
+        return res.status(401).json({ error: "Unauthorized" });
+      }
+      
+      // Don't return password hash
+      const { password, ...userWithoutPassword } = req.user;
+      res.json(userWithoutPassword);
+    } catch (error) {
+      console.error("Error fetching current user:", error);
+      res.status(500).json({ error: "Internal server error" });
+    }
+  });
+
   // Measurements routes
   app.get("/api/measurements", async (req, res) => {
     try {

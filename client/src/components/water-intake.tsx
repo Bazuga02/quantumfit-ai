@@ -5,6 +5,7 @@ import { Card } from "@/components/ui/card";
 import { useAuth } from "@/hooks/use-auth";
 import { format } from "date-fns";
 import { useToast } from "@/components/ui/use-toast";
+import { apiRequest } from "@/lib/queryClient";
 
 const WATER_GOAL = 3000; // 3L in ml
 
@@ -31,10 +32,7 @@ export function WaterIntake() {
   const fetchWaterIntakes = async () => {
     try {
       setIsLoading(true);
-      const response = await fetch("/api/water-intake");
-      if (!response.ok) {
-        throw new Error('Failed to fetch water intake data');
-      }
+      const response = await apiRequest("GET", "/api/water-intake");
       const data = await response.json();
       setIntakes(data.intakes || []);
       setTotalIntake(data.total || 0);
@@ -55,16 +53,7 @@ export function WaterIntake() {
   const addWaterIntake = async (amount: number) => {
     try {
       setIsAdding(true);
-      const response = await fetch("/api/water-intake", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ amount }),
-      });
-      if (!response.ok) {
-        throw new Error('Failed to add water intake');
-      }
+      await apiRequest("POST", "/api/water-intake", { amount });
       await fetchWaterIntakes();
       toast({
         title: "Success",

@@ -27,9 +27,43 @@ app.use('/api-doc', swaggerUi.serve, swaggerUi.setup(swaggerDocument));
 // Add CORS headers in development
 if (process.env.NODE_ENV === 'development') {
   app.use((req, res, next) => {
-    res.header('Access-Control-Allow-Origin', '*');
+    const allowedOrigins = [
+      'http://localhost:3001',
+      'http://localhost:5173',
+      'http://localhost:4173'
+    ];
+    const origin = req.headers.origin;
+    
+    if (origin && allowedOrigins.includes(origin)) {
+      res.header('Access-Control-Allow-Origin', origin);
+    }
+    
     res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, PATCH');
     res.header('Access-Control-Allow-Headers', 'Content-Type, Authorization');
+    res.header('Access-Control-Allow-Credentials', 'true');
+    
+    if (req.method === 'OPTIONS') {
+      return res.sendStatus(200);
+    }
+    next();
+  });
+} else {
+  // Production CORS - allow specific origins including the deployed client
+  app.use((req, res, next) => {
+    const allowedOrigins = [
+      'https://quantumfit-ai.vercel.app',
+      'https://quantumfit-ai.pages.dev'
+    ];
+    const origin = req.headers.origin;
+    
+    if (origin && allowedOrigins.includes(origin)) {
+      res.header('Access-Control-Allow-Origin', origin);
+      res.header('Access-Control-Allow-Credentials', 'true');
+    }
+    
+    res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, PATCH');
+    res.header('Access-Control-Allow-Headers', 'Content-Type, Authorization');
+    
     if (req.method === 'OPTIONS') {
       return res.sendStatus(200);
     }

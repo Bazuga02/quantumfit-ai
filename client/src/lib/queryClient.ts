@@ -1,6 +1,12 @@
 import { QueryClient } from "@tanstack/react-query";
 
-const API_URL = import.meta.env.VITE_API_URL || import.meta.env.NEXT_PUBLIC_API_URL || '';
+// Resolve at request time so it runs in the browser; on localhost always use same origin to avoid CORS.
+function getApiUrl(): string {
+  if (typeof window !== 'undefined' && (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1')) {
+    return '';
+  }
+  return import.meta.env.VITE_API_URL ?? import.meta.env.NEXT_PUBLIC_API_URL ?? 'https://quantumfit-ai.vercel.app';
+}
 
 export const queryClient = new QueryClient({
   defaultOptions: {
@@ -62,7 +68,7 @@ export async function apiRequest(
 
   
 
-  const response = await fetch(`${API_URL}${path}`, {
+  const response = await fetch(`${getApiUrl()}${path}`, {
     method,
     headers,
     credentials: "include",

@@ -112,9 +112,9 @@ export function ProgressBodyPartsTab({
             </CardHeader>
             <CardContent>
               <div className="grid grid-cols-7 gap-2 mb-2">
-                {weekDays.map((day) => (
+                {weekDays.map((day, i) => (
                   <div
-                    key={day}
+                    key={`weekday-${i}`}
                     className="text-center font-medium text-gray-500 dark:text-gray-400"
                   >
                     {day}

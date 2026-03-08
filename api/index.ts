@@ -27,9 +27,20 @@ try {
   app.use(express.json());
   app.use(express.urlencoded({ extended: false }));
 
-  // Add CORS headers
+  // CORS: with credentials, browser requires a specific origin (not '*')
+  const ALLOWED_ORIGINS = [
+    'https://quantumfit-ai.vercel.app',
+    'https://quantumfit-ai.pages.dev',
+    'http://localhost:3001',
+    'http://localhost:5173',
+    'http://localhost:4173',
+  ];
   app.use((req, res, next) => {
-    res.header('Access-Control-Allow-Origin', '*');
+    const origin = req.headers.origin;
+    if (typeof origin === 'string' && ALLOWED_ORIGINS.includes(origin)) {
+      res.header('Access-Control-Allow-Origin', origin);
+      res.header('Access-Control-Allow-Credentials', 'true');
+    }
     res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, PATCH');
     res.header('Access-Control-Allow-Headers', 'Content-Type, Authorization');
     if (req.method === 'OPTIONS') {

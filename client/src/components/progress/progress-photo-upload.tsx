@@ -56,23 +56,11 @@ export function ProgressPhotoUpload({ onUpload }: { onUpload?: () => void }) {
     setUploading(true);
     try {
       const cloudName = import.meta.env.VITE_CLOUDINARY_CLOUD_NAME;
-      const uploadPreset = "ml_default"; // Use your signed preset name
-      const apiKey = import.meta.env.VITE_CLOUDINARY_API_KEY;
-      // 1. Get signature from backend
-      const timestamp = Math.floor(Date.now() / 1000);
-      const sigRes = await fetch("/api/cloudinary-signature", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ timestamp, upload_preset: uploadPreset }),
-      });
-      const { signature } = await sigRes.json();
-      // 2. Upload to Cloudinary
+      const uploadPreset = "unsigned_upload"; // Use unsigned preset
+      // Upload directly to Cloudinary (no signature needed)
       const formData = new FormData();
       formData.append("file", file);
-      formData.append("api_key", apiKey);
-      formData.append("timestamp", timestamp.toString());
       formData.append("upload_preset", uploadPreset);
-      formData.append("signature", signature);
       const res = await fetch(`https://api.cloudinary.com/v1_1/${cloudName}/image/upload`, {
         method: "POST",
         body: formData

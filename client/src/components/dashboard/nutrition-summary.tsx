@@ -3,13 +3,13 @@ import { Button } from "@/components/ui/button";
 import { Utensils } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { Link } from "wouter";
+import { apiRequest } from "@/lib/queryClient";
 
 export function NutritionSummary() {
   const { data, isLoading, error } = useQuery({
     queryKey: ["/api/nutrition-summary"],
     queryFn: async () => {
-      const res = await fetch("/api/nutrition-summary");
-      if (!res.ok) throw new Error("Failed to fetch nutrition summary");
+      const res = await apiRequest("GET", "/api/nutrition-summary");
       return res.json();
     },
     refetchOnWindowFocus: true,
