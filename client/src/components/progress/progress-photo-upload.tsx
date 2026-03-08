@@ -1,5 +1,6 @@
 import { useState, useRef } from "react";
 import { Button } from "@/components/ui/button";
+import { apiRequest } from "@/lib/queryClient";
 
 const bodyParts = [
   "Full Body",
@@ -70,14 +71,10 @@ export function ProgressPhotoUpload({ onUpload }: { onUpload?: () => void }) {
         throw new Error("Upload failed: " + (data.error?.message || JSON.stringify(data)));
       }
       // Save to backend
-      await fetch("/api/progress-photos", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          url: data.secure_url,
-          body_part: bodyPart,
-          note
-        })
+      await apiRequest("POST", "/api/progress-photos", {
+        url: data.secure_url,
+        body_part: bodyPart,
+        note
       });
       setFile(null);
       setPreview(null);

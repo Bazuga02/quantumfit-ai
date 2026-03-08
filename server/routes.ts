@@ -138,7 +138,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Measurements routes
   app.get("/api/measurements", async (req, res) => {
     try {
-      const measurements = await dbStorage.getMeasurements(req.user!.id);
+      if (!req.user) return res.status(401).json({ message: "Unauthorized" });
+      const measurements = await dbStorage.getMeasurements(req.user.id);
       res.json(measurements);
     } catch (error) {
       res.status(500).json({ message: "Failed to fetch measurements" });

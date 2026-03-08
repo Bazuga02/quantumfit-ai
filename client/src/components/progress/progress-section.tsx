@@ -3,6 +3,7 @@ import { ProgressBodyPartsTab } from "./ProgressBodyPartsTab";
 import { ProgressGraphTab } from "./ProgressGraphTab";
 import { ProgressPhotosTab } from "./ProgressPhotosTab";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
+import { apiRequest } from "@/lib/queryClient";
 
 const bodyPartsList = [
   "Chest", "Back", "Arms", "Waist", "Hips", "Thighs", "Full Body", "Other"
@@ -21,7 +22,7 @@ export function ProgressSection() {
 
   const fetchMeasurements = async () => {
     setLoading(true);
-    const res = await fetch("/api/measurements");
+    const res = await apiRequest("GET", "/api/measurements");
     if (res.ok) {
       setMeasurements(await res.json());
     } else {
@@ -31,7 +32,7 @@ export function ProgressSection() {
   };
 
   const fetchTrainedToday = async () => {
-    const res = await fetch("/api/trained-body-parts");
+    const res = await apiRequest("GET", "/api/trained-body-parts");
     if (res.ok) {
       const data = await res.json();
       setTrainedToday(data.map((d: any) => d.bodyPart));
@@ -44,7 +45,7 @@ export function ProgressSection() {
     const now = new Date();
     const from = new Date(now);
     from.setDate(now.getDate() - 6);
-    const res = await fetch(`/api/trained-body-parts?from=${from.toISOString().slice(0,10)}`);
+    const res = await apiRequest("GET", `/api/trained-body-parts?from=${from.toISOString().slice(0, 10)}`);
     if (res.ok) {
       const data = await res.json();
       const counts: Record<string, number> = {};
@@ -63,7 +64,7 @@ export function ProgressSection() {
     const now = new Date();
     const from = new Date(now);
     from.setDate(now.getDate() - 29);
-    const res = await fetch(`/api/trained-body-parts?from=${from.toISOString().slice(0,10)}`);
+    const res = await apiRequest("GET", `/api/trained-body-parts?from=${from.toISOString().slice(0, 10)}`);
     if (res.ok) {
       const data = await res.json();
       const map: { [date: string]: number } = {};
@@ -91,11 +92,7 @@ export function ProgressSection() {
 
   const logBodyPart = async (bodyPart: string) => {
     setLogging(true);
-    await fetch("/api/trained-body-parts", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ body_part: bodyPart })
-    });
+    await apiRequest("POST", "/api/trained-body-parts", { body_part: bodyPart });
     setLogging(false);
     fetchTrainedToday();
     fetchRecentStats();

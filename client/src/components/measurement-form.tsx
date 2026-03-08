@@ -4,6 +4,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useToast } from "@/components/ui/use-toast";
+import { apiRequest } from "@/lib/queryClient";
 
 export function MeasurementForm({ onSuccess }: { onSuccess?: () => void }) {
   const queryClient = useQueryClient();
@@ -20,21 +21,15 @@ export function MeasurementForm({ onSuccess }: { onSuccess?: () => void }) {
 
   const mutation = useMutation({
     mutationFn: async (data: typeof formData) => {
-      const response = await fetch("/api/measurements", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          ...data,
-          weight: parseFloat(data.weight),
-          bodyFat: parseFloat(data.bodyFat),
-          chest: parseFloat(data.chest),
-          waist: parseFloat(data.waist),
-          hips: parseFloat(data.hips),
-          arms: parseFloat(data.arms),
-          thighs: parseFloat(data.thighs),
-        }),
+      const response = await apiRequest("POST", "/api/measurements", {
+        ...data,
+        weight: parseFloat(data.weight),
+        bodyFat: parseFloat(data.bodyFat),
+        chest: parseFloat(data.chest),
+        waist: parseFloat(data.waist),
+        hips: parseFloat(data.hips),
+        arms: parseFloat(data.arms),
+        thighs: parseFloat(data.thighs),
       });
       if (!response.ok) {
         throw new Error("Failed to add measurement");

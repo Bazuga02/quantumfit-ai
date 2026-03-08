@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { apiRequest } from "@/lib/queryClient";
 
 export function ProgressPhotoGallery({ filterBodyPart }: { filterBodyPart?: string }) {
   const [photos, setPhotos] = useState<any[]>([]);
@@ -7,7 +8,7 @@ export function ProgressPhotoGallery({ filterBodyPart }: { filterBodyPart?: stri
   useEffect(() => {
     async function fetchPhotos() {
       setLoading(true);
-      const res = await fetch("/api/progress-photos");
+      const res = await apiRequest("GET", "/api/progress-photos");
       const data = res.ok ? await res.json() : [];
       setPhotos(data);
       setLoading(false);
