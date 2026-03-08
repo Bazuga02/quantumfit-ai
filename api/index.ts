@@ -50,10 +50,18 @@ try {
 // Register routes once (cached for serverless)
 async function ensureRoutes() {
   if (!routesInitialized) {
-    console.log(`[${timestamp}] [api] Registering application routes...`);
-    await registerRoutes(app);
+    const currentTimestamp = new Date().toISOString();
+    console.log(`[${currentTimestamp}] [api] Registering application routes...`);
+    console.log(`[${currentTimestamp}] [api] registerRoutes function:`, typeof registerRoutes);
+    console.log(`[${currentTimestamp}] [api] app object:`, typeof app);
+    
+    const result = await registerRoutes(app);
+    console.log(`[${currentTimestamp}] [api] registerRoutes result:`, result);
+    
     routesInitialized = true;
-    console.log('[api] Routes initialized');
+    console.log(`[${currentTimestamp}] [api] Routes initialized`);
+  } else {
+    console.log(`[${timestamp}] [api] Routes already initialized, skipping...`);
   }
 }
 
@@ -74,7 +82,11 @@ export default async function handler(req: Request, res: Response) {
   try {
     await ensureRoutes();
     console.log(`[${timestamp}] [api] Routes ensured, forwarding to app handler`);
+    console.log(`[${timestamp}] [api] About to call app(${req.method}, ${req.url})`);
+    
     app(req, res);
+    
+    console.log(`[${timestamp}] [api] app handler completed`);
   } catch (err) {
     console.error(`[${timestamp}] [api] ===== HANDLER ERROR =====`);
     console.error(`[${timestamp}] [api] Error:`, err);
