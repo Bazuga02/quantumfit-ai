@@ -12,10 +12,5 @@
     "NODE_ENV": "production",
     "JWT_SECRET": "quantumfit-jwt-secret-key",
     "SESSION_SECRET": "quantumfit-super-secret-key"
-  },
-  "functions": {
-    "api/index.js": {
-      "maxDuration": 10
-    }
   }
 }
