@@ -35,9 +35,12 @@ try {
     'http://localhost:5173',
     'http://localhost:4173',
   ];
+  const isAllowedOrigin = (origin: string) =>
+    ALLOWED_ORIGINS.includes(origin) ||
+    origin.endsWith('.vercel.app'); // allow all Vercel preview/production URLs
   app.use((req, res, next) => {
     const origin = req.headers.origin;
-    if (typeof origin === 'string' && ALLOWED_ORIGINS.includes(origin)) {
+    if (typeof origin === 'string' && isAllowedOrigin(origin)) {
       res.header('Access-Control-Allow-Origin', origin);
       res.header('Access-Control-Allow-Credentials', 'true');
     }
