@@ -1,3 +1,6 @@
+// TOP LEVEL LOG - This should always appear
+console.log('=== DATABASE MODULE LOADING START ===');
+
 import { drizzle } from "drizzle-orm/neon-http";
 import { neon } from "@neondatabase/serverless";
 import * as schema from "../shared/schema";
@@ -25,3 +28,4 @@ console.log(`[${timestamp}] [db] Creating Drizzle instance...`);
 export const db = drizzle(sql, { schema });
 
 console.log(`[${timestamp}] [db] Database initialized successfully`);
+console.log('=== DATABASE MODULE LOADING COMPLETE ===');

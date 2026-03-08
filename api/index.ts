@@ -1,3 +1,6 @@
+// TOP LEVEL LOG - This should always appear
+console.log('=== API MODULE LOADING START ===');
+
 import 'dotenv/config';
 import express, { type Request, Response } from "express";
 import { registerRoutes } from "../server/routes";
@@ -53,6 +56,8 @@ async function ensureRoutes() {
     console.log('[api] Routes initialized');
   }
 }
+
+console.log('=== API MODULE LOADING COMPLETE ===');
 
 // Vercel serverless handler
 export default async function handler(req: Request, res: Response) {

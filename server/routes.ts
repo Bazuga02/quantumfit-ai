@@ -1,3 +1,6 @@
+// TOP LEVEL LOG - This should always appear
+console.log('=== ROUTES MODULE LOADING START ===');
+
 import type { Express, Request, Response, NextFunction } from "express";
 import { createServer, type Server } from "http";
 
@@ -40,6 +43,7 @@ import jwt from "jsonwebtoken";
 import crypto from "crypto";
 
 console.log(`[${timestamp}] [routes] All imports successful`);
+console.log('=== ROUTES MODULE LOADING COMPLETE ===');
 
 // Ensure uploads directory exists
 const uploadsDir = path.join(process.cwd(), 'uploads', 'progress-photos');
