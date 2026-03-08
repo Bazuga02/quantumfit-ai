@@ -4,6 +4,7 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useAuth } from "@/hooks/use-auth";
 import { useLocation } from "wouter";
+import { Eye, EyeOff } from "lucide-react";
 import {
   Card,
   CardContent,
@@ -35,7 +36,6 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } f
 const loginSchema = z.object({
   email: z.string().email("Invalid email address"),
   password: z.string().min(6, "Password must be at least 6 characters"),
-  rememberMe: z.boolean().default(false),
 });
 
 // Extended schema for registration with fitness data
@@ -60,6 +60,9 @@ export function AuthForms() {
   const { loginMutation, registerMutation } = useAuth();
   const [, navigate] = useLocation();
   const [privacyOpen, setPrivacyOpen] = useState(false);
+  const [showLoginPw, setShowLoginPw] = useState(false);
+  const [showRegisterPw, setShowRegisterPw] = useState(false);
+  const [showConfirmPw, setShowConfirmPw] = useState(false);
 
   // Login form
   const loginForm = useForm<LoginFormValues>({
@@ -67,7 +70,6 @@ export function AuthForms() {
     defaultValues: {
       email: "",
       password: "",
-      rememberMe: false,
     },
   });
 
@@ -186,33 +188,30 @@ export function AuthForms() {
                             <FormItem>
                               <FormLabel>Password</FormLabel>
                               <FormControl>
-                                <Input
-                                  type="password"
-                                  placeholder="********"
-                                  {...field}
-                                  className="transition-all duration-300 focus:shadow-[0_0_0_3px_#FF3A5444] focus:border-[#FF3A54]"
-                                />
+                                <div className="relative">
+                                  <Input
+                                    type={showLoginPw ? "text" : "password"}
+                                    placeholder="********"
+                                    {...field}
+                                    className="transition-all duration-300 focus:shadow-[0_0_0_3px_#FF3A5444] focus:border-[#FF3A54] pr-10"
+                                  />
+                                  <Button
+                                    type="button"
+                                    variant="ghost"
+                                    size="icon"
+                                    className="absolute right-0 top-0 h-full px-3 hover:bg-transparent"
+                                    onClick={() => setShowLoginPw((p) => !p)}
+                                    aria-label={showLoginPw ? "Hide password" : "Show password"}
+                                  >
+                                    {showLoginPw ? <EyeOff className="h-4 w-4 text-gray-500" /> : <Eye className="h-4 w-4 text-gray-500" />}
+                                  </Button>
+                                </div>
                               </FormControl>
                               <FormMessage />
                             </FormItem>
                           )}
                         />
-                        <div className="flex items-center justify-between">
-                          <FormField
-                            control={loginForm.control}
-                            name="rememberMe"
-                            render={({ field }) => (
-                              <FormItem className="flex flex-row items-center space-x-2 space-y-0">
-                                <FormControl>
-                                  <Checkbox
-                                    checked={field.value}
-                                    onCheckedChange={field.onChange}
-                                  />
-                                </FormControl>
-                                <FormLabel className="text-sm font-normal">Remember me</FormLabel>
-                              </FormItem>
-                            )}
-                          />
+                        <div className="flex justify-end">
                           <Button variant="link" className="p-0 h-auto text-sm text-[#FF3A54] hover:underline">Forgot password?</Button>
                         </div>
                         <motion.button
@@ -289,12 +288,24 @@ export function AuthForms() {
                             <FormItem>
                               <FormLabel>Password</FormLabel>
                               <FormControl>
-                                <Input
-                                  type="password"
-                                  placeholder="********"
-                                  {...field}
-                                  className="transition-all duration-300 focus:shadow-[0_0_0_3px_#FF3A5444] focus:border-[#FF3A54]"
-                                />
+                                <div className="relative">
+                                  <Input
+                                    type={showRegisterPw ? "text" : "password"}
+                                    placeholder="********"
+                                    {...field}
+                                    className="transition-all duration-300 focus:shadow-[0_0_0_3px_#FF3A5444] focus:border-[#FF3A54] pr-10"
+                                  />
+                                  <Button
+                                    type="button"
+                                    variant="ghost"
+                                    size="icon"
+                                    className="absolute right-0 top-0 h-full px-3 hover:bg-transparent"
+                                    onClick={() => setShowRegisterPw((p) => !p)}
+                                    aria-label={showRegisterPw ? "Hide password" : "Show password"}
+                                  >
+                                    {showRegisterPw ? <EyeOff className="h-4 w-4 text-gray-500" /> : <Eye className="h-4 w-4 text-gray-500" />}
+                                  </Button>
+                                </div>
                               </FormControl>
                               <FormMessage />
                             </FormItem>
@@ -307,12 +318,24 @@ export function AuthForms() {
                             <FormItem>
                               <FormLabel>Confirm Password</FormLabel>
                               <FormControl>
-                                <Input
-                                  type="password"
-                                  placeholder="********"
-                                  {...field}
-                                  className="transition-all duration-300 focus:shadow-[0_0_0_3px_#FF3A5444] focus:border-[#FF3A54]"
-                                />
+                                <div className="relative">
+                                  <Input
+                                    type={showConfirmPw ? "text" : "password"}
+                                    placeholder="********"
+                                    {...field}
+                                    className="transition-all duration-300 focus:shadow-[0_0_0_3px_#FF3A5444] focus:border-[#FF3A54] pr-10"
+                                  />
+                                  <Button
+                                    type="button"
+                                    variant="ghost"
+                                    size="icon"
+                                    className="absolute right-0 top-0 h-full px-3 hover:bg-transparent"
+                                    onClick={() => setShowConfirmPw((p) => !p)}
+                                    aria-label={showConfirmPw ? "Hide password" : "Show password"}
+                                  >
+                                    {showConfirmPw ? <EyeOff className="h-4 w-4 text-gray-500" /> : <Eye className="h-4 w-4 text-gray-500" />}
+                                  </Button>
+                                </div>
                               </FormControl>
                               <FormMessage />
                             </FormItem>
