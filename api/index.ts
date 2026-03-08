@@ -32,14 +32,36 @@ async function ensureRoutes() {
 
 // Vercel serverless handler
 export default async function handler(req: Request, res: Response) {
-  console.log('[api] Request:', req.method, req.url, '| DATABASE_URL:', !!process.env.DATABASE_URL);
+  const timestamp = new Date().toISOString();
+  console.log(`[${timestamp}] [api] ===== NEW REQUEST =====`);
+  console.log(`[${timestamp}] [api] Method: ${req.method}`);
+  console.log(`[${timestamp}] [api] URL: ${req.url}`);
+  console.log(`[${timestamp}] [api] Headers:`, JSON.stringify(req.headers, null, 2));
+  console.log(`[${timestamp}] [api] DATABASE_URL present:`, !!process.env.DATABASE_URL);
+  console.log(`[${timestamp}] [api] JWT_SECRET present:`, !!process.env.JWT_SECRET);
+  console.log(`[${timestamp}] [api] SESSION_SECRET present:`, !!process.env.SESSION_SECRET);
+  console.log(`[${timestamp}] [api] NODE_ENV:`, process.env.NODE_ENV);
+  
   try {
     await ensureRoutes();
+    console.log(`[${timestamp}] [api] Routes ensured, forwarding to app handler`);
     app(req, res);
   } catch (err) {
-    console.error('[api] Handler error:', err);
+    console.error(`[${timestamp}] [api] ===== HANDLER ERROR =====`);
+    console.error(`[${timestamp}] [api] Error:`, err);
+    console.error(`[${timestamp}] [api] Error stack:`, err instanceof Error ? err.stack : 'No stack trace');
+    console.error(`[${timestamp}] [api] Error type:`, typeof err);
+    
     if (!res.headersSent) {
-      res.status(500).json({ message: 'Internal server error', debug: String(err) });
+      console.log(`[${timestamp}] [api] Sending 500 response to client`);
+      res.status(500).json({ 
+        message: 'Internal server error', 
+        debug: String(err),
+        timestamp,
+        url: req.url
+      });
+    } else {
+      console.log(`[${timestamp}] [api] Headers already sent, cannot send error response`);
     }
   }
 }

@@ -112,45 +112,65 @@ export function setupAuth(app: Express) {
 
   // Login endpoint
   app.post("/api/login", async (req, res) => {
-    console.log('[auth] Login attempt, body keys:', req.body ? Object.keys(req.body) : 'none');
+    const timestamp = new Date().toISOString();
+    console.log(`[${timestamp}] [auth] ===== LOGIN ATTEMPT =====`);
+    console.log(`[${timestamp}] [auth] Request body keys:`, req.body ? Object.keys(req.body) : 'none');
+    console.log(`[${timestamp}] [auth] Content-Type:`, req.headers['content-type']);
+    
     try {
       const { email, password } = loginUserSchema.parse(req.body);
-      console.log('[auth] Parsed credentials for:', email);
+      console.log(`[${timestamp}] [auth] Parsed credentials for email:`, email);
       
       // Find user by email
+      console.log(`[${timestamp}] [auth] Looking up user in database...`);
       const user = await storage.getUserByEmail(email);
-      console.log('[auth] User lookup result:', user ? 'found' : 'not found');
+      console.log(`[${timestamp}] [auth] User lookup result:`, user ? 'found' : 'not found');
+      
       if (!user) {
+        console.log(`[${timestamp}] [auth] Login failed: User not found for email:`, email);
         return res.status(401).json({ message: "Invalid email or password" });
       }
 
       // Compare hashed passwords
+      console.log(`[${timestamp}] [auth] Comparing passwords...`);
       const passwordMatch = await bcrypt.compare(password, user.password);
+      console.log(`[${timestamp}] [auth] Password match result:`, passwordMatch);
+      
       if (!passwordMatch) {
+        console.log(`[${timestamp}] [auth] Login failed: Invalid password for email:`, email);
         return res.status(401).json({ message: "Invalid email or password" });
       }
 
       // Generate JWT token
+      console.log(`[${timestamp}] [auth] Generating JWT token...`);
       const token = jwt.sign(
         { id: user.id, email: user.email },
         JWT_SECRET,
         { expiresIn: JWT_EXPIRES_IN }
       );
+      console.log(`[${timestamp}] [auth] JWT token generated successfully`);
 
       // Set user in session
+      console.log(`[${timestamp}] [auth] Setting user in session...`);
       req.session.user = user;
+      console.log(`[${timestamp}] [auth] User session set successfully`);
 
       // Remove password from response
       const { password: _, ...userWithoutPassword } = user;
+      console.log(`[${timestamp}] [auth] Login successful for email:`, email);
+      
       res.json({
         user: userWithoutPassword,
         token
       });
     } catch (error) {
+      console.error(`[${timestamp}] [auth] ===== LOGIN ERROR =====`);
       if (error instanceof z.ZodError) {
+        console.error(`[${timestamp}] [auth] Validation error:`, error.errors);
         return res.status(400).json({ message: "Invalid input data", errors: error.errors });
       }
-      console.error('[auth] Login error:', error);
+      console.error(`[${timestamp}] [auth] Login error:`, error);
+      console.error(`[${timestamp}] [auth] Error stack:`, error instanceof Error ? error.stack : 'No stack');
       res.status(500).json({ message: "Login failed", debug: String(error) });
     }
   });
@@ -168,12 +188,21 @@ export function setupAuth(app: Express) {
 
   // Get current user endpoint (supports both session and JWT)
   app.get("/api/user", verifyToken, (req, res) => {
-    console.log('[auth] GET /api/user - session:', !!req.session?.user, 'req.user:', !!req.user);
-    if (!req.session.user && !req.user) {
+    const timestamp = new Date().toISOString();
+    console.log(`[${timestamp}] [auth] ===== GET USER REQUEST =====`);
+    console.log(`[${timestamp}] [auth] Session exists:`, !!req.session);
+    console.log(`[${timestamp}] [auth] Session user:`, !!req.session?.user);
+    console.log(`[${timestamp}] [auth] Request user:`, !!req.user);
+    console.log(`[${timestamp}] [auth] Authorization header:`, req.headers.authorization ? 'present' : 'missing');
+    
+    if (!req.session?.user && !req.user) {
+      console.log(`[${timestamp}] [auth] Get user failed: No authentication found`);
       return res.status(401).json({ message: "Not authenticated" });
     }
     
-    const user = req.session.user || req.user;
+    const user = req.session?.user || req.user;
+    console.log(`[${timestamp}] [auth] Get user successful for user ID:`, user.id);
+    
     // Remove password from response
     const { password, ...userWithoutPassword } = user;
     res.json(userWithoutPassword);
