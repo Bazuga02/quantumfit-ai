@@ -3,6 +3,7 @@ console.log('=== API MODULE LOADING START ===');
 
 import 'dotenv/config';
 import express, { type Request, Response } from "express";
+import { registerRoutes } from "../server/routes.js";
 
 const timestamp = new Date().toISOString();
 console.log(`[${timestamp}] [api] ===== MODULE INITIALIZATION =====`);
@@ -37,26 +38,6 @@ try {
     next();
   });
 
-  // Simple test routes
-  app.get('/api/health', (req, res) => {
-    console.log(`[${timestamp}] [api] Health check requested`);
-    res.json({ 
-      status: 'ok', 
-      timestamp,
-      database: !!process.env.DATABASE_URL,
-      environment: process.env.NODE_ENV
-    });
-  });
-
-  app.post('/api/test', (req, res) => {
-    console.log(`[${timestamp}] [api] Test endpoint hit`, req.body);
-    res.json({ 
-      message: 'Test successful',
-      received: req.body,
-      timestamp
-    });
-  });
-
   console.log(`[${timestamp}] [api] Module initialization completed successfully`);
 
 } catch (initError) {
@@ -69,7 +50,8 @@ try {
 // Register routes once (cached for serverless)
 async function ensureRoutes() {
   if (!routesInitialized) {
-    console.log('[api] Routes are already set up inline');
+    console.log(`[${timestamp}] [api] Registering application routes...`);
+    await registerRoutes(app);
     routesInitialized = true;
     console.log('[api] Routes initialized');
   }
