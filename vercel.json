@@ -1,5 +1,5 @@
 {
-  "buildCommand": "cd client && npm run build",
+  "buildCommand": "npm run build:client",
   "outputDirectory": "client/dist",
   "rewrites": [
     {
@@ -9,7 +9,6 @@
   ],
   "env": {
     "NODE_ENV": "production",
-    "NEXT_PUBLIC_API_URL": "https://${VERCEL_URL}",
     "JWT_SECRET": "quantumfit-jwt-secret-key",
     "SESSION_SECRET": "quantumfit-super-secret-key"
   }

@@ -1,10 +1,8 @@
 import 'dotenv/config';
 import express, { type Request, Response } from "express";
 import { registerRoutes } from "../server/routes";
-import { PostgresStorage } from "../server/storage";
 
 const app = express();
-const storage = new PostgresStorage();
 
 // Basic middleware
 app.use(express.json());
@@ -21,10 +19,24 @@ app.use((req, res, next) => {
   next();
 });
 
-// Register all routes
+// Register routes once (cached for serverless)
+let routesInitialized = false;
+async function ensureRoutes() {
+  if (!routesInitialized) {
+    await registerRoutes(app);
+    routesInitialized = true;
+  }
+}
+
+// Vercel serverless handler
 export default async function handler(req: Request, res: Response) {
-  await registerRoutes(app);
-  
-  // Handle the request through the Express app
-  app(req, res);
+  try {
+    await ensureRoutes();
+    app(req, res);
+  } catch (err) {
+    console.error('[api] Handler error:', err);
+    if (!res.headersSent) {
+      res.status(500).json({ message: 'Internal server error' });
+    }
+  }
 }
