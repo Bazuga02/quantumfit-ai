@@ -40,27 +40,28 @@ export function setupAuth(app: Express) {
 
   // Middleware to verify JWT token
   const verifyToken = (req: any, res: any, next: any) => {
-    // First check session
-    if (req.session.user) {
-      req.user = req.session.user;
-      return next();
-    }
-
-    // If no session, check JWT token
-    const token = req.headers.authorization?.split(' ')[1];
-    
-    if (!token) {
-      return res.status(401).json({ message: "No token provided" });
-    }
-
     try {
+      // First check session
+      if (req.session?.user) {
+        req.user = req.session.user;
+        return next();
+      }
+
+      // If no session, check JWT token
+      const token = req.headers.authorization?.split(' ')[1];
+      
+      if (!token) {
+        return res.status(401).json({ message: "No token provided" });
+      }
+
       const decoded = jwt.verify(token, JWT_SECRET);
       // Set user in session for future requests
       req.session.user = decoded;
       req.user = decoded;
       next();
     } catch (error) {
-      return res.status(401).json({ message: "Invalid token" });
+      console.error('[auth] verifyToken error:', error);
+      return res.status(401).json({ message: "Invalid token", debug: String(error) });
     }
   };
 
@@ -111,11 +112,14 @@ export function setupAuth(app: Express) {
 
   // Login endpoint
   app.post("/api/login", async (req, res) => {
+    console.log('[auth] Login attempt, body keys:', req.body ? Object.keys(req.body) : 'none');
     try {
       const { email, password } = loginUserSchema.parse(req.body);
+      console.log('[auth] Parsed credentials for:', email);
       
       // Find user by email
       const user = await storage.getUserByEmail(email);
+      console.log('[auth] User lookup result:', user ? 'found' : 'not found');
       if (!user) {
         return res.status(401).json({ message: "Invalid email or password" });
       }
@@ -146,8 +150,8 @@ export function setupAuth(app: Express) {
       if (error instanceof z.ZodError) {
         return res.status(400).json({ message: "Invalid input data", errors: error.errors });
       }
-      console.error('Login error:', error);
-      res.status(500).json({ message: "Login failed" });
+      console.error('[auth] Login error:', error);
+      res.status(500).json({ message: "Login failed", debug: String(error) });
     }
   });
 
@@ -164,6 +168,7 @@ export function setupAuth(app: Express) {
 
   // Get current user endpoint (supports both session and JWT)
   app.get("/api/user", verifyToken, (req, res) => {
+    console.log('[auth] GET /api/user - session:', !!req.session?.user, 'req.user:', !!req.user);
     if (!req.session.user && !req.user) {
       return res.status(401).json({ message: "Not authenticated" });
     }

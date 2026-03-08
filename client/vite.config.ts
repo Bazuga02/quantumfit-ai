@@ -4,8 +4,14 @@ import path from 'path'
 
 // https://vitejs.dev/config/
 export default defineConfig({
+  root: __dirname,
   base: '/',
   plugins: [react()],
+  server: {
+    watch: {
+      ignored: ['**/dist/**', '**/node_modules/**'],
+    },
+  },
   build: {
     rollupOptions: {
       output: {

@@ -23,20 +23,23 @@ app.use((req, res, next) => {
 let routesInitialized = false;
 async function ensureRoutes() {
   if (!routesInitialized) {
+    console.log('[api] Initializing routes (first request)...');
     await registerRoutes(app);
     routesInitialized = true;
+    console.log('[api] Routes initialized');
   }
 }
 
 // Vercel serverless handler
 export default async function handler(req: Request, res: Response) {
+  console.log('[api] Request:', req.method, req.url, '| DATABASE_URL:', !!process.env.DATABASE_URL);
   try {
     await ensureRoutes();
     app(req, res);
   } catch (err) {
     console.error('[api] Handler error:', err);
     if (!res.headersSent) {
-      res.status(500).json({ message: 'Internal server error' });
+      res.status(500).json({ message: 'Internal server error', debug: String(err) });
     }
   }
 }
