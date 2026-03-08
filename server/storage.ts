@@ -1,8 +1,8 @@
 import { User, InsertUser, Measurement, InsertMeasurement, Exercise, WorkoutPlan, InsertWorkoutPlan, WorkoutPlanExercise, InsertWorkoutPlanExercise, Food, MealPlan, InsertMealPlan, Meal, InsertMeal, MealFood, InsertMealFood, WaterIntake, InsertWaterIntake } from "@shared/schema";
 import createMemoryStore from "memorystore";
 import session, { Store } from "express-session";
-import { db } from './db';
-import * as schema from '../shared/schema';
+import { db } from './db.js';
+import * as schema from '../shared/schema.js';
 import { eq, and, desc, gte, lt } from 'drizzle-orm';
 import { drizzle } from "drizzle-orm/neon-http";
 import { neon } from "@neondatabase/serverless";
