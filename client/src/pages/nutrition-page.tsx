@@ -1,12 +1,12 @@
 import { useState } from "react";
 import { MainLayout } from "@/components/layout/main-layout";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { useQuery } from "@tanstack/react-query";
 import { useAuth } from "@/hooks/use-auth";
 import { apiRequest } from "@/lib/queryClient";
-import { Calendar, Plus, Utensils } from "lucide-react";
+import { Calendar, Plus, Utensils, Apple } from "lucide-react";
 import {
   Dialog,
   DialogContent,
@@ -23,12 +23,28 @@ export default function NutritionPage() {
   const { user } = useAuth();
   const [isLogMealDialogOpen, setIsLogMealDialogOpen] = useState(false);
 
+  const formatProtein = (value: unknown) => {
+    if (value == null) return null;
+    const s = String(value).trim();
+    // If API already returns "30g", don't add another "g"
+    if (/^\d+(\.\d+)?\s*g$/i.test(s)) return s.replace(/\s+/g, "");
+    // If API returns just "30", show as "30g"
+    if (/^\d+(\.\d+)?$/i.test(s)) return `${s}g`;
+    return s;
+  };
+
 
 
   // Fetch nutrition summary
   const { data: nutritionSummary, isLoading: isLoadingSummary, error: errorSummary } = useQuery({
     queryKey: ['/api/nutrition-summary'],
     queryFn: () => apiRequest('GET', '/api/nutrition-summary').then((res: Response) => res.json()),
+    enabled: !!user,
+  });
+
+  const { data: savedAiNutrition = [], isLoading: isLoadingAiNutrition } = useQuery({
+    queryKey: ['/api/ai/nutrition-recommendations'],
+    queryFn: () => apiRequest('GET', '/api/ai/nutrition-recommendations').then((res: Response) => res.json()),
     enabled: !!user,
   });
 
@@ -42,6 +58,7 @@ export default function NutritionPage() {
           <TabsList>
             <TabsTrigger value="summary">Daily Summary</TabsTrigger>
             <TabsTrigger value="food-library">Food Library</TabsTrigger>
+            <TabsTrigger value="recommended">Recommended</TabsTrigger>
           </TabsList>
 
           <Dialog open={isLogMealDialogOpen} onOpenChange={setIsLogMealDialogOpen}>
@@ -220,7 +237,103 @@ export default function NutritionPage() {
           <FoodLibrary />
         </TabsContent>
 
-       
+        <TabsContent value="recommended">
+          <Card>
+            <CardHeader>
+              <CardTitle>AI Nutrition Recommendations</CardTitle>
+              <CardDescription>Meal plans you saved from the AI Coach</CardDescription>
+            </CardHeader>
+            <CardContent>
+              {isLoadingAiNutrition ? (
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                  {[1, 2, 3].map((i) => (
+                    <Card key={i} className="animate-pulse rounded-xl">
+                      <CardContent className="p-6 h-56" />
+                    </Card>
+                  ))}
+                </div>
+              ) : (savedAiNutrition as any[]).length === 0 ? (
+                <div className="flex flex-col items-center justify-center py-8 text-center">
+                  <Apple className="h-12 w-12 text-gray-300 mb-2" />
+                  <p className="text-muted-foreground">No saved AI nutrition recommendations yet</p>
+                  <p className="text-sm text-muted-foreground">
+                    Go to AI Coach, generate a nutrition plan, and click &quot;Save to My Meal Plans&quot; to see it here
+                  </p>
+                </div>
+              ) : (
+                <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
+                  {(savedAiNutrition as any[]).map((rec: any) => (
+                    <Card
+                      key={rec.id}
+                      className="overflow-hidden rounded-2xl border border-gray-200/70 dark:border-gray-700/70 shadow-sm hover:shadow-md transition-shadow"
+                    >
+                      <CardHeader className="pb-3">
+                        <div className="flex items-start justify-between gap-3">
+                          <div className="min-w-0">
+                            <CardTitle className="text-lg leading-snug line-clamp-1">{rec.title}</CardTitle>
+                            <CardDescription className="line-clamp-2">{rec.description}</CardDescription>
+                          </div>
+                          <div className="h-9 w-9 rounded-xl bg-green-100 dark:bg-green-900/30 flex items-center justify-center text-green-600 dark:text-green-400 shrink-0">
+                            <Apple className="h-4 w-4" />
+                          </div>
+                        </div>
+                      </CardHeader>
+                      <CardContent className="pt-0">
+                        <div className="flex items-center justify-between text-xs text-muted-foreground mb-3">
+                          <span>{(rec.payload?.meals ?? []).length} meals</span>
+                          {rec.createdAt && (
+                            <span className="hidden sm:inline">
+                              {new Date(rec.createdAt).toLocaleDateString()}
+                            </span>
+                          )}
+                        </div>
+
+                        <div className="space-y-2">
+                          {(rec.payload?.meals ?? []).slice(0, 3).map((meal: any, i: number) => (
+                            <div
+                              key={i}
+                              className="flex items-start justify-between gap-3 rounded-xl bg-gray-50 dark:bg-gray-800/50 px-3 py-2"
+                            >
+                              <div className="min-w-0">
+                                <p className="text-sm font-medium leading-snug line-clamp-1">{meal.name}</p>
+                                {meal.description && (
+                                  <p className="text-xs text-muted-foreground line-clamp-1">{meal.description}</p>
+                                )}
+                              </div>
+                              {formatProtein(meal.protein) && (
+                                <span className="text-xs text-muted-foreground shrink-0">
+                                  {formatProtein(meal.protein)} protein
+                                </span>
+                              )}
+                            </div>
+                          ))}
+                          {(rec.payload?.meals?.length ?? 0) > 3 && (
+                            <p className="text-xs text-muted-foreground">
+                              +{(rec.payload?.meals?.length ?? 0) - 3} more meals
+                            </p>
+                          )}
+                        </div>
+
+                        {rec.payload?.dailyTotals && (
+                          <div className="mt-4 grid grid-cols-2 gap-2 text-xs">
+                            <div className="rounded-xl border border-gray-200/70 dark:border-gray-700/70 px-3 py-2">
+                              <p className="text-muted-foreground">Protein</p>
+                              <p className="font-semibold">{rec.payload.dailyTotals.protein}</p>
+                            </div>
+                            <div className="rounded-xl border border-gray-200/70 dark:border-gray-700/70 px-3 py-2">
+                              <p className="text-muted-foreground">Calories</p>
+                              <p className="font-semibold">{rec.payload.dailyTotals.calories}</p>
+                            </div>
+                          </div>
+                        )}
+                      </CardContent>
+                    </Card>
+                  ))}
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        </TabsContent>
       </Tabs>
     </MainLayout>
   );

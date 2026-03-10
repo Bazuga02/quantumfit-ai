@@ -477,15 +477,47 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
       
       const recommendation = await getWorkoutRecommendation({
-        goals,
-        fitnessLevel,
-        limitations,
-        preferredExercises
+        goals: String(goals),
+        fitnessLevel: String(fitnessLevel),
+        limitations: limitations != null ? String(limitations) : undefined,
+        preferredExercises: Array.isArray(preferredExercises) ? preferredExercises : undefined,
       });
       
       res.json(recommendation);
     } catch (error) {
-      res.status(500).json({ message: "Failed to generate workout recommendation" });
+      console.error("Workout recommendation error:", error);
+      const message = error instanceof Error ? error.message : "Failed to generate workout recommendation";
+      res.status(500).json({ message: "Failed to generate workout recommendation", error: message });
+    }
+  });
+
+  app.post("/api/ai/workout-recommendation/save", async (req, res) => {
+    try {
+      if (!req.user?.id) {
+        return res.status(401).json({ message: "You must be logged in to save" });
+      }
+      const { title, description, exercises } = req.body;
+      if (!title || !description || !Array.isArray(exercises)) {
+        return res.status(400).json({ message: "title, description, and exercises are required" });
+      }
+      const saved = await dbStorage.saveAiWorkoutRecommendation(req.user.id, { title, description, exercises });
+      res.json(saved);
+    } catch (error) {
+      console.error("Save workout recommendation error:", error);
+      res.status(500).json({ message: "Failed to save workout recommendation" });
+    }
+  });
+
+  app.get("/api/ai/workout-recommendations", async (req, res) => {
+    try {
+      if (!req.user?.id) {
+        return res.status(401).json({ message: "You must be logged in" });
+      }
+      const list = await dbStorage.getAiWorkoutRecommendations(req.user.id);
+      res.json(list);
+    } catch (error) {
+      console.error("Get AI workout recommendations error:", error);
+      res.status(500).json({ message: "Failed to fetch saved recommendations" });
     }
   });
 
@@ -506,6 +538,36 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.json(recommendation);
     } catch (error) {
       res.status(500).json({ message: "Failed to generate nutrition recommendation" });
+    }
+  });
+
+  app.post("/api/ai/nutrition-recommendation/save", async (req, res) => {
+    try {
+      if (!req.user?.id) {
+        return res.status(401).json({ message: "You must be logged in to save" });
+      }
+      const { title, description, meals, dailyTotals } = req.body;
+      if (!title || !description || !Array.isArray(meals) || !dailyTotals) {
+        return res.status(400).json({ message: "title, description, meals, and dailyTotals are required" });
+      }
+      const saved = await dbStorage.saveAiNutritionRecommendation(req.user.id, { title, description, meals, dailyTotals });
+      res.json(saved);
+    } catch (error) {
+      console.error("Save nutrition recommendation error:", error);
+      res.status(500).json({ message: "Failed to save nutrition recommendation" });
+    }
+  });
+
+  app.get("/api/ai/nutrition-recommendations", async (req, res) => {
+    try {
+      if (!req.user?.id) {
+        return res.status(401).json({ message: "You must be logged in" });
+      }
+      const list = await dbStorage.getAiNutritionRecommendations(req.user.id);
+      res.json(list);
+    } catch (error) {
+      console.error("Get AI nutrition recommendations error:", error);
+      res.status(500).json({ message: "Failed to fetch saved recommendations" });
     }
   });
 

@@ -98,6 +98,12 @@ export interface IStorage {
   getMealsForUserOnDate(userId: number, date: string): Promise<Meal[]>;
 
   getTrainedBodyPartsInRange(userId: number, fromDate: Date, toDate: Date): Promise<schema.TrainedBodyPart[]>;
+
+  // AI recommendations
+  saveAiWorkoutRecommendation(userId: number, data: { title: string; description: string; exercises: { name: string; description: string; sets: string; reps: string; restTime: string }[] }): Promise<schema.AiWorkoutRecommendation>;
+  saveAiNutritionRecommendation(userId: number, data: { title: string; description: string; meals: { name: string; description: string; protein: string; carbs: string; fats: string; calories: string }[]; dailyTotals: { protein: string; carbs: string; fats: string; calories: string } }): Promise<schema.AiNutritionRecommendation>;
+  getAiWorkoutRecommendations(userId: number): Promise<schema.AiWorkoutRecommendation[]>;
+  getAiNutritionRecommendations(userId: number): Promise<schema.AiNutritionRecommendation[]>;
 }
 
 export class PostgresStorage implements IStorage {
@@ -436,6 +442,36 @@ export class PostgresStorage implements IStorage {
         lt(schema.trainedBodyParts.date, new Date(toDate.getTime() + 24 * 60 * 60 * 1000))
       )
     );
+  }
+
+  async saveAiWorkoutRecommendation(userId: number, data: { title: string; description: string; exercises: { name: string; description: string; sets: string; reps: string; restTime: string }[] }) {
+    const [row] = await db.insert(schema.aiWorkoutRecommendations).values({
+      userId,
+      title: data.title,
+      description: data.description,
+      payload: data,
+    }).returning();
+    if (!row) throw new Error("Failed to save AI workout recommendation");
+    return row;
+  }
+
+  async saveAiNutritionRecommendation(userId: number, data: { title: string; description: string; meals: { name: string; description: string; protein: string; carbs: string; fats: string; calories: string }[]; dailyTotals: { protein: string; carbs: string; fats: string; calories: string } }) {
+    const [row] = await db.insert(schema.aiNutritionRecommendations).values({
+      userId,
+      title: data.title,
+      description: data.description,
+      payload: data,
+    }).returning();
+    if (!row) throw new Error("Failed to save AI nutrition recommendation");
+    return row;
+  }
+
+  async getAiWorkoutRecommendations(userId: number) {
+    return db.select().from(schema.aiWorkoutRecommendations).where(eq(schema.aiWorkoutRecommendations.userId, userId)).orderBy(desc(schema.aiWorkoutRecommendations.createdAt));
+  }
+
+  async getAiNutritionRecommendations(userId: number) {
+    return db.select().from(schema.aiNutritionRecommendations).where(eq(schema.aiNutritionRecommendations.userId, userId)).orderBy(desc(schema.aiNutritionRecommendations.createdAt));
   }
 }
 

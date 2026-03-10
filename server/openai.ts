@@ -1,227 +1,213 @@
-import { GoogleGenerativeAI } from "@google/generative-ai";
+/**
+ * AI Coach — Groq (OpenAI-compatible). Fast, free tier.
+ * Responses are validated with Zod so the frontend always gets the same format.
+ */
 
-const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY!);
+import Groq from "groq-sdk";
+import { z } from "zod";
 
-interface Exercise {
-  name: string;
-  description: string;
-  sets: string;
-  reps: string;
-  restTime: string;
+// Lazy client so API key is read after dotenv loads
+function getGroq() {
+  const apiKey = process.env.GROQ_API_KEY;
+  if (!apiKey) throw new Error("GROQ_API_KEY is not set");
+  return new Groq({ apiKey });
 }
 
-interface WorkoutRecommendation {
-  title: string;
-  description: string;
-  exercises: Exercise[];
-}
+const MODEL = "llama-3.1-8b-instant";
 
-interface Meal {
-  name: string;
-  description: string;
-  protein: string;
-  carbs: string;
-  fats: string;
-  calories: string;
-}
+// --- Response schemas (guaranteed format for frontend) ---
 
-interface DailyTotals {
-  protein: string;
-  carbs: string;
-  fats: string;
-  calories: string;
-}
+const ExerciseSchema = z.object({
+  name: z.string().default(""),
+  description: z.string().default(""),
+  sets: z.string().default(""),
+  reps: z.string().default(""),
+  restTime: z.string().default(""),
+});
 
-interface NutritionRecommendation {
-  title: string;
-  description: string;
-  meals: Meal[];
-  dailyTotals: DailyTotals;
-}
+const WorkoutRecommendationSchema = z.object({
+  title: z.string().default("Workout Plan"),
+  description: z.string().default(""),
+  exercises: z.array(ExerciseSchema).default([]),
+});
 
-async function geminiJsonPrompt(prompt: string): Promise<any> {
-  const model = genAI.getGenerativeModel({ model: "gemini-pro" });
-  const result = await model.generateContent(prompt);
-  try {
-    return JSON.parse(result.response.text());
-  } catch (e) {
-    console.error("Gemini raw response:", result.response.text());
-    console.error("Failed to parse Gemini response as JSON:", e);
-    throw new Error("Failed to parse Gemini response as JSON: " + result.response.text());
-  }
-}
+const MealSchema = z.object({
+  name: z.string().default(""),
+  description: z.string().default(""),
+  protein: z.string().default(""),
+  carbs: z.string().default(""),
+  fats: z.string().default(""),
+  calories: z.string().default(""),
+});
 
-async function callGeminiAPI(prompt: string) {
-  try {
-    const response = await fetch(
-      `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${process.env.GEMINI_API_KEY}`,
-      {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          contents: [{
-            parts: [{ text: prompt }]
-          }]
-        })
-      }
-    );
+const DailyTotalsSchema = z.object({
+  protein: z.string().default(""),
+  carbs: z.string().default(""),
+  fats: z.string().default(""),
+  calories: z.string().default(""),
+});
 
-    if (!response.ok) {
-      throw new Error('Failed to get response from Gemini API');
-    }
+const NutritionRecommendationSchema = z.object({
+  title: z.string().default("Nutrition Plan"),
+  description: z.string().default(""),
+  meals: z.array(MealSchema).default([]),
+  dailyTotals: DailyTotalsSchema.default({ protein: "", carbs: "", fats: "", calories: "" }),
+});
 
-    const data = await response.json();
-    return data.candidates[0].content.parts[0].text;
-  } catch (error) {
-    console.error('Error calling Gemini API:', error);
-    return null;
-  }
-}
+const ProgressAnalysisSchema = z.object({
+  analysis: z.string().default(""),
+  recommendations: z.array(z.string()).default([]),
+});
+
+export type WorkoutRecommendation = z.infer<typeof WorkoutRecommendationSchema>;
+export type NutritionRecommendation = z.infer<typeof NutritionRecommendationSchema>;
+
+// --- Single helper: Groq chat + JSON parse ---
 
 function extractJson(text: string): string {
-  // Remove code block markers and extract JSON
-  const cleaned = text.replace(/```json|```/g, '').trim();
-  const match = cleaned.match(/\{[\s\S]*\}/);
-  if (match) return match[0];
-  return cleaned;
-}
-
-export async function getWorkoutRecommendation(
-  userData: {
-    goals: string;
-    fitnessLevel: string;
-    limitations?: string;
-    preferredExercises?: string[];
-  }
-): Promise<WorkoutRecommendation> {
-  const prompt = `
-    Generate a personalized workout recommendation based on the following user data:
-    - Goals: ${userData.goals}
-    - Fitness Level: ${userData.fitnessLevel}
-    - Limitations/Injuries: ${userData.limitations || "None"}
-    - Preferred Exercises: ${userData.preferredExercises?.join(", ") || "No specific preferences"}
-
-    Please provide a detailed workout plan in the following JSON format:
-    {
-      "title": "Workout Plan Title",
-      "description": "Brief description of the workout plan",
-      "exercises": [
-        {
-          "name": "Exercise Name",
-          "description": "Detailed description of the exercise",
-          "sets": "Number of sets",
-          "reps": "Number of reps or duration",
-          "restTime": "Rest time between sets"
-        }
-      ]
-    }
-
-    Respond with only the JSON object, no explanations, no markdown, no code blocks. Make sure to address the user's specific goals and limitations in the plan.
-  `;
-
-  try {
-    const response = await callGeminiAPI(prompt);
-    if (response) {
-      const jsonStr = extractJson(response);
-      const recommendation = JSON.parse(jsonStr);
-      return recommendation;
-    }
-  } catch (error) {
-    console.error('Error parsing Gemini response:', error);
-    throw new Error('Gemini API or parsing error: ' + error);
-  }
-
-  // If for some reason we reach here, throw a generic error
-  throw new Error('Unknown error in getWorkoutRecommendation');
-}
-
-export async function getNutritionRecommendation(
-  userData: {
-    goals: string;
-    dietaryRestrictions?: string[];
-    currentIntake?: {
-      calories: number;
-      protein: number;
-      carbs: number;
-      fats: number;
-    };
-  }
-): Promise<NutritionRecommendation> {
-  const prompt = `
-    Generate a personalized nutrition recommendation based on the following user data:
-    - Goals: ${userData.goals}
-    - Dietary Restrictions: ${userData.dietaryRestrictions?.join(", ") || "None"}
-    - Current Daily Intake: ${JSON.stringify(userData.currentIntake || "Not specified")}
-    
-    Please provide a detailed nutrition plan in the following JSON format:
-    {
-      "title": "Nutrition Plan Title",
-      "description": "Brief description of the nutrition plan",
-      "meals": [
-        {
-          "name": "Meal Name",
-          "description": "Detailed description of the meal",
-          "protein": "Protein content in grams",
-          "carbs": "Carbohydrate content in grams",
-          "fats": "Fat content in grams",
-          "calories": "Total calories"
-        }
-      ],
-      "dailyTotals": {
-        "protein": "Total daily protein in grams",
-        "carbs": "Total daily carbs in grams",
-        "fats": "Total daily fats in grams",
-        "calories": "Total daily calories"
+  const trimmed = text.trim();
+  const codeBlock = trimmed.match(/```(?:json)?\s*([\s\S]*?)```/);
+  if (codeBlock) return codeBlock[1].trim();
+  const firstBrace = trimmed.indexOf("{");
+  if (firstBrace === -1) return trimmed;
+  let depth = 0;
+  let end = firstBrace;
+  for (let i = firstBrace; i < trimmed.length; i++) {
+    if (trimmed[i] === "{") depth++;
+    if (trimmed[i] === "}") {
+      depth--;
+      if (depth === 0) {
+        end = i + 1;
+        break;
       }
     }
-    
-    Respond with only the JSON object, no explanations, no markdown, no code blocks. Make sure to address the user's specific goals and dietary restrictions in the plan.
-  `;
-
-  try {
-    const response = await callGeminiAPI(prompt);
-    if (response) {
-      const jsonStr = extractJson(response);
-      const recommendation = JSON.parse(jsonStr);
-      return recommendation;
-    }
-  } catch (error) {
-    console.error('Error parsing Gemini response:', error);
-    throw new Error('Gemini API or parsing error: ' + error);
   }
-
-  // If for some reason we reach here, throw a generic error
-  throw new Error('Unknown error in getNutritionRecommendation');
+  return trimmed.slice(firstBrace, end);
 }
 
-export async function getProgressAnalysis(
-  userData: {
-    startingStats: {
-      weight?: number;
-      bodyFat?: number;
-      measurements?: Record<string, number>;
-    };
-    currentStats: {
-      weight?: number;
-      bodyFat?: number;
-      measurements?: Record<string, number>;
-    };
-    goal: string;
-    timeframe: string;
+async function generateJson<T = unknown>(prompt: string): Promise<T> {
+  const groq = getGroq();
+  const completion = await groq.chat.completions.create({
+    model: MODEL,
+    messages: [{ role: "user", content: prompt }],
+    temperature: 0.3,
+    max_tokens: 4096,
+  });
+
+  const raw = completion.choices[0]?.message?.content;
+  if (raw == null || raw === "") {
+    console.error("Groq returned no content:", JSON.stringify(completion, null, 2));
+    throw new Error("Groq returned empty response");
   }
-): Promise<{ analysis: string; recommendations: string[] }> {
-  const prompt = `
-    Analyze fitness progress based on the following user data:
-    - Starting Stats: ${JSON.stringify(userData.startingStats)}
-    - Current Stats: ${JSON.stringify(userData.currentStats)}
-    - Goal: ${userData.goal}
-    - Timeframe: ${userData.timeframe}
-    Please respond with a JSON object that includes:
-    1. A brief analysis of the progress made
-    2. A list of 3 recommendations for continued improvement
-    Format your response as: { "analysis": "", "recommendations": ["", "", ""] }
-  `;
-  return await geminiJsonPrompt(prompt);
+
+  try {
+    const jsonStr = extractJson(raw);
+    return JSON.parse(jsonStr) as T;
+  } catch (e) {
+    console.error("Groq JSON parse error. Raw:", raw);
+    throw new Error("Groq returned invalid JSON");
+  }
+}
+
+// --- Prompts: ask for JSON only (no schema in API, so prompt clearly) ---
+
+export async function getWorkoutRecommendation(userData: {
+  goals: string;
+  fitnessLevel: string;
+  limitations?: string;
+  preferredExercises?: string[];
+}): Promise<WorkoutRecommendation> {
+  const prompt = `You are a fitness coach. Return ONLY a valid JSON object, no other text or markdown.
+
+User context:
+- Goals: ${userData.goals}
+- Fitness level: ${userData.fitnessLevel}
+- Limitations/injuries: ${userData.limitations || "None"}
+- Preferred exercises: ${userData.preferredExercises?.join(", ") || "None"}
+
+Return exactly this JSON structure:
+{
+  "title": "workout plan title",
+  "description": "brief description of the plan",
+  "exercises": [
+    {
+      "name": "exercise name",
+      "description": "short description",
+      "sets": "e.g. 3",
+      "reps": "e.g. 10 or 30s",
+      "restTime": "e.g. 60s"
+    }
+  ]
+}
+
+Include 4-6 exercises. Address the user's goals and limitations. Output only the JSON object.`;
+
+  const raw = await generateJson<unknown>(prompt);
+  return WorkoutRecommendationSchema.parse(raw);
+}
+
+export async function getNutritionRecommendation(userData: {
+  goals: string;
+  dietaryRestrictions?: string[];
+  currentIntake?: { calories: number; protein: number; carbs: number; fats: number };
+}): Promise<NutritionRecommendation> {
+  const prompt = `You are a nutrition coach. Return ONLY a valid JSON object, no other text or markdown.
+
+User context:
+- Goals: ${userData.goals}
+- Dietary restrictions: ${userData.dietaryRestrictions?.join(", ") || "None"}
+- Current daily intake: ${JSON.stringify(userData.currentIntake ?? "Not specified")}
+
+Return exactly this JSON structure:
+{
+  "title": "nutrition plan title",
+  "description": "brief description",
+  "meals": [
+    {
+      "name": "meal name",
+      "description": "short description",
+      "protein": "grams",
+      "carbs": "grams",
+      "fats": "grams",
+      "calories": "number as string"
+    }
+  ],
+  "dailyTotals": {
+    "protein": "total grams",
+    "carbs": "total grams",
+    "fats": "total grams",
+    "calories": "total"
+  }
+}
+
+Include 3-5 meals. Address goals and restrictions. Output only the JSON object.`;
+
+  const raw = await generateJson<unknown>(prompt);
+  return NutritionRecommendationSchema.parse(raw);
+}
+
+export async function getProgressAnalysis(userData: {
+  startingStats: { weight?: number; bodyFat?: number; measurements?: Record<string, number> };
+  currentStats: { weight?: number; bodyFat?: number; measurements?: Record<string, number> };
+  goal: string;
+  timeframe: string;
+}): Promise<{ analysis: string; recommendations: string[] }> {
+  const prompt = `You are a fitness analyst. Return ONLY a valid JSON object, no other text or markdown.
+
+Context:
+- Starting stats: ${JSON.stringify(userData.startingStats)}
+- Current stats: ${JSON.stringify(userData.currentStats)}
+- Goal: ${userData.goal}
+- Timeframe: ${userData.timeframe}
+
+Return exactly this JSON structure:
+{
+  "analysis": "brief analysis of progress",
+  "recommendations": ["recommendation 1", "recommendation 2", "recommendation 3"]
+}
+
+Provide 3 concrete recommendations. Output only the JSON object.`;
+
+  const raw = await generateJson<unknown>(prompt);
+  return ProgressAnalysisSchema.parse(raw);
 }

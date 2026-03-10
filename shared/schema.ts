@@ -213,6 +213,29 @@ export const trainedBodyParts = pgTable("trained_body_parts", {
 
 export const insertTrainedBodyPartSchema = createInsertSchema(trainedBodyParts).omit({ id: true, date: true });
 
+// AI recommendations (workout + nutrition from Groq)
+export const aiWorkoutRecommendations = pgTable("ai_workout_recommendations", {
+  id: serial("id").primaryKey(),
+  userId: integer("user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
+  title: text("title").notNull(),
+  description: text("description").notNull(),
+  payload: jsonb("payload").$type<{ title: string; description: string; exercises: { name: string; description: string; sets: string; reps: string; restTime: string }[] }>().notNull(),
+  createdAt: timestamp("created_at", { withTimezone: true }).defaultNow(),
+});
+
+export const insertAiWorkoutRecommendationSchema = createInsertSchema(aiWorkoutRecommendations).omit({ id: true, createdAt: true });
+
+export const aiNutritionRecommendations = pgTable("ai_nutrition_recommendations", {
+  id: serial("id").primaryKey(),
+  userId: integer("user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
+  title: text("title").notNull(),
+  description: text("description").notNull(),
+  payload: jsonb("payload").$type<{ title: string; description: string; meals: { name: string; description: string; protein: string; carbs: string; fats: string; calories: string }[]; dailyTotals: { protein: string; carbs: string; fats: string; calories: string } }>().notNull(),
+  createdAt: timestamp("created_at", { withTimezone: true }).defaultNow(),
+});
+
+export const insertAiNutritionRecommendationSchema = createInsertSchema(aiNutritionRecommendations).omit({ id: true, createdAt: true });
+
 export type User = typeof users.$inferSelect;
 export type InsertUser = z.infer<typeof insertUserSchema>;
 export type LoginUser = z.infer<typeof loginUserSchema>;
@@ -249,3 +272,8 @@ export type InsertProgressPhoto = z.infer<typeof insertProgressPhotoSchema>;
 
 export type TrainedBodyPart = typeof trainedBodyParts.$inferSelect;
 export type InsertTrainedBodyPart = z.infer<typeof insertTrainedBodyPartSchema>;
+
+export type AiWorkoutRecommendation = typeof aiWorkoutRecommendations.$inferSelect;
+export type InsertAiWorkoutRecommendation = z.infer<typeof insertAiWorkoutRecommendationSchema>;
+export type AiNutritionRecommendation = typeof aiNutritionRecommendations.$inferSelect;
+export type InsertAiNutritionRecommendation = z.infer<typeof insertAiNutritionRecommendationSchema>;

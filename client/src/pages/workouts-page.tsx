@@ -16,7 +16,7 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
-import { useToast } from "@/hooks/use-toast";
+import { useToast } from "@/components/ui/use-toast";
 import { WorkoutSession } from "@/components/workouts/workout-session";
 import { WorkoutDetail } from "@/components/workouts/workout-detail";
 
@@ -49,6 +49,12 @@ export default function WorkoutsPage() {
     enabled: !!user,
   });
   const exercises = exercisesRaw as any[] | undefined;
+
+  const { data: savedAiWorkouts = [], isLoading: isLoadingAiWorkouts } = useQuery({
+    queryKey: ['/api/ai/workout-recommendations'],
+    queryFn: () => apiRequest('GET', '/api/ai/workout-recommendations').then(res => res.json()),
+    enabled: !!user,
+  });
 
   // Start workout mutation
   const startWorkoutMutation = useMutation({
@@ -566,19 +572,81 @@ export default function WorkoutsPage() {
             <CardHeader>
               <CardTitle>AI Workout Recommendations</CardTitle>
               <CardDescription>
-                Personalized workout suggestions based on your goals and activity
+                Workout plans you saved from the AI Coach
               </CardDescription>
             </CardHeader>
             <CardContent>
-              <div className="flex flex-col items-center justify-center py-8 text-center">
-                <Calendar className="h-12 w-12 text-gray-300 mb-2" />
-                <p className="text-muted-foreground">
-                  Workout recommendations are coming soon!
-                </p>
-                <p className="text-sm text-muted-foreground">
-                  Check back later for personalized AI workout suggestions
-                </p>
-              </div>
+              {isLoadingAiWorkouts ? (
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                  {[1, 2, 3].map((i) => (
+                    <Card key={i} className="animate-pulse">
+                      <CardContent className="p-6 h-48" />
+                    </Card>
+                  ))}
+                </div>
+              ) : (savedAiWorkouts as any[]).length === 0 ? (
+                <div className="flex flex-col items-center justify-center py-8 text-center">
+                  <Calendar className="h-12 w-12 text-gray-300 mb-2" />
+                  <p className="text-muted-foreground">No saved AI workout recommendations yet</p>
+                  <p className="text-sm text-muted-foreground">
+                    Go to AI Coach, generate a workout plan, and click &quot;Save to My Workouts&quot; to see it here
+                  </p>
+                </div>
+              ) : (
+                <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
+                  {(savedAiWorkouts as any[]).map((rec: any) => (
+                    <Card
+                      key={rec.id}
+                      className="overflow-hidden rounded-2xl border border-gray-200/70 dark:border-gray-700/70 shadow-sm hover:shadow-md transition-shadow"
+                    >
+                      <CardHeader className="pb-3">
+                        <div className="flex items-start justify-between gap-3">
+                          <div className="min-w-0">
+                            <CardTitle className="text-lg leading-snug line-clamp-1">{rec.title}</CardTitle>
+                            <CardDescription className="line-clamp-2">{rec.description}</CardDescription>
+                          </div>
+                          <div className="h-9 w-9 rounded-xl bg-primary/10 flex items-center justify-center text-primary shrink-0">
+                            <Dumbbell className="h-4 w-4" />
+                          </div>
+                        </div>
+                      </CardHeader>
+                      <CardContent className="pt-0">
+                        <div className="flex items-center justify-between text-xs text-muted-foreground mb-3">
+                          <span>{(rec.payload?.exercises ?? []).length} exercises</span>
+                          {rec.createdAt && (
+                            <span className="hidden sm:inline">
+                              {new Date(rec.createdAt).toLocaleDateString()}
+                            </span>
+                          )}
+                        </div>
+                        <div className="space-y-2">
+                          {(rec.payload?.exercises ?? []).slice(0, 4).map((ex: any, i: number) => (
+                            <div
+                              key={i}
+                              className="flex items-center gap-3 rounded-xl bg-gray-50 dark:bg-gray-800/50 px-3 py-2"
+                            >
+                              <Dumbbell className="h-4 w-4 shrink-0 text-primary" />
+                              <div className="min-w-0 flex-1">
+                                <p className="text-sm font-medium leading-snug line-clamp-1">{ex.name}</p>
+                                {(ex.sets || ex.reps) && (
+                                  <p className="text-xs text-muted-foreground">
+                                    {[ex.sets && `Sets: ${ex.sets}`, ex.reps && `Reps: ${ex.reps}`].filter(Boolean).join(" · ")}
+                                  </p>
+                                )}
+                              </div>
+                            </div>
+                          ))}
+                          {(rec.payload?.exercises?.length ?? 0) > 4 && (
+                            <p className="text-xs text-muted-foreground">
+                              +{(rec.payload?.exercises?.length ?? 0) - 4} more exercises
+                            </p>
+                          )}
+                        </div>
+                      </CardContent>
+                    </Card>
+                  ))}
+                </div>
+              )}
             </CardContent>
           </Card>
         </TabsContent>

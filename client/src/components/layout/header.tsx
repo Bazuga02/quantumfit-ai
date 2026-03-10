@@ -1,5 +1,5 @@
 import { useAuth } from "@/hooks/use-auth";
-import { Menu, Moon, Search, Sun, Activity } from "lucide-react";
+import { Menu, Moon, Sun, Activity } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import {
@@ -54,10 +54,6 @@ export function Header({ onToggleSidebar }: HeaderProps) {
         <div className="flex items-center gap-3 relative w-full justify-end">
           {/* Animated car with banner - moved to new component */}
           <AnimatedRacecarBanner />
-          {/* Search icon */}
-          <Button variant="ghost" size="icon" aria-label="Search">
-            <Search className="w-5 h-5" />
-          </Button>
 
           {/* Theme toggle */}
           <Button variant="ghost" size="icon" onClick={toggleTheme} aria-label="Toggle dark mode">

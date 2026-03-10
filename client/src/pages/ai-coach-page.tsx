@@ -7,7 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { useMutation } from "@tanstack/react-query";
-import { useToast } from "@/hooks/use-toast";
+import { useToast } from "@/components/ui/use-toast";
 import { apiRequest } from "@/lib/queryClient";
 import {
   BrainCircuit,
@@ -65,6 +65,50 @@ export default function AICoachPage() {
       toast({
         title: "Failed to generate recommendation",
         description: error.message,
+        variant: "destructive",
+      });
+    },
+  });
+
+  // Save AI workout recommendation (only when user clicks "Save to My Workouts")
+  const saveWorkoutMutation = useMutation({
+    mutationFn: async (data: { title: string; description: string; exercises: any[] }) => {
+      const res = await apiRequest("POST", "/api/ai/workout-recommendation/save", data);
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        throw new Error(err.message || "Failed to save");
+      }
+      return res.json();
+    },
+    onSuccess: () => {
+      toast({ title: "Saved", description: "Workout recommendation saved to your list." });
+    },
+    onError: (error) => {
+      toast({
+        title: "Failed to save",
+        description: error instanceof Error ? error.message : "Could not save workout recommendation",
+        variant: "destructive",
+      });
+    },
+  });
+
+  // Save AI nutrition recommendation (only when user clicks "Save to My Meal Plans")
+  const saveNutritionMutation = useMutation({
+    mutationFn: async (data: { title: string; description: string; meals: any[]; dailyTotals: any }) => {
+      const res = await apiRequest("POST", "/api/ai/nutrition-recommendation/save", data);
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        throw new Error(err.message || "Failed to save");
+      }
+      return res.json();
+    },
+    onSuccess: () => {
+      toast({ title: "Saved", description: "Nutrition recommendation saved to your list." });
+    },
+    onError: (error) => {
+      toast({
+        title: "Failed to save",
+        description: error instanceof Error ? error.message : "Could not save nutrition recommendation",
         variant: "destructive",
       });
     },
@@ -146,38 +190,38 @@ export default function AICoachPage() {
           </CardContent>
         </Card>
 
-        {/* General Instructions Section (replaces Current Recommendations) */}
-        <div className="mb-6">
-          <h2 className="text-lg font-semibold mb-4">How to Use the AI Coach</h2>
-          <Card className="bg-gradient-to-br from-blue-50 to-white border-blue-200 shadow-sm dark:bg-gradient-to-br dark:from-gray-900 dark:to-gray-800 dark:border-gray-700">
-            <CardContent className="p-8 flex gap-6 items-start">
-              <div className="hidden md:block">
-                <BrainCircuit className="h-12 w-12 text-primary dark:text-primary-300" />
+        {/* How to use - clean steps */}
+        <div className="mb-8">
+          <h2 className="text-lg font-semibold text-foreground mb-4">How to use</h2>
+          <div className="grid gap-3 sm:grid-cols-2">
+            <div className="flex gap-4 rounded-xl border border-border bg-card p-4 shadow-sm">
+              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-primary">
+                <Dumbbell className="h-5 w-5" />
               </div>
               <div>
-                <ul className="list-disc pl-6 space-y-4 text-gray-700 text-base dark:text-gray-200">
-                  <li>
-                    <span className="font-bold text-primary dark:text-primary-300">To get a workout recommendation:</span>
-                    <span> Enter your fitness goals, select your fitness level, and mention any limitations or injuries. </span>
-                    <span className="font-semibold text-primary dark:text-primary-200">Click Generate Workout Plan</span>
-                    <span> to receive a personalized plan.</span>
-                  </li>
-                  <li>
-                    <span className="font-bold text-green-700 dark:text-green-400">To get a nutrition recommendation:</span>
-                    <span> Enter your nutrition goals and any dietary restrictions. </span>
-                    <span className="font-semibold text-green-700 dark:text-green-300">Click Generate Nutrition Plan</span>
-                    <span> to receive a personalized meal plan.</span>
-                  </li>
-                  <li>
-                    <span className="italic text-gray-500 dark:text-gray-400">You can ask for plans like: "I want to build muscle and gain weight", "I need a vegetarian meal plan for fat loss", or "I have a knee injury, suggest a safe workout".</span>
-                  </li>
-                  <li>
-                    <span className="text-gray-600 dark:text-gray-400">Try both tabs below to see how the AI can help you with your fitness journey!</span>
-                  </li>
-                </ul>
+                <p className="font-medium text-foreground">Workout plan</p>
+                <p className="text-sm text-muted-foreground mt-0.5">
+                  Enter your goals, fitness level, and any limitations. Then click Generate Workout Plan.
+                </p>
               </div>
-            </CardContent>
-          </Card>
+            </div>
+            <div className="flex gap-4 rounded-xl border border-border bg-card p-4 shadow-sm">
+              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-primary">
+                <Apple className="h-5 w-5" />
+              </div>
+              <div>
+                <p className="font-medium text-foreground">Nutrition plan</p>
+                <p className="text-sm text-muted-foreground mt-0.5">
+                  Enter your nutrition goals and dietary restrictions. Then click Generate Nutrition Plan.
+                </p>
+              </div>
+            </div>
+          </div>
+          <p className="mt-3 text-sm text-muted-foreground">
+            Example prompts: &ldquo;I want to build muscle&rdquo;, &ldquo;vegetarian meal plan for fat loss&rdquo;, &ldquo;safe workout with a knee injury&rdquo;.
+            After you generate a plan, click <span className="font-medium text-foreground">Save</span> to store it.
+            You can view saved plans later in the <span className="font-medium text-foreground">Recommended</span> tabs on the Workouts and Nutrition pages.
+          </p>
         </div>
 
         {/* Get New Recommendations */}
@@ -275,7 +319,7 @@ export default function AICoachPage() {
                   </CardHeader>
                   <CardContent>
                     <div className="space-y-4">
-                      {workoutMutation.data.exercises.map((exercise: any, index: number): JSX.Element => (
+                      {(workoutMutation.data.exercises ?? []).map((exercise: any, index: number): JSX.Element => (
                         <div key={index} className="flex gap-3">
                           <div className="h-8 w-8 rounded-full bg-primary/10 flex items-center justify-center text-primary">
                             {index + 1}
@@ -294,8 +338,19 @@ export default function AICoachPage() {
                     </div>
                   </CardContent>
                   <CardFooter>
-                    <Button className="w-full">
-                      Save to My Workouts
+                    <Button
+                      className="w-full"
+                      onClick={() => saveWorkoutMutation.mutate(workoutMutation.data)}
+                      disabled={saveWorkoutMutation.isPending}
+                    >
+                      {saveWorkoutMutation.isPending ? (
+                        <>
+                          <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                          Saving...
+                        </>
+                      ) : (
+                        "Save to My Workouts"
+                      )}
                     </Button>
                   </CardFooter>
                 </Card>
@@ -360,7 +415,7 @@ export default function AICoachPage() {
                   </CardHeader>
                   <CardContent>
                     <div className="space-y-4">
-                      {nutritionMutation.data.meals.map((meal: any, index: number): JSX.Element => (
+                      {(nutritionMutation.data.meals ?? []).map((meal: any, index: number): JSX.Element => (
                         <div key={index} className="flex gap-3">
                           <div className="h-8 w-8 rounded-full bg-green-100 dark:bg-green-900/30 flex items-center justify-center text-green-600 dark:text-green-400">
                             <Apple className="h-4 w-4" />
@@ -377,8 +432,19 @@ export default function AICoachPage() {
                     </div>
                   </CardContent>
                   <CardFooter>
-                    <Button className="w-full">
-                      Save to My Meal Plans
+                    <Button
+                      className="w-full"
+                      onClick={() => saveNutritionMutation.mutate(nutritionMutation.data)}
+                      disabled={saveNutritionMutation.isPending}
+                    >
+                      {saveNutritionMutation.isPending ? (
+                        <>
+                          <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                          Saving...
+                        </>
+                      ) : (
+                        "Save to My Meal Plans"
+                      )}
                     </Button>
                   </CardFooter>
                 </Card>

@@ -1,11 +1,12 @@
-import 'dotenv/config';
-import { createServer } from "http";
-import express, { type Request, Response, NextFunction } from "express";
+import "./load-env.js";
 import path from "path";
 import { fileURLToPath } from "url";
-// Define __filename and __dirname FIRST!
+import { createServer } from "http";
+import express, { type Request, Response, NextFunction } from "express";
+
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
+
 // --- Swagger UI Express setup ---
 import swaggerUi from 'swagger-ui-express';
 import YAML from 'yamljs';
