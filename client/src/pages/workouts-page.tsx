@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { Link } from "wouter";
 import { MainLayout } from "@/components/layout/main-layout";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -6,7 +7,29 @@ import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { useAuth } from "@/hooks/use-auth";
 import { apiRequest } from "@/lib/queryClient";
-import { Calendar, ChevronRight, Dumbbell, Search, Timer, Users, Plus } from "lucide-react";
+import {
+  ChevronRight,
+  ClipboardList,
+  Dumbbell,
+  Search,
+  Timer,
+  Users,
+  Plus,
+  Sparkles,
+  Loader2,
+} from "lucide-react";
+import { cn } from "@/lib/utils";
+
+function difficultyPillClass(difficulty: string) {
+  const d = (difficulty || "").toLowerCase();
+  if (d === "beginner") {
+    return "border-emerald-500/30 bg-emerald-500/15 text-emerald-800 dark:text-emerald-300";
+  }
+  if (d === "advanced") {
+    return "border-destructive/25 bg-destructive/10 text-destructive";
+  }
+  return "border-primary/30 bg-primary/15 text-primary";
+}
 import { Input } from "@/components/ui/input";
 import {
   Dialog,
@@ -27,6 +50,16 @@ export default function WorkoutsPage() {
   const [activeWorkoutSession, setActiveWorkoutSession] = useState<any>(null);
   const [selectedWorkout, setSelectedWorkout] = useState<any>(null);
   const [activeTab, setActiveTab] = useState("my-workouts");
+  const [aiWorkoutDetail, setAiWorkoutDetail] = useState<any | null>(null);
+
+  const { data: aiWorkoutRecommendationsRaw, isLoading: isLoadingAiWorkouts } = useQuery({
+    queryKey: ["/api/ai/workout-recommendations"],
+    queryFn: () => apiRequest("GET", "/api/ai/workout-recommendations").then((res) => res.json()),
+    enabled: !!user,
+  });
+  const aiWorkoutRecommendations = (Array.isArray(aiWorkoutRecommendationsRaw)
+    ? aiWorkoutRecommendationsRaw
+    : []) as any[];
 
   // Fetch user plans
   const { data: userPlansRaw, isLoading: isLoadingUserPlans } = useQuery({
@@ -49,12 +82,6 @@ export default function WorkoutsPage() {
     enabled: !!user,
   });
   const exercises = exercisesRaw as any[] | undefined;
-
-  const { data: savedAiWorkouts = [], isLoading: isLoadingAiWorkouts } = useQuery({
-    queryKey: ['/api/ai/workout-recommendations'],
-    queryFn: () => apiRequest('GET', '/api/ai/workout-recommendations').then(res => res.json()),
-    enabled: !!user,
-  });
 
   // Start workout mutation
   const startWorkoutMutation = useMutation({
@@ -364,9 +391,10 @@ export default function WorkoutsPage() {
   // If there's an active workout session, show the workout session interface
   if (activeWorkoutSession) {
     return (
-      <MainLayout 
-        title="Active Workout" 
-        subtitle={`Currently working out: ${activeWorkoutSession.planName}`}
+      <MainLayout
+        compact
+        title="Active workout"
+        subtitle={`You're in session: ${activeWorkoutSession.planName}. Finish sets at your pace — you can exit anytime.`}
       >
         <WorkoutSession 
           session={activeWorkoutSession}
@@ -389,268 +417,331 @@ export default function WorkoutsPage() {
   }
 
   return (
-    <MainLayout 
-      title="Workouts" 
-      subtitle="Manage your workout plans and track your exercises."
+    <MainLayout
+      title="Workouts"
+      subtitle="Your plans, the exercise catalog, and saved AI sessions — pick a tab and start moving."
     >
-      <Tabs defaultValue="my-workouts" value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-        <div className="flex justify-between items-center">
-          <TabsList>
-            <TabsTrigger value="my-workouts">My Workouts</TabsTrigger>
-            <TabsTrigger value="exercise-library">Exercise Library</TabsTrigger>
-            <TabsTrigger value="recommended">Recommended</TabsTrigger>
+      <div className="mx-auto w-full max-w-6xl space-y-8 pb-8">
+      <Tabs defaultValue="my-workouts" value={activeTab} onValueChange={setActiveTab} className="space-y-8">
+        <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+          <TabsList className="grid h-auto w-full grid-cols-3 rounded-2xl bg-muted/60 p-1 dark:bg-muted/40 sm:w-auto sm:max-w-xl">
+            <TabsTrigger
+              value="my-workouts"
+              className="gap-1.5 rounded-xl py-2.5 text-xs sm:text-sm data-[state=active]:bg-background data-[state=active]:shadow-sm"
+            >
+              <ClipboardList className="hidden h-4 w-4 sm:inline" aria-hidden />
+              <span className="truncate">My workouts</span>
+            </TabsTrigger>
+            <TabsTrigger
+              value="exercise-library"
+              className="gap-1.5 rounded-xl py-2.5 text-xs sm:text-sm data-[state=active]:bg-background data-[state=active]:shadow-sm"
+            >
+              <Search className="hidden h-4 w-4 sm:inline" aria-hidden />
+              <span className="truncate">Exercises</span>
+            </TabsTrigger>
+            <TabsTrigger
+              value="recommended"
+              className="gap-1.5 rounded-xl py-2.5 text-xs sm:text-sm data-[state=active]:bg-background data-[state=active]:shadow-sm"
+            >
+              <Sparkles className="hidden h-4 w-4 sm:inline" aria-hidden />
+              <span className="truncate">Recommended</span>
+            </TabsTrigger>
           </TabsList>
-          
+
           <Dialog>
             <DialogTrigger asChild>
-              <Button className="flex items-center gap-1">
-                <Plus className="w-4 h-4" />
-                New Workout
+              <Button className="w-full gap-2 rounded-2xl shadow-md sm:w-auto">
+                <Plus className="h-4 w-4" />
+                New workout
               </Button>
             </DialogTrigger>
-            <DialogContent>
+            <DialogContent className="rounded-2xl sm:max-w-md">
               <DialogHeader>
-                <DialogTitle>Create New Workout</DialogTitle>
+                <DialogTitle>Create workout</DialogTitle>
                 <DialogDescription>
-                  Design a custom workout plan tailored to your goals.
+                  Custom plan builder is on the way. For now, start from AI Coach or use a template below.
                 </DialogDescription>
               </DialogHeader>
-              <div className="py-4">
-                <p className="text-center text-muted-foreground">
-                  Workout creation form goes here. This feature is coming soon!
+              <div className="rounded-xl border border-dashed border-border bg-muted/30 py-8 text-center dark:bg-muted/15">
+                <p className="text-sm text-muted-foreground">
+                  Coming soon — you&apos;ll be able to assemble blocks and save plans here.
                 </p>
               </div>
             </DialogContent>
           </Dialog>
         </div>
 
-        <TabsContent value="my-workouts">
+        <TabsContent value="my-workouts" className="mt-0 space-y-6">
           {isLoadingUserPlans || startWorkoutMutation.isPending ? (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
               {[1, 2, 3].map((i) => (
-                <Card key={i} className="animate-pulse">
-                  <CardContent className="p-6 h-60"></CardContent>
+                <Card key={i} className="animate-pulse rounded-3xl border-border/60">
+                  <CardContent className="h-64 p-6" />
                 </Card>
               ))}
             </div>
           ) : displayedWorkouts.length > 0 ? (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
               {displayedWorkouts.map((workout: any) => (
-                <Card key={workout.id} className="group relative overflow-visible bg-gradient-to-br from-white via-gray-50 to-gray-100 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900 border-0 shadow-md hover:shadow-xl transition-shadow duration-300 rounded-2xl hover:-translate-y-1">
-                  <CardContent className="p-7 pb-6 flex flex-col h-full">
-                    {/* Floating Difficulty Badge */}
-                    <span className="absolute top-5 right-5 z-10 px-3 py-1 rounded-full text-xs font-semibold bg-white/80 dark:bg-gray-900/80 border border-gray-200 dark:border-gray-700 shadow text-gray-700 dark:text-gray-200 group-hover:bg-primary group-hover:text-white transition-colors">{workout.difficulty}</span>
-                    {/* Icon */}
-                    <div className="h-12 w-12 rounded-xl bg-primary-100 dark:bg-primary-900/60 flex items-center justify-center text-primary-600 dark:text-primary-400 text-2xl mb-4 shadow-sm">
-                      <Dumbbell className="h-7 w-7" />
+                <Card
+                  key={workout.id}
+                  className="group relative flex flex-col overflow-hidden rounded-3xl border-border/60 bg-card shadow-lg ring-1 ring-primary/5 transition-all duration-300 hover:-translate-y-0.5 hover:shadow-xl"
+                >
+                  <CardContent className="flex h-full flex-col p-6 sm:p-7">
+                    <span
+                      className={cn(
+                        "absolute right-5 top-5 z-10 rounded-full border px-3 py-1 text-xs font-semibold capitalize shadow-sm",
+                        difficultyPillClass(workout.difficulty)
+                      )}
+                    >
+                      {workout.difficulty}
+                    </span>
+                    <div className="relative mb-4 flex h-12 w-12 items-center justify-center rounded-2xl bg-primary/15 text-primary shadow-sm">
+                      <Dumbbell className="h-6 w-6" />
                     </div>
-                    {/* Title & Description */}
-                    <h3 className="font-bold text-2xl mb-1 text-gray-900 dark:text-white">{workout.name}</h3>
-                    <p className="text-sm text-gray-500 dark:text-gray-300 mb-4 line-clamp-2">{workout.description}</p>
-                    {/* Spacer */}
+                    <h3 className="pr-16 text-xl font-bold leading-snug tracking-tight text-foreground">
+                      {workout.name}
+                    </h3>
+                    <p className="mt-2 line-clamp-2 text-sm leading-relaxed text-muted-foreground">
+                      {workout.description}
+                    </p>
                     <div className="flex-1" />
-                    {/* Bottom Bar */}
-                    <div className="flex items-center justify-between gap-4 text-sm font-medium mb-4">
-                      <div className="flex items-center gap-1 text-gray-700 dark:text-gray-200">
-                        <Timer className="h-4 w-4" />
+                    <div className="mb-4 mt-5 flex items-center justify-between gap-3 text-sm font-medium text-muted-foreground">
+                      <div className="flex items-center gap-1.5">
+                        <Timer className="h-4 w-4 shrink-0 text-primary" />
                         <span>{workout.duration} min</span>
                       </div>
-                      <div className="flex items-center gap-1 text-gray-700 dark:text-gray-200">
-                        <Users className="h-4 w-4" />
-                        <span>{workout.exercises?.length ?? 3} exercises</span>
+                      <div className="flex items-center gap-1.5">
+                        <Users className="h-4 w-4 shrink-0 text-primary" />
+                        <span>{workout.exercises?.length ?? 0} moves</span>
                       </div>
                     </div>
-                    {/* Details Button */}
-                    <Button 
-                      className="w-full bg-primary text-white font-semibold rounded-full py-2 mt-1 shadow-md hover:bg-primary/90 transition-colors"
+                    <Button
+                      className="w-full rounded-2xl font-semibold shadow-md"
                       onClick={() => handleSelectWorkout(workout)}
                     >
-                      Details
+                      View plan
                     </Button>
                   </CardContent>
                 </Card>
               ))}
             </div>
           ) : (
-            <Card>
-              <CardContent className="p-6">
-                <div className="flex flex-col items-center justify-center py-8 text-center">
-                  <Dumbbell className="h-12 w-12 text-gray-300 mb-2" />
-                  <p className="text-muted-foreground">No workout plans found</p>
-                  <p className="text-sm text-muted-foreground mb-4">
-                    Create your first workout plan to get started
-                  </p>
-                  <Button>Create Workout Plan</Button>
-                </div>
-              </CardContent>
-            </Card>
+            <div className="rounded-3xl border border-dashed border-border bg-muted/20 px-6 py-14 text-center dark:bg-muted/10">
+              <Dumbbell className="mx-auto h-12 w-12 text-muted-foreground/50" />
+              <p className="mt-4 text-base font-medium text-foreground">No workout plans yet</p>
+              <p className="mx-auto mt-2 max-w-md text-sm leading-relaxed text-muted-foreground">
+                Plans from your account will list here. Use the Recommended tab after saving one from AI Coach, or check
+                back when templates are available.
+              </p>
+              <div className="mt-6 flex flex-wrap items-center justify-center gap-3">
+                <Button asChild variant="default" className="rounded-2xl">
+                  <Link href="/ai-coach">Open AI Coach</Link>
+                </Button>
+                <Dialog>
+                  <DialogTrigger asChild>
+                    <Button variant="outline" className="rounded-2xl">
+                      New workout
+                    </Button>
+                  </DialogTrigger>
+                  <DialogContent className="rounded-2xl sm:max-w-md">
+                    <DialogHeader>
+                      <DialogTitle>Create workout</DialogTitle>
+                      <DialogDescription>Custom builder is coming soon.</DialogDescription>
+                    </DialogHeader>
+                  </DialogContent>
+                </Dialog>
+              </div>
+            </div>
           )}
         </TabsContent>
 
-        <TabsContent value="exercise-library">
-          <div className="mb-6">
-            <div className="relative">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
-              <Input
-                placeholder="Search exercises..."
-                className="pl-10"
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-              />
-            </div>
-          </div>
-          
-          {isLoadingExercises ? (
-            <div className="space-y-2">
-              {[1, 2, 3, 4, 5].map((i) => (
-                <Card key={i} className="animate-pulse">
-                  <CardContent className="p-4 h-14"></CardContent>
-                </Card>
-              ))}
-            </div>
-          ) : filteredExercises.length > 0 ? (
-            <div className="space-y-2">
-              {filteredExercises.map((exercise: any) => (
-                <Card 
-                  key={exercise.id} 
-                  className="cursor-pointer hover:bg-accent/50 transition-colors"
-                  onClick={() => setSelectedWorkout({
-                    id: 999,
-                    name: exercise.name,
-                    description: exercise.description,
-                    difficulty: exercise.difficulty || "intermediate",
-                    duration: 0,
-                    exercises: [{
-                      exercise: {
-                        ...exercise,
-                        muscleGroups: exercise.muscleGroups,
-                        videoUrl: exercise.videoUrl,
-                        imageUrl: exercise.imageUrl
-                      },
-                      sets: 4,
-                      reps: 10,
-                      restTime: 60,
-                      order: 1
-                    }]
-                  })}
-                >
-                  <CardContent className="p-4 flex items-center justify-between">
-                    <div className="flex items-center gap-3">
-                      <div className="h-10 w-10 rounded-lg bg-primary-100 dark:bg-primary-900/50 flex items-center justify-center text-primary">
-                        <Dumbbell className="h-5 w-5" />
-                      </div>
-                      <div>
-                        <p className="font-medium">{exercise.name}</p>
-                        <p className="text-xs text-muted-foreground">
-                          {exercise.muscleGroups.join(", ")}
-                        </p>
-                      </div>
-                    </div>
-                    <ChevronRight className="h-5 w-5 text-muted-foreground" />
-                  </CardContent>
-                </Card>
-              ))}
-            </div>
-          ) : (
-            <Card>
-              <CardContent className="p-6">
-                <div className="flex flex-col items-center justify-center py-8 text-center">
-                  <Search className="h-12 w-12 text-gray-300 mb-2" />
-                  <p className="text-muted-foreground">No exercises found</p>
-                  <p className="text-sm text-muted-foreground">
-                    Try adjusting your search or check back later
-                  </p>
-                </div>
-              </CardContent>
-            </Card>
-          )}
-        </TabsContent>
-
-
-        <TabsContent value="recommended">
-          <Card>
-            <CardHeader>
-              <CardTitle>AI Workout Recommendations</CardTitle>
-              <CardDescription>
-                Workout plans you saved from the AI Coach
+        <TabsContent value="exercise-library" className="mt-0 space-y-6">
+          <Card className="overflow-hidden rounded-3xl border-border/60 shadow-lg ring-1 ring-primary/5">
+            <CardHeader className="border-b border-border/50 bg-muted/30 py-4 dark:bg-muted/15">
+              <CardTitle className="text-lg font-bold text-foreground">Exercise library</CardTitle>
+              <CardDescription className="text-sm leading-relaxed">
+                Tap a row to preview cues and equipment — great for quick reference between sets.
               </CardDescription>
             </CardHeader>
-            <CardContent>
-              {isLoadingAiWorkouts ? (
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                  {[1, 2, 3].map((i) => (
-                    <Card key={i} className="animate-pulse">
-                      <CardContent className="p-6 h-48" />
+            <CardContent className="space-y-4 bg-card p-6">
+              <div className="relative">
+                <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                <Input
+                  placeholder="Search by name…"
+                  className="h-11 rounded-2xl pl-10"
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                />
+              </div>
+
+              {isLoadingExercises ? (
+                <div className="space-y-3">
+                  {[1, 2, 3, 4, 5].map((i) => (
+                    <Card key={i} className="animate-pulse rounded-2xl border-border/60">
+                      <CardContent className="h-16 p-4" />
                     </Card>
                   ))}
                 </div>
-              ) : (savedAiWorkouts as any[]).length === 0 ? (
-                <div className="flex flex-col items-center justify-center py-8 text-center">
-                  <Calendar className="h-12 w-12 text-gray-300 mb-2" />
-                  <p className="text-muted-foreground">No saved AI workout recommendations yet</p>
-                  <p className="text-sm text-muted-foreground">
-                    Go to AI Coach, generate a workout plan, and click &quot;Save to My Workouts&quot; to see it here
-                  </p>
-                </div>
-              ) : (
-                <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
-                  {(savedAiWorkouts as any[]).map((rec: any) => (
+              ) : filteredExercises.length > 0 ? (
+                <div className="space-y-3">
+                  {filteredExercises.map((exercise: any) => (
                     <Card
-                      key={rec.id}
-                      className="overflow-hidden rounded-2xl border border-gray-200/70 dark:border-gray-700/70 shadow-sm hover:shadow-md transition-shadow"
+                      key={exercise.id}
+                      className="cursor-pointer rounded-2xl border-border/60 transition-colors hover:border-primary/25 hover:bg-muted/30"
+                      onClick={() =>
+                        setSelectedWorkout({
+                          id: 999,
+                          name: exercise.name,
+                          description: exercise.description,
+                          difficulty: exercise.difficulty || "intermediate",
+                          duration: 0,
+                          exercises: [
+                            {
+                              exercise: {
+                                ...exercise,
+                                muscleGroups: exercise.muscleGroups,
+                                videoUrl: exercise.videoUrl,
+                                imageUrl: exercise.imageUrl,
+                              },
+                              sets: 4,
+                              reps: 10,
+                              restTime: 60,
+                              order: 1,
+                            },
+                          ],
+                        })
+                      }
                     >
-                      <CardHeader className="pb-3">
-                        <div className="flex items-start justify-between gap-3">
+                      <CardContent className="flex items-center justify-between gap-3 p-4 sm:p-5">
+                        <div className="flex min-w-0 items-center gap-3">
+                          <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-primary/15 text-primary">
+                            <Dumbbell className="h-5 w-5" />
+                          </div>
                           <div className="min-w-0">
-                            <CardTitle className="text-lg leading-snug line-clamp-1">{rec.title}</CardTitle>
-                            <CardDescription className="line-clamp-2">{rec.description}</CardDescription>
-                          </div>
-                          <div className="h-9 w-9 rounded-xl bg-primary/10 flex items-center justify-center text-primary shrink-0">
-                            <Dumbbell className="h-4 w-4" />
-                          </div>
-                        </div>
-                      </CardHeader>
-                      <CardContent className="pt-0">
-                        <div className="flex items-center justify-between text-xs text-muted-foreground mb-3">
-                          <span>{(rec.payload?.exercises ?? []).length} exercises</span>
-                          {rec.createdAt && (
-                            <span className="hidden sm:inline">
-                              {new Date(rec.createdAt).toLocaleDateString()}
-                            </span>
-                          )}
-                        </div>
-                        <div className="space-y-2">
-                          {(rec.payload?.exercises ?? []).slice(0, 4).map((ex: any, i: number) => (
-                            <div
-                              key={i}
-                              className="flex items-center gap-3 rounded-xl bg-gray-50 dark:bg-gray-800/50 px-3 py-2"
-                            >
-                              <Dumbbell className="h-4 w-4 shrink-0 text-primary" />
-                              <div className="min-w-0 flex-1">
-                                <p className="text-sm font-medium leading-snug line-clamp-1">{ex.name}</p>
-                                {(ex.sets || ex.reps) && (
-                                  <p className="text-xs text-muted-foreground">
-                                    {[ex.sets && `Sets: ${ex.sets}`, ex.reps && `Reps: ${ex.reps}`].filter(Boolean).join(" · ")}
-                                  </p>
-                                )}
-                              </div>
-                            </div>
-                          ))}
-                          {(rec.payload?.exercises?.length ?? 0) > 4 && (
-                            <p className="text-xs text-muted-foreground">
-                              +{(rec.payload?.exercises?.length ?? 0) - 4} more exercises
+                            <p className="font-medium text-foreground">{exercise.name}</p>
+                            <p className="truncate text-xs text-muted-foreground sm:text-sm">
+                              {exercise.muscleGroups.join(" · ")}
                             </p>
-                          )}
+                          </div>
                         </div>
+                        <ChevronRight className="h-5 w-5 shrink-0 text-muted-foreground" />
                       </CardContent>
                     </Card>
                   ))}
+                </div>
+              ) : (
+                <div className="rounded-2xl border border-dashed border-border bg-muted/20 py-12 text-center dark:bg-muted/10">
+                  <Search className="mx-auto h-10 w-10 text-muted-foreground/50" />
+                  <p className="mt-3 font-medium text-foreground">No exercises match</p>
+                  <p className="mt-1 text-sm text-muted-foreground">Try another search term</p>
                 </div>
               )}
             </CardContent>
           </Card>
         </TabsContent>
+
+        <TabsContent value="recommended" className="mt-0 space-y-6">
+          <Card className="overflow-hidden rounded-3xl border-border/60 shadow-lg ring-1 ring-primary/5">
+            <CardHeader className="border-b border-border/50 bg-gradient-to-br from-primary/90 to-primary py-5 text-primary-foreground">
+              <CardTitle className="text-xl font-bold">AI workout recommendations</CardTitle>
+              <CardDescription className="text-base leading-relaxed text-primary-foreground/90">
+                Plans you generated in AI Coach and saved with &quot;Save to My Workouts&quot; appear here.
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="bg-card p-6">
+              {isLoadingAiWorkouts ? (
+                <div className="flex justify-center py-16">
+                  <Loader2 className="h-10 w-10 animate-spin text-primary" aria-label="Loading" />
+                </div>
+              ) : aiWorkoutRecommendations.length === 0 ? (
+                <div className="flex flex-col items-center justify-center rounded-2xl border border-dashed border-border bg-muted/20 px-6 py-14 text-center dark:bg-muted/10">
+                  <Sparkles className="mb-3 h-12 w-12 text-primary/70" />
+                  <p className="text-base font-medium text-foreground">No saved recommendations yet</p>
+                  <p className="mt-2 max-w-md text-base text-muted-foreground leading-relaxed">
+                    Open AI Coach, generate a workout plan, then save it — it will show up in this list.
+                  </p>
+                  <Button asChild className="mt-6 rounded-2xl">
+                    <Link href="/ai-coach">Open AI Coach</Link>
+                  </Button>
+                </div>
+              ) : (
+                <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+                  {aiWorkoutRecommendations.map((rec: any) => {
+                    const exercises = rec.payload?.exercises ?? [];
+                    const when = rec.createdAt
+                      ? new Date(rec.createdAt).toLocaleDateString(undefined, {
+                          month: "short",
+                          day: "numeric",
+                          year: "numeric",
+                        })
+                      : "";
+                    return (
+                      <Card
+                        key={rec.id}
+                        className="rounded-2xl border-border/60 transition-colors hover:bg-muted/25"
+                      >
+                        <CardContent className="flex flex-col gap-3 p-5">
+                          <div className="flex items-start justify-between gap-2">
+                            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-primary/15 text-primary">
+                              <Dumbbell className="h-5 w-5" />
+                            </div>
+                            {when ? (
+                              <span className="text-xs font-medium text-muted-foreground">{when}</span>
+                            ) : null}
+                          </div>
+                          <h3 className="font-semibold leading-snug text-foreground">{rec.title}</h3>
+                          <p className="line-clamp-2 text-sm text-muted-foreground">{rec.description}</p>
+                          <p className="text-sm text-muted-foreground">
+                            {exercises.length} exercise{exercises.length === 1 ? "" : "s"}
+                          </p>
+                          <Button
+                            variant="outline"
+                            className="mt-auto w-full rounded-xl"
+                            onClick={() => setAiWorkoutDetail(rec)}
+                          >
+                            View plan
+                          </Button>
+                        </CardContent>
+                      </Card>
+                    );
+                  })}
+                </div>
+              )}
+            </CardContent>
+          </Card>
+
+          <Dialog open={aiWorkoutDetail !== null} onOpenChange={(open) => !open && setAiWorkoutDetail(null)}>
+            <DialogContent className="max-h-[85vh] max-w-lg overflow-y-auto rounded-2xl sm:max-w-xl">
+              <DialogHeader>
+                <DialogTitle>{aiWorkoutDetail?.title}</DialogTitle>
+                <DialogDescription className="text-base leading-relaxed">
+                  {aiWorkoutDetail?.description}
+                </DialogDescription>
+              </DialogHeader>
+              <div className="space-y-4 pr-1">
+                {(aiWorkoutDetail?.payload?.exercises ?? []).map((exercise: any, index: number) => (
+                  <div key={index} className="flex gap-3 rounded-xl border border-border/60 bg-muted/20 p-4 dark:bg-muted/10">
+                    <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-primary/15 text-sm font-semibold text-primary">
+                      {index + 1}
+                    </div>
+                    <div className="min-w-0">
+                      <h4 className="font-semibold text-foreground">{exercise.name}</h4>
+                      <p className="mt-1 text-sm leading-relaxed text-muted-foreground">{exercise.description}</p>
+                      <p className="mt-2 text-sm text-muted-foreground">
+                        <span className="font-medium text-foreground">Sets:</span> {exercise.sets} ·{" "}
+                        <span className="font-medium text-foreground">Reps:</span> {exercise.reps} ·{" "}
+                        <span className="font-medium text-foreground">Rest:</span> {exercise.restTime}
+                      </p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </DialogContent>
+          </Dialog>
+        </TabsContent>
       </Tabs>
+      </div>
     </MainLayout>
   );
 }

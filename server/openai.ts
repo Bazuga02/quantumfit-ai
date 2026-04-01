@@ -158,7 +158,7 @@ User context:
 - Dietary restrictions: ${userData.dietaryRestrictions?.join(", ") || "None"}
 - Current daily intake: ${JSON.stringify(userData.currentIntake ?? "Not specified")}
 
-Return exactly this JSON structure:
+Return exactly this JSON structure (use numbers ONLY as strings for protein/carbs/fats/calories — no "g" suffix):
 {
   "title": "nutrition plan title",
   "description": "brief description",
@@ -166,17 +166,17 @@ Return exactly this JSON structure:
     {
       "name": "meal name",
       "description": "short description",
-      "protein": "grams",
-      "carbs": "grams",
-      "fats": "grams",
-      "calories": "number as string"
+      "protein": "35",
+      "carbs": "40",
+      "fats": "12",
+      "calories": "420"
     }
   ],
   "dailyTotals": {
-    "protein": "total grams",
-    "carbs": "total grams",
-    "fats": "total grams",
-    "calories": "total"
+    "protein": "140",
+    "carbs": "180",
+    "fats": "55",
+    "calories": "2000"
   }
 }
 

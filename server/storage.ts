@@ -3,10 +3,8 @@ import createMemoryStore from "memorystore";
 import session, { Store } from "express-session";
 import { db } from './db.js';
 import * as schema from '../shared/schema.js';
-import { eq, and, desc, gte, lt } from 'drizzle-orm';
-import { drizzle } from "drizzle-orm/neon-http";
-import { neon } from "@neondatabase/serverless";
-import { sql } from 'drizzle-orm';
+import { eq, and, desc, gte, lt } from "drizzle-orm";
+import { sql } from "drizzle-orm";
 
 // Add retry utility function
 const sleep = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
@@ -54,8 +52,7 @@ export interface IStorage {
   // Exercises
   getExercises(): Promise<Exercise[]>;
   getExerciseById(id: number): Promise<Exercise | undefined>;
-  searchExercises(query: string, muscleGroup?: string): Promise<Exercise[]>;
-  
+
   // Workout plans
   getWorkoutPlans(filter?: { userId?: number; isTemplate?: boolean }): Promise<WorkoutPlan[]>;
   getWorkoutPlanById(id: number): Promise<WorkoutPlan | undefined>;
@@ -79,8 +76,6 @@ export interface IStorage {
   
   // Session store for authentication
   sessionStore: Store;
-
-  getAllUsers(): Promise<User[]>;
 
   // Water intake methods
   getWaterIntakes(userId: number, date?: Date): Promise<WaterIntake[]>;
@@ -191,17 +186,6 @@ export class PostgresStorage implements IStorage {
   async getExerciseById(id: number): Promise<Exercise | undefined> {
     const exercises = await db.select().from(schema.exercises).where(eq(schema.exercises.id, id));
     return exercises[0];
-  }
-
-  async searchExercises(query: string, muscleGroup?: string): Promise<Exercise[]> {
-    const exercises = await db.select().from(schema.exercises);
-    return exercises.filter(exercise => {
-      const nameMatch = exercise.name.toLowerCase().includes(query.toLowerCase());
-      if (muscleGroup) {
-        return nameMatch && exercise.muscleGroups.includes(muscleGroup);
-      }
-      return nameMatch;
-    });
   }
 
   async getWorkoutPlans(filter?: { userId?: number; isTemplate?: boolean }): Promise<WorkoutPlan[]> {
@@ -321,13 +305,6 @@ export class PostgresStorage implements IStorage {
     );
     
     return foodDetails;
-  }
-
-  async getAllUsers(): Promise<User[]> {
-    const users = await db.select()
-      .from(schema.users)
-      .orderBy(desc(schema.users.createdAt));
-    return users;
   }
 
   async getWaterIntakes(userId: number, date?: Date): Promise<WaterIntake[]> {

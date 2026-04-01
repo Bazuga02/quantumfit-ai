@@ -1,70 +1,79 @@
 import { MainLayout } from "@/components/layout/main-layout";
-import { Card } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { WaterIntake } from "@/components/water-intake";
-import { Droplets } from "lucide-react";
+import { Droplets, HeartPulse, Sun, Sparkles } from "lucide-react";
 
 export default function WaterPage() {
   return (
-    <MainLayout 
-      title="Water Intake"
-      subtitle="Track your daily water consumption and stay hydrated."
+    <MainLayout
+      title="Water intake"
+      subtitle="Log drinks through the day and watch your level against your personal goal — small reminders beat perfect streaks."
     >
-      {/* Main Content */}
-      <div className="flex flex-col lg:flex-row gap-8 justify-center items-start w-full max-w-5xl mx-auto">
-        {/* Main water intake card */}
-        <div className="flex-1 flex justify-center">
-          <WaterIntake />
-        </div>
-        {/* Hydration Tips */}
-        <div className="flex-1 min-w-[320px] max-w-md">
-          <Card className="max-w-md w-full overflow-hidden border-0 shadow-xl rounded-3xl">
-            {/* Gradient Header */}
-            <div className="p-6 bg-gradient-to-br from-[#FF3A54] to-[#ff6b7d] dark:from-[#FF3A54] dark:to-[#ff6b7d]">
-              <div className="flex items-center justify-between mb-2">
-                <h2 className="text-xl font-bold text-white flex items-center">
-                  <Droplets className="h-5 w-5 mr-2" />
-                  Hydration Tips
-                </h2>
-              </div>
-            </div>
-            {/* White/Dark Content Area */}
-            <div className="p-6 bg-white dark:bg-gray-900 rounded-b-3xl">
-              <div className="space-y-5">
-                <div>
-                  <h3 className="font-semibold text-[#FF3A54] dark:text-[#ff6b7d] mb-2">Why Stay Hydrated?</h3>
-                  <ul className="list-disc pl-5 text-gray-700 dark:text-gray-200 space-y-1">
-                    <li>Improves physical performance</li>
-                    <li>Boosts energy levels and brain function</li>
-                    <li>Helps with weight management</li>
-                    <li>Promotes healthy skin</li>
-                    <li>Aids in digestion and nutrient absorption</li>
+      <div className="mx-auto w-full max-w-6xl space-y-10 px-0 pb-10">
+        <div className="grid gap-8 lg:grid-cols-12 lg:items-start">
+          <div className="flex justify-center lg:col-span-7">
+            <WaterIntake />
+          </div>
+
+          <aside className="lg:col-span-5 space-y-4">
+            <Card className="overflow-hidden rounded-3xl border-border/60 shadow-lg ring-1 ring-primary/5">
+              <CardHeader className="border-b border-border/50 bg-gradient-to-br from-primary/90 to-primary py-5 text-primary-foreground">
+                <CardTitle className="flex items-center gap-2 text-lg font-bold">
+                  <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-white/20">
+                    <Droplets className="h-5 w-5" aria-hidden />
+                  </span>
+                  Hydration tips
+                </CardTitle>
+                <p className="text-sm leading-relaxed text-primary-foreground/90">
+                  Small habits beat perfect plans — use what fits your day.
+                </p>
+              </CardHeader>
+              <CardContent className="space-y-6 bg-card p-6">
+                <section className="rounded-2xl border border-border/60 bg-muted/30 p-4 dark:bg-muted/15">
+                  <h3 className="mb-3 flex items-center gap-2 text-base font-semibold text-foreground">
+                    <HeartPulse className="h-4 w-4 shrink-0 text-primary" aria-hidden />
+                    Why it matters
+                  </h3>
+                  <ul className="list-disc space-y-2 pl-5 text-base leading-relaxed text-muted-foreground marker:text-primary">
+                    <li>Better focus and steadier energy through the day</li>
+                    <li>Easier performance in workouts and recovery</li>
+                    <li>Digestion and skin often feel better when you’re topped up</li>
                   </ul>
-                </div>
-                <div>
-                  <h3 className="font-semibold text-[#FF3A54] dark:text-[#ff6b7d] mb-2">Daily Water Intake Guidelines</h3>
-                  <p className="text-gray-700 dark:text-gray-200 mb-2">The general recommendation is to drink 2-3 liters (8-12 cups) of water per day. However, your needs may vary based on:</p>
-                  <ul className="list-disc pl-5 text-gray-700 dark:text-gray-200 space-y-1">
-                    <li>Your activity level</li>
-                    <li>Climate and weather</li>
-                    <li>Body size and composition</li>
-                    <li>Overall health</li>
+                </section>
+
+                <section className="rounded-2xl border border-border/60 bg-muted/30 p-4 dark:bg-muted/15">
+                  <h3 className="mb-3 flex items-center gap-2 text-base font-semibold text-foreground">
+                    <Sun className="h-4 w-4 shrink-0 text-primary" aria-hidden />
+                    Rough daily target
+                  </h3>
+                  <p className="mb-3 text-base leading-relaxed text-muted-foreground">
+                    Many people land around <strong className="text-foreground">2–3 liters</strong> from fluids, more
+                    if you train hard or it’s hot. Your app goal is a guide — adjust in Settings if needed.
+                  </p>
+                  <ul className="list-disc space-y-2 pl-5 text-base leading-relaxed text-muted-foreground marker:text-primary">
+                    <li>Activity and sweat increase needs</li>
+                    <li>Larger bodies often need more volume</li>
+                    <li>Illness, travel, and caffeine/alcohol shift balance</li>
                   </ul>
-                </div>
-                <div>
-                  <h3 className="font-semibold text-[#FF3A54] dark:text-[#ff6b7d] mb-2">Tips for Staying Hydrated</h3>
-                  <ul className="list-disc pl-5 text-gray-700 dark:text-gray-200 space-y-1">
-                    <li>Carry a water bottle with you</li>
-                    <li>Set reminders to drink water</li>
-                    <li>Drink water before meals</li>
-                    <li>Add flavor with fruits or herbs</li>
-                    <li>Monitor your urine color (aim for light yellow)</li>
+                </section>
+
+                <section className="rounded-2xl border border-dashed border-primary/25 bg-primary/5 p-4 dark:bg-primary/10">
+                  <h3 className="mb-3 flex items-center gap-2 text-base font-semibold text-foreground">
+                    <Sparkles className="h-4 w-4 shrink-0 text-primary" aria-hidden />
+                    Easy wins
+                  </h3>
+                  <ul className="list-disc space-y-2 pl-5 text-base leading-relaxed text-muted-foreground marker:text-primary">
+                    <li>Keep a bottle visible at your desk or in your bag</li>
+                    <li>Pair a glass of water with coffee or meals</li>
+                    <li>Set one phone reminder mid-morning and mid-afternoon</li>
+                    <li>Light yellow urine is a simple “enough fluids” cue for most people</li>
                   </ul>
-                </div>
-              </div>
-            </div>
-          </Card>
+                </section>
+              </CardContent>
+            </Card>
+          </aside>
         </div>
       </div>
     </MainLayout>
   );
-} 
+}

@@ -88,11 +88,15 @@ export function ProgressPhotoUpload({ onUpload }: { onUpload?: () => void }) {
   };
 
   return (
-    <form onSubmit={handleUpload} className="space-y-4 card bg-white dark:bg-gray-900 shadow p-6 mt-6 mb-4">
+    <form onSubmit={handleUpload} className="space-y-5">
       <div>
-        <label className="block font-medium mb-1">Progress Photo</label>
+        <label className="mb-2 block text-sm font-semibold text-foreground">Photo</label>
         <div
-          className={`w-full border-2 border-dashed rounded-xl p-4 flex flex-col items-center justify-center cursor-pointer transition-all ${dragActive ? 'border-primary bg-primary/10' : 'border-gray-300 bg-gray-50 dark:bg-gray-800'}`}
+          className={`flex w-full cursor-pointer flex-col items-center justify-center rounded-2xl border-2 border-dashed p-6 transition-all ${
+            dragActive
+              ? "border-primary bg-primary/10"
+              : "border-border/70 bg-muted/25 hover:border-primary/35 dark:bg-muted/15"
+          }`}
           onClick={openFileDialog}
           onDrop={handleDrop}
           onDragOver={handleDragOver}
@@ -127,15 +131,15 @@ export function ProgressPhotoUpload({ onUpload }: { onUpload?: () => void }) {
         </select>
       </div>
       <div>
-        <label className="block font-medium mb-1">Note (optional)</label>
+        <label className="mb-2 block text-sm font-semibold text-foreground">Note (optional)</label>
         <input
-          className="w-full border rounded-full px-3 py-2 focus:border-primary focus:ring-2 focus:ring-primary/20"
+          className="h-11 w-full rounded-xl border border-input bg-background px-3 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
           value={note}
           onChange={e => setNote(e.target.value)}
           placeholder="e.g. After chest workout"
         />
       </div>
-      <Button type="submit" className="w-full bg-primary hover:bg-primary/90 text-white rounded-full text-lg font-semibold py-3 transition-all" disabled={uploading || !file || !bodyPart}>
+      <Button type="submit" className="h-11 w-full rounded-xl text-base font-semibold" disabled={uploading || !file || !bodyPart}>
         {uploading ? "Uploading..." : "Upload Photo"}
       </Button>
     </form>

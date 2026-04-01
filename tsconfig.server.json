@@ -33,6 +33,7 @@
     "client",
     "dist",
     "uploads",
+    "server/routes.ts",
     "**/*.test.ts",
     "**/*.spec.ts"
   ]

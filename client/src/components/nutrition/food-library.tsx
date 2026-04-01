@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Search, Utensils, ChevronRight } from "lucide-react";
-import { Card, CardContent } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -74,20 +74,26 @@ export function FoodLibrary() {
   }
 
   return (
-    <div className="space-y-6">
-      <h2 className="text-2xl font-bold">Food Library</h2>
-      <p className="text-muted-foreground mb-4">Browse and learn about nutritional content of different foods</p>
-      <div className="flex items-center gap-4">
+    <div className="space-y-8">
+      <Card className="overflow-hidden rounded-3xl border-border/60 shadow-lg ring-1 ring-primary/5">
+        <CardHeader className="border-b border-border/50 bg-gradient-to-br from-primary/90 to-primary py-5 text-primary-foreground">
+          <CardTitle className="text-xl font-bold">Food library</CardTitle>
+          <CardDescription className="text-base leading-relaxed text-primary-foreground/90">
+            Browse macros and calories to plan meals or compare options.
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-6 bg-card p-6">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
         <div className="relative flex-1">
           <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
           <Input
             placeholder="Search foods..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-            className="pl-9"
+            className="rounded-2xl pl-9"
           />
         </div>
-        <Button variant="outline" onClick={() => setSearchTerm('')}>
+        <Button variant="outline" className="rounded-2xl sm:shrink-0" onClick={() => setSearchTerm("")}>
           Clear
         </Button>
       </div>
@@ -95,11 +101,11 @@ export function FoodLibrary() {
       {categories.length > 0 && (
         <div className="flex flex-wrap gap-2">
           {categories.map((category) => (
-            <Badge 
-              key={category} 
-              variant={selectedCategory === category ? "default" : "outline"}
-              className="cursor-pointer"
-              onClick={() => handleCategoryClick(category)}
+            <Badge
+                        key={category}
+                        variant={selectedCategory === category ? "default" : "outline"}
+                        className="cursor-pointer rounded-full px-3 py-1"
+                        onClick={() => handleCategoryClick(category)}
             >
               {category}
             </Badge>
@@ -116,20 +122,20 @@ export function FoodLibrary() {
           ))}
         </div>
       ) : error ? (
-        <div className="text-center text-red-500">
-          Error loading foods: {error.message}
+        <div className="rounded-2xl border border-destructive/30 bg-destructive/5 px-4 py-6 text-center text-sm text-destructive">
+          Could not load foods: {error.message}
         </div>
       ) : filteredFoods.length > 0 ? (
         <div className="space-y-2">
           {filteredFoods.map((food) => (
-            <Card 
-              key={food.id} 
-              className="cursor-pointer hover:bg-accent/50 transition-colors"
+            <Card
+              key={food.id}
+              className="cursor-pointer rounded-2xl border-border/60 transition-colors hover:bg-accent/40"
               onClick={() => handleFoodClick(food)}
             >
               <CardContent className="p-4 flex items-center justify-between">
                 <div className="flex items-center gap-3">
-                  <div className="h-10 w-10 rounded-lg bg-primary-100 dark:bg-primary-900/50 flex items-center justify-center text-primary">
+                  <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary/15 text-primary">
                     <Utensils className="h-5 w-5" />
                   </div>
                   <div>
@@ -156,21 +162,24 @@ export function FoodLibrary() {
         </div>
       ) : (
         <div className="flex flex-col items-center justify-center py-12 text-center">
-          <Search className="h-12 w-12 text-gray-300 mb-4" />
+          <Search className="mb-4 h-12 w-12 text-muted-foreground/50" />
           <p className="text-lg font-medium mb-1">No foods found</p>
           <p className="text-muted-foreground mb-4">
             Try adjusting your search term or filter
           </p>
           {selectedCategory && (
-            <Button 
-              variant="outline" 
+            <Button
+              variant="outline"
+              className="rounded-2xl"
               onClick={() => setSelectedCategory(null)}
             >
-              Clear Filter
+              Clear filter
             </Button>
           )}
         </div>
       )}
+        </CardContent>
+      </Card>
     </div>
   );
 }

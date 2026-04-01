@@ -1,14 +1,28 @@
 import { useAuth } from "@/hooks/use-auth";
-import { Menu, Moon, Sun, Activity } from "lucide-react";
+import { Link } from "wouter";
+import { Menu, Moon, Sun, Activity, ChevronDown } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
+  DropdownMenuLabel,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { cn } from "@/lib/utils";
+
+function userInitials(name: string): string {
+  const parts = name.trim().split(/\s+/).filter(Boolean);
+  if (parts.length >= 2) {
+    return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
+  }
+  if (parts.length === 1 && parts[0].length >= 2) {
+    return parts[0].slice(0, 2).toUpperCase();
+  }
+  return parts[0]?.[0]?.toUpperCase() ?? "U";
+}
 import { useTheme } from "@/lib/theme-provider";
 import { AnimatedRacecarBanner } from "@/components/layout/racecar-banner";
 
@@ -64,20 +78,43 @@ export function Header({ onToggleSidebar }: HeaderProps) {
           {user && (
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <Button variant="ghost" className="relative h-8 w-8 rounded-full">
-                  <Avatar className="h-8 w-8">
-                    <AvatarImage src="" alt={user?.name || 'User'} />
-                    <AvatarFallback className="bg-primary/10 text-primary">
-                      {user?.name ? user.name.charAt(0).toUpperCase() : 'U'}
+                <button
+                  type="button"
+                  className={cn(
+                    "flex max-w-[200px] items-center gap-2 rounded-full py-1 pl-1 pr-2",
+                    "outline-none transition-colors hover:bg-muted/80",
+                    "focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background"
+                  )}
+                  aria-label="Open account menu"
+                >
+                  <Avatar className="h-9 w-9 border-2 border-background shadow-md ring-2 ring-primary/30 dark:ring-primary/40">
+                    <AvatarFallback
+                      className={cn(
+                        "bg-gradient-to-br from-primary to-primary/75 text-sm font-bold tracking-tight text-primary-foreground",
+                        "shadow-inner"
+                      )}
+                    >
+                      {userInitials(user.name)}
                     </AvatarFallback>
                   </Avatar>
-                </Button>
+                  <ChevronDown className="hidden h-4 w-4 shrink-0 text-muted-foreground opacity-80 sm:block" aria-hidden />
+                </button>
               </DropdownMenuTrigger>
-              <DropdownMenuContent align="end">
-                <DropdownMenuItem>Your Profile</DropdownMenuItem>
-                <DropdownMenuItem>Settings</DropdownMenuItem>
+              <DropdownMenuContent align="end" className="w-56">
+                <DropdownMenuLabel className="font-normal">
+                  <div className="flex flex-col space-y-0.5">
+                    <p className="truncate text-sm font-semibold text-foreground">{user.name}</p>
+                    <p className="truncate text-xs text-muted-foreground">{user.email}</p>
+                  </div>
+                </DropdownMenuLabel>
                 <DropdownMenuSeparator />
-                <DropdownMenuItem onClick={handleLogout}>Sign out</DropdownMenuItem>
+                <DropdownMenuItem asChild>
+                  <Link href="/settings">Settings</Link>
+                </DropdownMenuItem>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem className="text-destructive focus:text-destructive" onClick={handleLogout}>
+                  Sign out
+                </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
           )}

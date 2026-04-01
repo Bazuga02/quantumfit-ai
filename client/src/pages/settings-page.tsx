@@ -96,7 +96,7 @@ export default function SettingsPage() {
   return (
     <MainLayout
       title="Settings"
-      subtitle="Manage your account settings and preferences."
+      subtitle="Profile, goals, macros, appearance, and sign-out — everything that controls your account lives here."
     >
       <Tabs defaultValue="profile" className="space-y-6">
         <TabsList>

@@ -1,11 +1,48 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Utensils } from "lucide-react";
+import { Utensils, Loader2 } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { Link } from "wouter";
 import { apiRequest } from "@/lib/queryClient";
+import { cn } from "@/lib/utils";
 
-export function NutritionSummary() {
+type NutritionSummaryProps = {
+  /** Hide the recent-meals list (e.g. on /nutrition where meals are shown separately). */
+  showRecentMeals?: boolean;
+};
+
+function MacroBar({
+  label,
+  consumed,
+  goal,
+  pct,
+  barClassName,
+}: {
+  label: string;
+  consumed: number;
+  goal: number;
+  pct: number;
+  barClassName: string;
+}) {
+  return (
+    <div>
+      <div className="mb-1 flex items-center justify-between">
+        <p className="text-sm font-medium text-foreground">{label}</p>
+        <p className="text-sm font-medium tabular-nums text-foreground">
+          {consumed}g / {goal}g
+        </p>
+      </div>
+      <div className="h-2.5 overflow-hidden rounded-full bg-muted">
+        <div
+          className={cn("h-full rounded-full transition-[width] duration-300 ease-out", barClassName)}
+          style={{ width: `${pct}%` }}
+        />
+      </div>
+    </div>
+  );
+}
+
+export function NutritionSummary({ showRecentMeals = true }: NutritionSummaryProps) {
   const { data, isLoading, error } = useQuery({
     queryKey: ["/api/nutrition-summary"],
     queryFn: async () => {
@@ -17,12 +54,17 @@ export function NutritionSummary() {
 
   if (isLoading) {
     return (
-      <Card>
-        <CardHeader className="pb-2">
-          <CardTitle className="text-lg font-semibold">Nutrition</CardTitle>
+      <Card className="overflow-hidden rounded-3xl border-border/60 shadow-lg ring-1 ring-primary/5">
+        <CardHeader className="border-b border-border/50 bg-gradient-to-br from-primary/90 to-primary py-5 text-primary-foreground">
+          <CardTitle className="flex items-center gap-2 text-lg font-bold">
+            <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-white/20">
+              <Utensils className="h-5 w-5" aria-hidden />
+            </span>
+            Today
+          </CardTitle>
         </CardHeader>
-        <CardContent>
-          <div className="p-4 text-center text-muted-foreground">Loading nutrition summary...</div>
+        <CardContent className="flex min-h-[200px] items-center justify-center p-8">
+          <Loader2 className="h-8 w-8 animate-spin text-primary" aria-label="Loading" />
         </CardContent>
       </Card>
     );
@@ -30,12 +72,12 @@ export function NutritionSummary() {
 
   if (error || !data) {
     return (
-      <Card>
-        <CardHeader className="pb-2">
-          <CardTitle className="text-lg font-semibold">Nutrition</CardTitle>
+      <Card className="overflow-hidden rounded-3xl border-border/60 shadow-lg ring-1 ring-primary/5">
+        <CardHeader className="border-b border-border/50 bg-gradient-to-br from-primary/90 to-primary py-5 text-primary-foreground">
+          <CardTitle className="text-lg font-bold">Today</CardTitle>
         </CardHeader>
-        <CardContent>
-          <div className="p-4 text-center text-destructive">Failed to load nutrition summary</div>
+        <CardContent className="p-6 text-center text-destructive">
+          Failed to load nutrition summary
         </CardContent>
       </Card>
     );
@@ -52,92 +94,102 @@ export function NutritionSummary() {
   const fatsPercentage = calculatePercentage(macros.fats.consumed, macros.fats.goal);
 
   return (
-    <Card>
-      <CardHeader className="pb-2">
-        <div className="flex items-center justify-between">
-          <CardTitle className="text-lg font-semibold">Nutrition</CardTitle>
+    <Card className="overflow-hidden rounded-3xl border-border/60 shadow-lg ring-1 ring-primary/5">
+      <CardHeader className="border-b border-border/50 bg-gradient-to-br from-primary/90 to-primary py-5 text-primary-foreground">
+        <div className="flex items-start justify-between gap-3">
+          <CardTitle className="flex items-center gap-2 text-lg font-bold">
+            <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-white/20">
+              <Utensils className="h-5 w-5" aria-hidden />
+            </span>
+            Today
+          </CardTitle>
           <Link href="/nutrition/log">
-            <Button variant="link" className="text-primary p-0 h-auto">
-              Log Meal
+            <Button
+              variant="secondary"
+              size="sm"
+              className="shrink-0 rounded-xl border-0 bg-white/20 text-primary-foreground hover:bg-white/30"
+            >
+              Log meal
             </Button>
           </Link>
         </div>
+        <p className="mt-2 text-sm leading-relaxed text-primary-foreground/90">
+          Calories and macros vs your goals for this day.
+        </p>
       </CardHeader>
-      <CardContent>
-        {/* Calories progress */}
-        <div className="mb-4">
-          <div className="flex justify-between items-center mb-1">
-            <p className="text-sm font-medium text-gray-700 dark:text-gray-300">Calories</p>
-            <p className="text-sm font-medium text-gray-700 dark:text-gray-300">
+      <CardContent className="space-y-6 bg-card p-6">
+        <div>
+          <div className="mb-1 flex items-center justify-between">
+            <p className="text-sm font-medium text-foreground">Calories</p>
+            <p className="text-sm font-medium tabular-nums text-foreground">
               {calories.consumed} / {calories.goal}
             </p>
           </div>
-          <div style={{ height: '10px', background: '#e5e7eb', borderRadius: '4px', overflow: 'hidden' }}>
-            <div style={{ width: `${caloriePercentage}%`, height: '100%', background: '#3b82f6', transition: 'width 0.3s' }} />
+          <div className="h-3 overflow-hidden rounded-full bg-muted">
+            <div
+              className="h-full rounded-full bg-primary transition-[width] duration-300 ease-out"
+              style={{ width: `${caloriePercentage}%` }}
+            />
           </div>
-          <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+          <p className="mt-1.5 text-sm text-muted-foreground">
             {calories.remaining} calories remaining
           </p>
         </div>
-        {/* Macros */}
+
         <div className="space-y-4">
-          <div>
-            <div className="flex justify-between items-center mb-1">
-              <p className="text-sm font-medium text-gray-700 dark:text-gray-300">Protein</p>
-              <p className="text-sm font-medium text-gray-700 dark:text-gray-300">
-                {macros.protein.consumed}g / {macros.protein.goal}g
-              </p>
-            </div>
-            <div style={{ height: '10px', background: '#e5e7eb', borderRadius: '4px', overflow: 'hidden' }}>
-              <div style={{ width: `${proteinPercentage}%`, height: '100%', background: '#3b82f6', transition: 'width 0.3s' }} />
-            </div>
-          </div>
-          <div>
-            <div className="flex justify-between items-center mb-1">
-              <p className="text-sm font-medium text-gray-700 dark:text-gray-300">Carbs</p>
-              <p className="text-sm font-medium text-gray-700 dark:text-gray-300">
-                {macros.carbs.consumed}g / {macros.carbs.goal}g
-              </p>
-            </div>
-            <div style={{ height: '10px', background: '#e5e7eb', borderRadius: '4px', overflow: 'hidden' }}>
-              <div style={{ width: `${carbsPercentage}%`, height: '100%', background: '#3b82f6', transition: 'width 0.3s' }} />
-            </div>
-          </div>
-          <div>
-            <div className="flex justify-between items-center mb-1">
-              <p className="text-sm font-medium text-gray-700 dark:text-gray-300">Fat</p>
-              <p className="text-sm font-medium text-gray-700 dark:text-gray-300">
-                {macros.fats.consumed}g / {macros.fats.goal}g
-              </p>
-            </div>
-            <div style={{ height: '10px', background: '#e5e7eb', borderRadius: '4px', overflow: 'hidden' }}>
-              <div style={{ width: `${fatsPercentage}%`, height: '100%', background: '#3b82f6', transition: 'width 0.3s' }} />
-            </div>
-          </div>
+          <MacroBar
+            label="Protein"
+            consumed={macros.protein.consumed}
+            goal={macros.protein.goal}
+            pct={proteinPercentage}
+            barClassName="bg-primary"
+          />
+          <MacroBar
+            label="Carbs"
+            consumed={macros.carbs.consumed}
+            goal={macros.carbs.goal}
+            pct={carbsPercentage}
+            barClassName="bg-emerald-500 dark:bg-emerald-400"
+          />
+          <MacroBar
+            label="Fat"
+            consumed={macros.fats.consumed}
+            goal={macros.fats.goal}
+            pct={fatsPercentage}
+            barClassName="bg-amber-500 dark:bg-amber-400"
+          />
         </div>
-        <div className="mt-6">
-          <h3 className="text-sm font-semibold text-gray-900 dark:text-white mb-2">Recent Meals</h3>
-          <div className="space-y-2">
-            {meals.length === 0 ? (
-              <div className="text-xs text-muted-foreground">No meals logged today.</div>
-            ) : (
-              meals.map((meal: any, index: number) => (
-                <div key={index} className="flex items-center justify-between">
-                  <div className="flex items-center">
-                    <div className={`h-8 w-8 rounded-md bg-primary/10 flex items-center justify-center text-primary`}>
-                      <Utensils className="h-4 w-4" />
+
+        {showRecentMeals ? (
+          <div className="rounded-2xl border border-border/60 bg-muted/30 p-4 dark:bg-muted/15">
+            <h3 className="mb-3 text-base font-semibold text-foreground">Recent meals</h3>
+            <div className="space-y-3">
+              {meals.length === 0 ? (
+                <p className="text-sm text-muted-foreground">No meals logged today.</p>
+              ) : (
+                meals.map((meal: any, index: number) => (
+                  <div
+                    key={index}
+                    className="flex items-center justify-between gap-2 border-b border-border/50 pb-3 last:border-0 last:pb-0"
+                  >
+                    <div className="flex min-w-0 items-center gap-3">
+                      <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-primary/15 text-primary">
+                        <Utensils className="h-4 w-4" />
+                      </div>
+                      <div className="min-w-0">
+                        <p className="truncate text-sm font-medium text-foreground">{meal.type}</p>
+                        <p className="truncate text-xs text-muted-foreground">{meal.name}</p>
+                      </div>
                     </div>
-                    <div className="ml-3">
-                      <p className="text-sm font-medium text-gray-900 dark:text-white">{meal.type}</p>
-                      <p className="text-xs text-gray-500 dark:text-gray-400">{meal.name}</p>
-                    </div>
+                    <p className="shrink-0 text-sm font-medium tabular-nums text-foreground">
+                      {meal.calories} cal
+                    </p>
                   </div>
-                  <p className="text-sm font-medium text-gray-700 dark:text-gray-300">{meal.calories} cal</p>
-                </div>
-              ))
-            )}
+                ))
+              )}
+            </div>
           </div>
-        </div>
+        ) : null}
       </CardContent>
     </Card>
   );

@@ -3,13 +3,13 @@ import { ProgressSection } from "@/components/progress/progress-section";
 
 export default function ProgressPage() {
   return (
-    <MainLayout 
-      title="Progress" 
-      subtitle="Track your body measurements and visual progress over time."
+    <MainLayout
+      title="Progress"
+      subtitle="Training taps, measurement check-ins, and progress photos together — built to show trends, not single-day swings."
     >
-      <div className="max-w-6xl mx-auto min-h-screen w-full px-4 py-4">
+      <div className="mx-auto w-full max-w-6xl space-y-8 pb-10">
         <ProgressSection />
       </div>
     </MainLayout>
   );
-} 
+}

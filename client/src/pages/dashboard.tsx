@@ -91,11 +91,13 @@ export default function Dashboard() {
     fetchMeasurements();
   }, []);
 
+  const greeting =
+    firstName.length > 0
+      ? `Good to see you, ${firstName}. Here's a snapshot of training, nutrition, and habits — dive into anything below.`
+      : "Here's a snapshot of training, nutrition, and habits — dive into anything below.";
+
   return (
-    <MainLayout 
-      title="Dashboard" 
-      subtitle={`Welcome back, ${firstName}! Here's your fitness overview.`}
-    >
+    <MainLayout title="Dashboard" subtitle={greeting}>
       {/* Greeting card */}
       <GreetingCard />
 

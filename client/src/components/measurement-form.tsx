@@ -67,7 +67,7 @@ export function MeasurementForm({ onSuccess }: { onSuccess?: () => void }) {
   };
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-3 card bg-white dark:bg-gray-900 shadow p-4">
+    <form onSubmit={handleSubmit} className="space-y-4">
       <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
         <div className="space-y-1">
           <Label htmlFor="weight">Weight (kg)</Label>

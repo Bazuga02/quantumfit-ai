@@ -4,9 +4,10 @@ import { ProgressGraphTab } from "./ProgressGraphTab";
 import { ProgressPhotosTab } from "./ProgressPhotosTab";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { apiRequest } from "@/lib/queryClient";
+import { Loader2, Dumbbell, LineChart, Camera } from "lucide-react";
 
 const bodyPartsList = [
-  "Chest", "Back", "Arms", "Waist", "Hips", "Thighs", "Full Body", "Other"
+  "Chest", "Back", "Arms", "Waist", "Hips", "Thighs", "Full Body", "Other",
 ];
 
 export function ProgressSection() {
@@ -16,8 +17,8 @@ export function ProgressSection() {
   const [showLogForm, setShowLogForm] = useState(false);
   const [trainedToday, setTrainedToday] = useState<string[]>([]);
   const [logging, setLogging] = useState(false);
-  const [recentStats, setRecentStats] = useState<any[]>([]); // [{ bodyPart, count }]
-  const [activeTab, setActiveTab] = useState<string>('bodyparts');
+  const [recentStats, setRecentStats] = useState<any[]>([]);
+  const [activeTab, setActiveTab] = useState<string>("bodyparts");
   const [calendarData, setCalendarData] = useState<{ [date: string]: number }>({});
 
   const fetchMeasurements = async () => {
@@ -53,13 +54,12 @@ export function ProgressSection() {
       for (const entry of data) {
         if (counts[entry.bodyPart] !== undefined) counts[entry.bodyPart]++;
       }
-      setRecentStats(bodyPartsList.map(bp => ({ bodyPart: bp, count: counts[bp] })));
+      setRecentStats(bodyPartsList.map((bp) => ({ bodyPart: bp, count: counts[bp] })));
     } else {
       setRecentStats([]);
     }
   };
 
-  // Fetch last 30 days for calendar heatmap
   const fetchCalendarData = async () => {
     const now = new Date();
     const from = new Date(now);
@@ -92,23 +92,43 @@ export function ProgressSection() {
 
   const logBodyPart = async (bodyPart: string) => {
     setLogging(true);
-    await apiRequest("POST", "/api/trained-body-parts", { body_part: bodyPart });
-    setLogging(false);
-    fetchTrainedToday();
-    fetchRecentStats();
+    try {
+      const res = await apiRequest("POST", "/api/trained-body-parts", { body_part: bodyPart });
+      if (!res.ok) return;
+      await Promise.all([fetchTrainedToday(), fetchRecentStats(), fetchCalendarData()]);
+    } finally {
+      setLogging(false);
+    }
   };
 
-  if (loading) return <div>Loading progress...</div>;
+  if (loading) {
+    return (
+      <div className="flex min-h-[280px] flex-col items-center justify-center rounded-3xl border border-border/60 bg-card/50 py-16 text-muted-foreground">
+        <Loader2 className="h-10 w-10 animate-spin text-primary" aria-label="Loading progress" />
+        <p className="mt-4 text-base">Loading your progress data…</p>
+      </div>
+    );
+  }
 
   return (
-    <div className=" mx-auto w-full p-0">
-      <Tabs value={activeTab} onValueChange={v => setActiveTab(v as 'bodyparts' | 'graph' | 'photos')} className="w-full">
-        <TabsList className="mb-6">
-          <TabsTrigger value="bodyparts">Body Parts Trained</TabsTrigger>
-          <TabsTrigger value="graph">Progress Graph</TabsTrigger>
-          <TabsTrigger value="photos">Progress Photos</TabsTrigger>
+    <div className="w-full">
+      <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as "bodyparts" | "graph" | "photos")} className="w-full">
+        <TabsList className="grid h-auto w-full max-w-2xl grid-cols-3 rounded-2xl bg-muted/60 p-1 dark:bg-muted/40">
+          <TabsTrigger value="bodyparts" className="gap-1.5 rounded-xl py-2.5 text-sm data-[state=active]:bg-background data-[state=active]:shadow-sm">
+            <Dumbbell className="hidden h-4 w-4 sm:inline" aria-hidden />
+            Training
+          </TabsTrigger>
+          <TabsTrigger value="graph" className="gap-1.5 rounded-xl py-2.5 text-sm data-[state=active]:bg-background data-[state=active]:shadow-sm">
+            <LineChart className="hidden h-4 w-4 sm:inline" aria-hidden />
+            Measurements
+          </TabsTrigger>
+          <TabsTrigger value="photos" className="gap-1.5 rounded-xl py-2.5 text-sm data-[state=active]:bg-background data-[state=active]:shadow-sm">
+            <Camera className="hidden h-4 w-4 sm:inline" aria-hidden />
+            Photos
+          </TabsTrigger>
         </TabsList>
-        <TabsContent value="bodyparts">
+
+        <TabsContent value="bodyparts" className="mt-8">
           <ProgressBodyPartsTab
             trainedToday={trainedToday}
             logging={logging}
@@ -118,7 +138,7 @@ export function ProgressSection() {
             bodyPartsList={bodyPartsList}
           />
         </TabsContent>
-        <TabsContent value="graph">
+        <TabsContent value="graph" className="mt-8">
           <ProgressGraphTab
             measurements={measurements}
             showLogForm={showLogForm}
@@ -126,13 +146,10 @@ export function ProgressSection() {
             fetchMeasurements={fetchMeasurements}
           />
         </TabsContent>
-        <TabsContent value="photos">
-          <ProgressPhotosTab
-            refreshPhotos={refreshPhotos}
-            setRefreshPhotos={setRefreshPhotos}
-          />
+        <TabsContent value="photos" className="mt-8">
+          <ProgressPhotosTab refreshPhotos={refreshPhotos} setRefreshPhotos={setRefreshPhotos} />
         </TabsContent>
       </Tabs>
     </div>
   );
-} 
+}

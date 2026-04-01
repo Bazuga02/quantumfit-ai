@@ -75,8 +75,9 @@ export function ExerciseLibrary() {
   if (selectedExercise) {
     return (
       <MainLayout
+        compact
         title={selectedExercise.name}
-        subtitle={selectedExercise.muscleGroups.join(", ")}
+        subtitle={selectedExercise.muscleGroups.join(" · ")}
       >
         <ExerciseDetail
           exercise={selectedExercise}
@@ -88,8 +89,8 @@ export function ExerciseLibrary() {
 
   return (
     <MainLayout
-      title="Exercise Library"
-      subtitle="Browse and learn about different exercises"
+      title="Exercise library"
+      subtitle="Search and filter by muscle group — open any move for form cues and equipment notes."
     >
       <div className="space-y-4">
         <div className="flex items-center gap-4">

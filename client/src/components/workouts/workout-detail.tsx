@@ -64,8 +64,9 @@ export function WorkoutDetail({ workout, onBack, onStartWorkout }: WorkoutDetail
 
   return (
     <MainLayout
+      compact
       title={workout.name}
-      subtitle={`${workout.duration} minute ${workout.difficulty} workout`}
+      subtitle={`${workout.duration}-minute session · ${workout.difficulty} level · review moves below, then start when you're ready.`}
     >
       <div className="space-y-6">
         <div className="flex justify-between items-center">
