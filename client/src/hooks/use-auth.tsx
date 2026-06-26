@@ -12,14 +12,21 @@ type AuthContextType = {
   user: User | null;
   isLoading: boolean;
   error: Error | null;
-  loginMutation: UseMutationResult<{ user: Omit<User, "password">; token: string }, Error, LoginData>;
+  loginMutation: UseMutationResult<AuthResponse, Error, LoginData>;
+  guestLoginMutation: UseMutationResult<AuthResponse, Error, void>;
   logoutMutation: UseMutationResult<void, Error, void>;
-  registerMutation: UseMutationResult<{ user: Omit<User, "password">; token: string }, Error, InsertUser>;
+  registerMutation: UseMutationResult<AuthResponse, Error, InsertUser>;
 };
 
 type LoginData = {
   email: string;
   password: string;
+};
+
+type AuthResponse = {
+  user: Omit<User, "password">;
+  token: string;
+  isGuest?: boolean;
 };
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -62,6 +69,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     staleTime: 5 * 60 * 1000, // 5 minutes
   });
 
+  const storeAuthToken = (token: string) => {
+    const expirationTime = Date.now() + 7 * 24 * 60 * 60 * 1000;
+    localStorage.setItem("token", token);
+    localStorage.setItem("tokenExpiration", expirationTime.toString());
+  };
+
   const loginMutation = useMutation({
     mutationFn: async (credentials: LoginData) => {
       const res = await apiRequest("POST", "/api/login", credentials);
@@ -69,27 +82,57 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         const error = await res.json();
         throw new Error(error.message || "Login failed");
       }
-      const data = await res.json();
-      
-      // Store token in localStorage with expiration
+      const data: AuthResponse = await res.json();
+
       if (data.token) {
-        const expirationTime = Date.now() + 7 * 24 * 60 * 60 * 1000; // 7 days
-        localStorage.setItem('token', data.token);
-        localStorage.setItem('tokenExpiration', expirationTime.toString());
+        storeAuthToken(data.token);
       }
-      
+
       return data;
     },
     onSuccess: (data) => {
       queryClient.setQueryData(["/api/user"], data.user);
       toast({
-        title: "Login Successful",
-        description: `Welcome back, ${data.user.name}!`,
+        title: data.isGuest ? "Welcome, Guest!" : "Login Successful",
+        description: data.isGuest
+          ? "You're exploring QuantumFit AI in demo mode."
+          : `Welcome back, ${data.user.name}!`,
       });
     },
     onError: (error: Error) => {
       toast({
         title: "Login Failed",
+        description: error.message,
+        variant: "destructive",
+      });
+    },
+  });
+
+  const guestLoginMutation = useMutation({
+    mutationFn: async () => {
+      const res = await apiRequest("POST", "/api/guest-login");
+      if (!res.ok) {
+        const error = await res.json();
+        throw new Error(error.message || "Guest login failed");
+      }
+      const data: AuthResponse = await res.json();
+
+      if (data.token) {
+        storeAuthToken(data.token);
+      }
+
+      return data;
+    },
+    onSuccess: (data) => {
+      queryClient.setQueryData(["/api/user"], data.user);
+      toast({
+        title: "Welcome, Guest!",
+        description: "You're exploring QuantumFit AI in demo mode.",
+      });
+    },
+    onError: (error: Error) => {
+      toast({
+        title: "Guest Login Failed",
         description: error.message,
         variant: "destructive",
       });
@@ -103,15 +146,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         const error = await res.json();
         throw new Error(error.message || "Registration failed");
       }
-      const data = await res.json();
-      
-      // Store token in localStorage with expiration
+      const data: AuthResponse = await res.json();
+
       if (data.token) {
-        const expirationTime = Date.now() + 7 * 24 * 60 * 60 * 1000; // 7 days
-        localStorage.setItem('token', data.token);
-        localStorage.setItem('tokenExpiration', expirationTime.toString());
+        storeAuthToken(data.token);
       }
-      
+
       return data;
     },
     onSuccess: (data) => {
@@ -163,6 +203,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         isLoading,
         error,
         loginMutation,
+        guestLoginMutation,
         logoutMutation,
         registerMutation,
       }}

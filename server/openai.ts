@@ -5,6 +5,7 @@
 
 import Groq from "groq-sdk";
 import { z } from "zod";
+import { callGroqWithRetry } from "./groq-rate-limiter.js";
 
 // Lazy client so API key is read after dotenv loads
 function getGroq() {
@@ -87,12 +88,14 @@ function extractJson(text: string): string {
 
 async function generateJson<T = unknown>(prompt: string): Promise<T> {
   const groq = getGroq();
-  const completion = await groq.chat.completions.create({
-    model: MODEL,
-    messages: [{ role: "user", content: prompt }],
-    temperature: 0.3,
-    max_tokens: 4096,
-  });
+  const completion = await callGroqWithRetry(() =>
+    groq.chat.completions.create({
+      model: MODEL,
+      messages: [{ role: "user", content: prompt }],
+      temperature: 0.3,
+      max_tokens: 4096,
+    })
+  );
 
   const raw = completion.choices[0]?.message?.content;
   if (raw == null || raw === "") {

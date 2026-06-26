@@ -4,7 +4,7 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useAuth } from "@/hooks/use-auth";
 import { useLocation } from "wouter";
-import { Eye, EyeOff } from "lucide-react";
+import { Eye, EyeOff, UserRound } from "lucide-react";
 import {
   Card,
   CardContent,
@@ -57,7 +57,7 @@ type RegisterFormValues = z.infer<typeof registerSchema>;
 
 export function AuthForms() {
   const [activeTab, setActiveTab] = useState<string>("login");
-  const { loginMutation, registerMutation } = useAuth();
+  const { loginMutation, registerMutation, guestLoginMutation } = useAuth();
   const [, navigate] = useLocation();
   const [privacyOpen, setPrivacyOpen] = useState(false);
   const [showLoginPw, setShowLoginPw] = useState(false);
@@ -111,6 +111,13 @@ export function AuthForms() {
       },
     });
   }
+
+  function onGuestLogin() {
+    guestLoginMutation.mutate(undefined, { onSuccess: () => navigate("/") });
+  }
+
+  const isAuthPending =
+    loginMutation.isPending || registerMutation.isPending || guestLoginMutation.isPending;
 
   return (
     <motion.div
@@ -217,7 +224,7 @@ export function AuthForms() {
                         <motion.button
                           type="submit"
                           className="w-full bg-[#FF3A54] hover:bg-[#e63346] text-white font-semibold py-3 rounded-full shadow-lg transition-transform duration-200 active:scale-95"
-                          disabled={loginMutation.isPending}
+                          disabled={isAuthPending}
                           whileHover={{ scale: 1.03 }}
                           whileTap={{ scale: 0.97 }}
                         >
@@ -225,6 +232,38 @@ export function AuthForms() {
                         </motion.button>
                       </form>
                     </Form>
+
+                    <div className="relative my-6">
+                      <div className="absolute inset-0 flex items-center">
+                        <span className="w-full border-t border-gray-200 dark:border-gray-700" />
+                      </div>
+                      <div className="relative flex justify-center text-xs uppercase">
+                        <span className="bg-white dark:bg-gray-950 px-3 text-gray-400 font-medium tracking-wider">
+                          or
+                        </span>
+                      </div>
+                    </div>
+
+                    <motion.button
+                      type="button"
+                      onClick={onGuestLogin}
+                      disabled={isAuthPending}
+                      className="group w-full flex items-center justify-center gap-2.5 rounded-full border-2 border-dashed border-gray-200 dark:border-gray-700 bg-gray-50/80 dark:bg-gray-900/50 px-4 py-3.5 text-sm font-semibold text-gray-700 dark:text-gray-200 transition-all duration-200 hover:border-[#FF3A54]/50 hover:bg-[#FF3A54]/5 hover:text-[#FF3A54] disabled:opacity-60 disabled:cursor-not-allowed"
+                      whileHover={{ scale: isAuthPending ? 1 : 1.02 }}
+                      whileTap={{ scale: isAuthPending ? 1 : 0.98 }}
+                    >
+                      <span className="flex h-8 w-8 items-center justify-center rounded-full bg-white dark:bg-gray-800 shadow-sm ring-1 ring-gray-200 dark:ring-gray-700 group-hover:ring-[#FF3A54]/30 transition-all">
+                        <UserRound className="h-4 w-4 text-[#FF3A54]" />
+                      </span>
+                      <span className="flex flex-col items-start text-left">
+                        <span>
+                          {guestLoginMutation.isPending ? "Entering as guest..." : "Continue as Guest"}
+                        </span>
+                        <span className="text-xs font-normal text-gray-400 group-hover:text-[#FF3A54]/70 transition-colors">
+                          No signup required — explore the app
+                        </span>
+                      </span>
+                    </motion.button>
                   </CardContent>
                 </motion.div>
               </TabsContent>

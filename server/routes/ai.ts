@@ -6,6 +6,15 @@ import {
 } from "../openai.js";
 import { storage as dbStorage } from "../storage.js";
 import { aiGenerateLimiter } from "../middleware/rate-limit.js";
+import { GroqRateLimitError } from "../groq-rate-limiter.js";
+
+function handleAiError(res: import("express").Response, error: unknown, fallback: string) {
+  if (error instanceof GroqRateLimitError) {
+    return res.status(429).json({ message: error.message });
+  }
+  const message = error instanceof Error ? error.message : fallback;
+  return res.status(500).json({ message: fallback, error: message });
+}
 
 export const aiRouter = Router();
 
@@ -53,8 +62,7 @@ aiRouter.post("/ai/workout-recommendation", aiGenerateLimiter, async (req, res) 
     res.json(recommendation);
   } catch (error) {
     console.error("Workout recommendation error:", error);
-    const message = error instanceof Error ? error.message : "Failed to generate workout recommendation";
-    res.status(500).json({ message: "Failed to generate workout recommendation", error: message });
+    handleAiError(res, error, "Failed to generate workout recommendation");
   }
 });
 
@@ -95,7 +103,8 @@ aiRouter.post("/ai/nutrition-recommendation", aiGenerateLimiter, async (req, res
 
     res.json(recommendation);
   } catch (error) {
-    res.status(500).json({ message: "Failed to generate nutrition recommendation" });
+    console.error("Nutrition recommendation error:", error);
+    handleAiError(res, error, "Failed to generate nutrition recommendation");
   }
 });
 
@@ -138,6 +147,7 @@ aiRouter.post("/ai/progress-analysis", aiGenerateLimiter, async (req, res) => {
 
     res.json(analysis);
   } catch (error) {
-    res.status(500).json({ message: "Failed to generate progress analysis" });
+    console.error("Progress analysis error:", error);
+    handleAiError(res, error, "Failed to generate progress analysis");
   }
 });
