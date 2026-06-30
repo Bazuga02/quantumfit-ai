@@ -1,6 +1,6 @@
 import type { User } from "../../shared/schema.js";
 
-/** User as stored in session or returned to clients — never includes `password`. */
+/** User returned to clients — never includes `password`. */
 export type AuthUser = Omit<User, "password">;
 
 /** Claims embedded in the JWT (and returned by `jwt.verify`). */

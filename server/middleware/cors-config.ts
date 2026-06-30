@@ -21,13 +21,12 @@ export function isAllowedCorsOrigin(origin: string): boolean {
 }
 
 /**
- * CORS for browser clients with credentials. Same rules for local Express and Vercel `api/index.ts`.
+ * CORS for browser clients (JWT via Authorization header). Same rules for local Express and Vercel `api/index.ts`.
  */
 export function corsMiddleware(req: Request, res: Response, next: NextFunction): void {
   const origin = req.headers.origin;
   if (typeof origin === "string" && isAllowedCorsOrigin(origin)) {
     res.header("Access-Control-Allow-Origin", origin);
-    res.header("Access-Control-Allow-Credentials", "true");
   }
 
   res.header("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, PATCH");

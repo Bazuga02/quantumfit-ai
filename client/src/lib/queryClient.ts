@@ -4,7 +4,7 @@ const PRODUCTION_API = 'https://quantumfit-ai.vercel.app';
 
 // Resolve at request time so it runs in the browser.
 // - Localhost → same origin (local dev).
-// - Vercel preview (*.vercel.app but not production) → always use production API so auth/session works.
+// - Vercel preview (*.vercel.app but not production) → always use production API so JWT auth works.
 // - Production domain → same origin.
 function getApiUrl(): string {
   if (typeof window === 'undefined') {
@@ -80,7 +80,6 @@ export async function apiRequest(
   const response = await fetch(`${getApiUrl()}${path}`, {
     method,
     headers,
-    credentials: "include",
     body: body ? JSON.stringify(body) : undefined,
   });
 

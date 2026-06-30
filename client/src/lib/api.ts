@@ -7,7 +7,6 @@ export async function apiRequest<T = any>(method: HttpMethod, path: string, body
       'Content-Type': 'application/json',
     },
     body: body ? JSON.stringify(body) : undefined,
-    credentials: 'include', // Important for cookies/session
   });
 
   if (!response.ok) {

@@ -7,17 +7,11 @@ import { toAuthUser } from "../types/auth.js";
 const JWT_SECRET = process.env.JWT_SECRET || "quantumfit-jwt-secret-key";
 
 /**
- * Sets `req.user` (no password) from session or Bearer JWT.
- * JWT path loads the full row from DB so `req.user` matches `AuthUser`.
+ * Sets `req.user` (no password) from Bearer JWT.
+ * Loads the full user row from DB so `req.user` matches `AuthUser`.
  */
 export async function attachUser(req: Request, res: Response, next: NextFunction): Promise<void> {
   try {
-    if (req.session?.user?.id != null) {
-      req.user = req.session.user;
-      next();
-      return;
-    }
-
     const authHeader = req.headers.authorization;
     if (!authHeader?.startsWith("Bearer ")) {
       next();
@@ -30,7 +24,7 @@ export async function attachUser(req: Request, res: Response, next: NextFunction
       const user = await storage.getUser(payload.id);
       if (user) req.user = toAuthUser(user);
     } catch {
-      /* invalid token — leave req.user unset */
+      /* invalid or expired token — leave req.user unset */
     }
 
     next();

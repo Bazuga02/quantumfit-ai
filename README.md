@@ -34,7 +34,6 @@ QuantumFit AI is a modern, AI-powered fitness web application that helps users a
 2. Set up your environment variables (see `.env.example`). For **Vercel deployment**, add these in Project Settings → Environment Variables:
    - `DATABASE_URL` (required) — Your PostgreSQL connection string (e.g., from [Neon](https://neon.tech))
    - `JWT_SECRET` — Optional; defaults are in vercel.json
-   - `SESSION_SECRET` — Optional; defaults are in vercel.json
 3. Run the development server:
    ```bash
    npm run dev

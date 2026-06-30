@@ -1,6 +1,4 @@
 import { User, InsertUser, Measurement, InsertMeasurement, Exercise, WorkoutPlan, InsertWorkoutPlan, WorkoutPlanExercise, InsertWorkoutPlanExercise, Food, MealPlan, InsertMealPlan, Meal, InsertMeal, MealFood, InsertMealFood, WaterIntake, InsertWaterIntake } from "../shared/schema.js";
-import createMemoryStore from "memorystore";
-import session, { Store } from "express-session";
 import { db } from './db.js';
 import * as schema from '../shared/schema.js';
 import { eq, and, desc, gte, lt } from "drizzle-orm";
@@ -35,8 +33,6 @@ async function withRetry<T>(
   
   throw lastError;
 }
-
-const MemoryStore = createMemoryStore(session);
 
 export interface IStorage {
   // User management
@@ -73,9 +69,6 @@ export interface IStorage {
   addFoodToMeal(mealFood: InsertMealFood): Promise<MealFood>;
   getMealsForPlan(mealPlanId: number): Promise<Meal[]>;
   getMealFoods(mealId: number): Promise<(MealFood & { food: Food })[]>;
-  
-  // Session store for authentication
-  sessionStore: Store;
 
   // Water intake methods
   getWaterIntakes(userId: number, date?: Date): Promise<WaterIntake[]>;
@@ -102,14 +95,6 @@ export interface IStorage {
 }
 
 export class PostgresStorage implements IStorage {
-  public sessionStore: Store;
-
-  constructor() {
-    this.sessionStore = new MemoryStore({
-      checkPeriod: 86400000 // 24h
-    });
-  }
-
   async getUser(id: number): Promise<User | undefined> {
     try {
       const result = await db.select()

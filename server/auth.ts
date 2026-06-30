@@ -1,5 +1,4 @@
 import type { Express, RequestHandler } from "express";
-import session from "express-session";
 import { storage } from "./storage.js";
 import { insertUserSchema, loginUserSchema } from "../shared/schema.js";
 import { z } from "zod";
@@ -16,7 +15,6 @@ const JWT_EXPIRES_IN = "7d";
 
 function sendAuthResponse(
   user: User,
-  req: Parameters<RequestHandler>[0],
   res: Parameters<RequestHandler>[1],
   status = 200
 ) {
@@ -27,7 +25,6 @@ function sendAuthResponse(
   );
 
   const authUser = toAuthUser(user);
-  req.session.user = authUser;
 
   res.status(status).json({
     user: authUser,
@@ -38,22 +35,6 @@ function sendAuthResponse(
 
 export function setupAuth(app: Express): void {
   void ensureGuestUser();
-
-  const sessionSettings: session.SessionOptions = {
-    secret: process.env.SESSION_SECRET || "quantumfit-super-secret-key",
-    resave: false,
-    saveUninitialized: false,
-    store: storage.sessionStore,
-    cookie: {
-      secure: process.env.NODE_ENV === "production",
-      maxAge: 1000 * 60 * 60 * 24 * 7,
-      sameSite: "lax",
-      httpOnly: true,
-      path: "/",
-    },
-  };
-
-  app.use(session(sessionSettings));
 
   const register: RequestHandler = async (req, res) => {
     try {
@@ -71,7 +52,7 @@ export function setupAuth(app: Express): void {
         password: hashedPassword,
       });
 
-      sendAuthResponse(user, req, res, 201);
+      sendAuthResponse(user, res, 201);
     } catch (error) {
       if (error instanceof z.ZodError) {
         return res.status(400).json({ message: "Invalid input data", errors: error.errors });
@@ -97,7 +78,7 @@ export function setupAuth(app: Express): void {
         return res.status(401).json({ message: "Invalid email or password" });
       }
 
-      sendAuthResponse(user, req, res);
+      sendAuthResponse(user, res);
     } catch (error) {
       if (error instanceof z.ZodError) {
         return res.status(400).json({ message: "Invalid input data", errors: error.errors });
@@ -128,7 +109,7 @@ export function setupAuth(app: Express): void {
         return res.status(503).json({ message: "Guest account is not available" });
       }
 
-      sendAuthResponse(user, req, res);
+      sendAuthResponse(user, res);
     } catch (error) {
       console.error("Guest login error:", error);
       res.status(500).json({ message: "Guest login failed" });
@@ -139,13 +120,8 @@ export function setupAuth(app: Express): void {
   app.post("/api/login", authRouteLimiter, login);
   app.post("/api/guest-login", authRouteLimiter, guestLogin);
 
-  app.post("/api/logout", (req, res) => {
-    req.session.destroy((err) => {
-      if (err) {
-        console.error("Logout error:", err);
-        return res.status(500).json({ message: "Logout failed" });
-      }
-      res.sendStatus(200);
-    });
+  // JWT is stateless — logout is handled client-side by clearing the token.
+  app.post("/api/logout", (_req, res) => {
+    res.sendStatus(200);
   });
 }
