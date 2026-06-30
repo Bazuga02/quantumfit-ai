@@ -4,7 +4,7 @@ QuantumFit AI is a modern, AI-powered fitness web application that helps users a
 
 ## 🚀 Features
 
-- **AI Coach:** Real-time, personalized workout and nutrition plans powered by Gemini API. Adapts to your goals, fitness level, and limitations.
+- **AI Coach:** Real-time, personalized workout and nutrition plans powered by **Groq** (Llama 3.1). Adapts to your goals, fitness level, and limitations.
 - **Workout Management:** Create, browse, and track custom workout plans with detailed exercise breakdowns.
 - **Motivational Banner:** Animated, dynamic banner with rotating fitness quotes.
 - **Nutrition Guidance:** Tailored meal and macro recommendations based on your dietary goals and restrictions.
@@ -14,14 +14,14 @@ QuantumFit AI is a modern, AI-powered fitness web application that helps users a
 - **Dark Mode:** Fully responsive and dark mode compatible.
 - **Beautiful UI:** Modern, card-based design with smooth animations and brand-focused color palette.
 - **Sidebar Navigation:** Easy access to all features with active state highlighting.
-- **Secure Authentication:** Register and log in with robust validation and privacy-first policies.
+- **Secure Authentication:** JWT-based login with bcrypt password hashing.
 - **Settings:** Customize your profile, fitness goals, macros, and app appearance.
 
 ## 🛠️ Tech Stack
 
 - **Frontend:** React, TypeScript, Tailwind CSS, Framer Motion, Lottie, React Query, Wouter, Lucide Icons
 - **Backend:** Node.js, Express, Drizzle ORM, PostgreSQL
-- **AI Integration:** Gemini API
+- **AI Integration:** Groq API (Llama 3.1 8B)
 
 ## 📦 Getting Started
 
@@ -33,7 +33,8 @@ QuantumFit AI is a modern, AI-powered fitness web application that helps users a
    ```
 2. Set up your environment variables (see `.env.example`). For **Vercel deployment**, add these in Project Settings → Environment Variables:
    - `DATABASE_URL` (required) — Your PostgreSQL connection string (e.g., from [Neon](https://neon.tech))
-   - `JWT_SECRET` — Optional; defaults are in vercel.json
+   - `JWT_SECRET` — Set a long random string in production (required for secure tokens)
+   - `GROQ_API_KEY` — Required for AI Coach features
 3. Run the development server:
    ```bash
    npm run dev

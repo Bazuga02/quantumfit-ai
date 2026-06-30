@@ -4,21 +4,21 @@ import { Link } from "wouter";
 
 export function WorkoutPlan() {
   return (
-    <Card>
-      <CardHeader className="pb-2">
+    <Card className="flex h-full flex-col">
+      <CardHeader className="pb-3">
         <CardTitle className="text-lg font-semibold">Start Your Today's Workout</CardTitle>
       </CardHeader>
-      <CardContent>
-        <div className="bg-gray-50 dark:bg-gray-700/50 p-4 rounded-md mb-4">
-          <p>
-            Every workout brings you one step closer to a stronger, healthier you. 
+      <CardContent className="flex flex-1 flex-col pt-0">
+        <div className="flex min-h-[10.5rem] flex-1 flex-col justify-between rounded-lg bg-muted/50 p-5 dark:bg-muted/30">
+          <p className="text-sm leading-relaxed text-muted-foreground">
+            Every workout brings you one step closer to a stronger, healthier you.
             Stay consistent and see the transformation!
           </p>
-          <Link href="/workouts">
-            <Button className="mt-4 bg-primary hover:bg-primary/90 text-white w-full">
-              Start Your Day
+          <div className="pt-4">
+            <Button asChild className="w-full bg-primary hover:bg-primary/90 text-white">
+              <Link href="/workouts">Start Your Day</Link>
             </Button>
-          </Link>
+          </div>
         </div>
       </CardContent>
     </Card>

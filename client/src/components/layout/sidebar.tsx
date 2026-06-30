@@ -47,11 +47,11 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
 
   const links = [
     { path: "/", icon: LayoutDashboard, label: "Dashboard" },
-    { path: "/workouts", icon: Dumbbell, label: "Workouts" },
     { path: "/nutrition", icon: Apple, label: "Nutrition" },
     { path: "/water", icon: Droplets, label: "Water" },
     { path: "/progress", icon: LineChart, label: "Progress" },
     { path: "/ai-coach", icon: BrainCircuit, label: "AI Coach" },
+    { path: "/workouts", icon: Dumbbell, label: "Workouts" },
     { path: "/settings", icon: Settings, label: "Settings" },
   ];
 

@@ -3,9 +3,10 @@ import { MainLayout } from "@/components/layout/main-layout";
 import { GreetingCard } from "@/components/dashboard/greeting-card";
 import { StatsCard } from "@/components/dashboard/stats-card";
 import { WorkoutPlan } from "@/components/dashboard/workout-plan";
+import { MeasurementsCard } from "@/components/dashboard/measurements-card";
 import { NutritionSummary } from "@/components/dashboard/nutrition-summary";
 import { AIRecommendations } from "@/components/dashboard/ai-recommendations";
-import { Flame, Dumbbell, Droplets } from "lucide-react";
+import { Flame, Droplets } from "lucide-react";
 import { WaterIntake } from "@/components/water-intake";
 import { ProgressGraph } from "@/components/progress/progress-graph";
 import { useEffect, useState } from "react";
@@ -64,32 +65,18 @@ export default function Dashboard() {
         isPositive: true
       }
     },
-    {
-      title: "Workouts",
-      value: "3 / 5",
-      icon: <Dumbbell className="h-6 w-6 text-purple-500" />,
-      iconBgClass: "bg-purple-50 dark:bg-purple-900/30",
-      trend: {
-        value: "60% completed",
-        isPositive: true
-      }
-    }
   ];
 
-  // Progress measurements state
-  const [measurements, setMeasurements] = useState<any[]>([]);
-  useEffect(() => {
-    async function fetchMeasurements() {
-      try {
-        const res = await apiRequest("GET", "/api/measurements");
-        setMeasurements(await res.json());
-      } catch (error) {
-        console.error("Failed to fetch measurements:", error);
-        setMeasurements([]);
-      }
-    }
-    fetchMeasurements();
-  }, []);
+  // Measurements for optional trend chart
+  const { data: measurements = [] } = useQuery({
+    queryKey: ["/api/measurements"],
+    queryFn: async () => {
+      const res = await apiRequest("GET", "/api/measurements");
+      if (!res.ok) return [];
+      return res.json();
+    },
+    enabled: !!user,
+  });
 
   const greeting =
     firstName.length > 0
@@ -102,7 +89,7 @@ export default function Dashboard() {
       <GreetingCard />
 
       {/* Stats cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 mb-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 mb-4">
         {statsCards.map((card, index) => (
           <StatsCard
             key={index}
@@ -115,22 +102,21 @@ export default function Dashboard() {
         ))}
       </div>
 
-      {/* Progress Graph */}
-      <div className="mb-4">
-        <ProgressGraph measurements={measurements} />
+      {/* Workout + measurements */}
+      <div className="mb-4 grid grid-cols-1 items-stretch gap-6 lg:grid-cols-2">
+        <WorkoutPlan />
+        <MeasurementsCard measurementCount={measurements.length} />
       </div>
 
-      {/* Main content grid */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Workout plan */}
-        <div className="lg:col-span-2">
-          <WorkoutPlan />
+      {measurements.length > 0 ? (
+        <div className="mb-4">
+          <ProgressGraph measurements={measurements} />
         </div>
-        
-        {/* AI Coach recommendations */}
-        <div className="lg:col-span-3">
-          <AIRecommendations />
-        </div>
+      ) : null}
+
+      {/* AI Coach recommendations */}
+      <div className="mb-4">
+        <AIRecommendations />
       </div>
 
       {/* Water Intake and Nutrition side by side */}

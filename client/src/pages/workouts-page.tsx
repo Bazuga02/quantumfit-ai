@@ -87,6 +87,10 @@ export default function WorkoutsPage() {
   const startWorkoutMutation = useMutation({
     mutationFn: async (workoutId: number) => {
       const res = await apiRequest("POST", `/api/workout-plans/${workoutId}/start`);
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({ message: "Failed to start workout" }));
+        throw new Error(err.message || "Failed to start workout");
+      }
       return await res.json();
     },
     onSuccess: (workoutSession) => {
@@ -112,252 +116,21 @@ export default function WorkoutsPage() {
       )
     : [];
 
-  // Sample workout data (while loading from API)
-  const sampleWorkouts = [
-    {
-      id: 1,
-      name: "Upper Body Strength",
-      description: "Focus on chest, shoulders and triceps with progressive overload.",
-      duration: 45,
-      difficulty: "intermediate",
-      exercises: [
-        { 
-          exercise: { 
-            id: 1,
-            name: "Bench Press", 
-            description: "A compound chest exercise performed on a flat bench",
-            muscleGroups: ["chest", "triceps", "shoulders"],
-            equipment: ["barbell", "bench"],
-            difficulty: "intermediate",
-            instructions: [
-              "Lie on a flat bench with feet flat on the floor",
-              "Grip the barbell slightly wider than shoulder width",
-              "Lower the bar to your mid-chest",
-              "Press the bar back up to the starting position"
-            ],
-          },
-          sets: 4, 
-          reps: 10, 
-          restTime: 60,
-          order: 1 
-        },
-        { 
-          exercise: { 
-            id: 2,
-            name: "Shoulder Press", 
-            description: "A compound shoulder exercise that targets deltoids",
-            muscleGroups: ["shoulders", "triceps"],
-            equipment: ["dumbbells", "barbell"],
-            difficulty: "intermediate",
-            instructions: [
-              "Sit on a bench with back support",
-              "Hold dumbbells at shoulder height with palms facing forward",
-              "Press the weights up until your arms are fully extended",
-              "Lower the weights back to the starting position"
-            ],
-          },
-          sets: 3, 
-          reps: 12, 
-          restTime: 60,
-          order: 2 
-        },
-        { 
-          exercise: { 
-            id: 3,
-            name: "Tricep Extensions", 
-            description: "An isolation exercise that targets the triceps",
-            muscleGroups: ["triceps"],
-            equipment: ["dumbbell", "cable"],
-            difficulty: "beginner",
-            instructions: [
-              "Hold a dumbbell with both hands above your head",
-              "Lower the weight behind your head by bending at the elbows",
-              "Extend your arms to raise the weight back to starting position",
-              "Keep your upper arms stationary throughout the movement"
-            ],
-          },
-          sets: 3, 
-          reps: 15, 
-          restTime: 60,
-          order: 3 
-        }
-      ]
-    },
-    {
-      id: 2,
-      name: "Lower Body Power",
-      description: "Leg day focusing on strength and power development.",
-      duration: 50,
-      difficulty: "advanced",
-      exercises: [
-        { 
-          exercise: { 
-            id: 4,
-            name: "Squats", 
-            description: "A compound lower body exercise",
-            muscleGroups: ["quadriceps", "hamstrings", "glutes"],
-            equipment: ["barbell", "squat rack"],
-            difficulty: "intermediate",
-            instructions: [
-              "Position the barbell on your upper back",
-              "Stand with feet shoulder-width apart",
-              "Bend your knees and hips to lower your body",
-              "Push through your heels to return to standing position"
-            ],
-          },
-          sets: 4, 
-          reps: 8, 
-          restTime: 90,
-          order: 1 
-        },
-        { 
-          exercise: { 
-            id: 5,
-            name: "Deadlifts", 
-            description: "A compound full-body exercise",
-            muscleGroups: ["back", "glutes", "hamstrings"],
-            equipment: ["barbell"],
-            difficulty: "advanced",
-            instructions: [
-              "Stand with feet hip-width apart, barbell over mid-foot",
-              "Bend at hips and knees to grasp the bar",
-              "Lift the bar by extending hips and knees",
-              "Lower the bar by hinging at the hips and bending the knees"
-            ],
-          },
-          sets: 3, 
-          reps: 8, 
-          restTime: 90,
-          order: 2
-        },
-        { 
-          exercise: { 
-            id: 6,
-            name: "Lunges", 
-            description: "A unilateral lower body exercise",
-            muscleGroups: ["quadriceps", "hamstrings", "glutes"],
-            equipment: ["dumbbells", "bodyweight"],
-            difficulty: "beginner",
-            instructions: [
-              "Stand upright with feet together",
-              "Take a step forward with one leg",
-              "Lower your body until both knees are bent at 90 degrees",
-              "Push off the front foot to return to the starting position"
-            ],
-          },
-          sets: 3, 
-          reps: 12, 
-          restTime: 60,
-          order: 3
-        }
-      ]
-    },
-    {
-      id: 3,
-      name: "Core Stability",
-      description: "Core-focused workout to improve stability and strength.",
-      duration: 30,
-      difficulty: "beginner",
-      exercises: [
-        { 
-          exercise: { 
-            id: 7,
-            name: "Planks", 
-            description: "A core exercise that improves stability and strengthens the abdominals",
-            muscleGroups: ["core", "shoulders"],
-            equipment: ["bodyweight"],
-            difficulty: "beginner",
-            instructions: [
-              "Get into a push-up position with forearms on the ground",
-              "Align your body in a straight line from head to heels",
-              "Keep your core tight and avoid arching your back",
-              "Hold the position for the prescribed time"
-            ],
-          },
-          sets: 3, 
-          reps: 1, 
-          duration: 60,
-          restTime: 45,
-          order: 1
-        },
-        { 
-          exercise: { 
-            id: 8,
-            name: "Russian Twists", 
-            description: "A rotational exercise that targets the obliques and core",
-            muscleGroups: ["core", "obliques"],
-            equipment: ["weight plate", "medicine ball"],
-            difficulty: "intermediate",
-            instructions: [
-              "Sit on the floor with knees bent",
-              "Lean back slightly, keeping your back straight",
-              "Hold a weight at chest level",
-              "Rotate your torso to touch the weight to the ground on each side"
-            ],
-          },
-          sets: 3, 
-          reps: 20, 
-          restTime: 45,
-          order: 2
-        },
-        { 
-          exercise: { 
-            id: 9,
-            name: "Mountain Climbers", 
-            description: "A dynamic core exercise that also provides cardiovascular benefits",
-            muscleGroups: ["core", "shoulders", "hip flexors"],
-            equipment: ["bodyweight"],
-            difficulty: "beginner",
-            instructions: [
-              "Start in a push-up position",
-              "Bring one knee toward your chest",
-              "Quickly switch legs, like you're running in place",
-              "Keep your hips down and core engaged throughout"
-            ],
-          },
-          sets: 3, 
-          reps: 1, 
-          duration: 45,
-          restTime: 30,
-          order: 3
-        }
-      ]
+  const handleStartWorkout = (workoutId: number) => {
+    // Exercise-library previews use a synthetic id — start locally without API
+    if (workoutId === 999 && selectedWorkout?.exercises?.length) {
+      setActiveWorkoutSession({
+        id: Date.now(),
+        planId: selectedWorkout.id,
+        planName: selectedWorkout.name,
+        startTime: new Date().toISOString(),
+        userId: user?.id,
+        exercises: selectedWorkout.exercises,
+        inProgress: true,
+      });
+      return;
     }
-  ];
-
-  // Use workoutPlans from API if available, otherwise fallback to sample data
-  const displayedWorkouts = Array.isArray(userPlans) && userPlans.length > 0 ? userPlans : sampleWorkouts;
-
-  // Handler for starting a workout
-  const handleStartWorkout = async (workoutId: number) => {
-    let workoutData = selectedWorkout;
-    if (!workoutData) {
-      // Fetch workout plan and its exercises if not already selected
-      const planRes = await apiRequest('GET', `/api/workout-plans/${workoutId}`);
-      if (!planRes.ok) {
-        toast({ title: 'Error', description: 'Failed to fetch workout plan.' });
-        return;
-      }
-      const plan = await planRes.json();
-      const exercisesRes = await apiRequest('GET', `/api/workout-plans/${workoutId}/exercises`);
-      if (!exercisesRes.ok) {
-        toast({ title: 'Error', description: 'Failed to fetch workout exercises.' });
-        return;
-      }
-      const exercises = await exercisesRes.json();
-      workoutData = { ...plan, exercises };
-    }
-    // Create the workout session object
-    const workoutSession = {
-      id: Date.now(),
-      planId: workoutData.id,
-      planName: workoutData.name,
-      startTime: new Date().toISOString(),
-      userId: user?.id,
-      exercises: workoutData.exercises || [],
-      inProgress: true
-    };
-    setActiveWorkoutSession(workoutSession);
+    startWorkoutMutation.mutate(workoutId);
   };
 
   // Handler for selecting a workout to view details
@@ -426,18 +199,18 @@ export default function WorkoutsPage() {
         <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
           <TabsList className="grid h-auto w-full grid-cols-3 rounded-2xl bg-muted/60 p-1 dark:bg-muted/40 sm:w-auto sm:max-w-xl">
             <TabsTrigger
-              value="my-workouts"
-              className="gap-1.5 rounded-xl py-2.5 text-xs sm:text-sm data-[state=active]:bg-background data-[state=active]:shadow-sm"
-            >
-              <ClipboardList className="hidden h-4 w-4 sm:inline" aria-hidden />
-              <span className="truncate">My workouts</span>
-            </TabsTrigger>
-            <TabsTrigger
               value="exercise-library"
               className="gap-1.5 rounded-xl py-2.5 text-xs sm:text-sm data-[state=active]:bg-background data-[state=active]:shadow-sm"
             >
               <Search className="hidden h-4 w-4 sm:inline" aria-hidden />
               <span className="truncate">Exercises</span>
+            </TabsTrigger>
+            <TabsTrigger
+              value="my-workouts"
+              className="gap-1.5 rounded-xl py-2.5 text-xs sm:text-sm data-[state=active]:bg-background data-[state=active]:shadow-sm"
+            >
+              <ClipboardList className="hidden h-4 w-4 sm:inline" aria-hidden />
+              <span className="truncate">My workouts</span>
             </TabsTrigger>
             <TabsTrigger
               value="recommended"
@@ -470,91 +243,6 @@ export default function WorkoutsPage() {
             </DialogContent>
           </Dialog>
         </div>
-
-        <TabsContent value="my-workouts" className="mt-0 space-y-6">
-          {isLoadingUserPlans || startWorkoutMutation.isPending ? (
-            <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
-              {[1, 2, 3].map((i) => (
-                <Card key={i} className="animate-pulse rounded-3xl border-border/60">
-                  <CardContent className="h-64 p-6" />
-                </Card>
-              ))}
-            </div>
-          ) : displayedWorkouts.length > 0 ? (
-            <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
-              {displayedWorkouts.map((workout: any) => (
-                <Card
-                  key={workout.id}
-                  className="group relative flex flex-col overflow-hidden rounded-3xl border-border/60 bg-card shadow-lg ring-1 ring-primary/5 transition-all duration-300 hover:-translate-y-0.5 hover:shadow-xl"
-                >
-                  <CardContent className="flex h-full flex-col p-6 sm:p-7">
-                    <span
-                      className={cn(
-                        "absolute right-5 top-5 z-10 rounded-full border px-3 py-1 text-xs font-semibold capitalize shadow-sm",
-                        difficultyPillClass(workout.difficulty)
-                      )}
-                    >
-                      {workout.difficulty}
-                    </span>
-                    <div className="relative mb-4 flex h-12 w-12 items-center justify-center rounded-2xl bg-primary/15 text-primary shadow-sm">
-                      <Dumbbell className="h-6 w-6" />
-                    </div>
-                    <h3 className="pr-16 text-xl font-bold leading-snug tracking-tight text-foreground">
-                      {workout.name}
-                    </h3>
-                    <p className="mt-2 line-clamp-2 text-sm leading-relaxed text-muted-foreground">
-                      {workout.description}
-                    </p>
-                    <div className="flex-1" />
-                    <div className="mb-4 mt-5 flex items-center justify-between gap-3 text-sm font-medium text-muted-foreground">
-                      <div className="flex items-center gap-1.5">
-                        <Timer className="h-4 w-4 shrink-0 text-primary" />
-                        <span>{workout.duration} min</span>
-                      </div>
-                      <div className="flex items-center gap-1.5">
-                        <Users className="h-4 w-4 shrink-0 text-primary" />
-                        <span>{workout.exercises?.length ?? 0} moves</span>
-                      </div>
-                    </div>
-                    <Button
-                      className="w-full rounded-2xl font-semibold shadow-md"
-                      onClick={() => handleSelectWorkout(workout)}
-                    >
-                      View plan
-                    </Button>
-                  </CardContent>
-                </Card>
-              ))}
-            </div>
-          ) : (
-            <div className="rounded-3xl border border-dashed border-border bg-muted/20 px-6 py-14 text-center dark:bg-muted/10">
-              <Dumbbell className="mx-auto h-12 w-12 text-muted-foreground/50" />
-              <p className="mt-4 text-base font-medium text-foreground">No workout plans yet</p>
-              <p className="mx-auto mt-2 max-w-md text-sm leading-relaxed text-muted-foreground">
-                Plans from your account will list here. Use the Recommended tab after saving one from AI Coach, or check
-                back when templates are available.
-              </p>
-              <div className="mt-6 flex flex-wrap items-center justify-center gap-3">
-                <Button asChild variant="default" className="rounded-2xl">
-                  <Link href="/ai-coach">Open AI Coach</Link>
-                </Button>
-                <Dialog>
-                  <DialogTrigger asChild>
-                    <Button variant="outline" className="rounded-2xl">
-                      New workout
-                    </Button>
-                  </DialogTrigger>
-                  <DialogContent className="rounded-2xl sm:max-w-md">
-                    <DialogHeader>
-                      <DialogTitle>Create workout</DialogTitle>
-                      <DialogDescription>Custom builder is coming soon.</DialogDescription>
-                    </DialogHeader>
-                  </DialogContent>
-                </Dialog>
-              </div>
-            </div>
-          )}
-        </TabsContent>
 
         <TabsContent value="exercise-library" className="mt-0 space-y-6">
           <Card className="overflow-hidden rounded-3xl border-border/60 shadow-lg ring-1 ring-primary/5">
@@ -639,6 +327,91 @@ export default function WorkoutsPage() {
               )}
             </CardContent>
           </Card>
+        </TabsContent>
+
+        <TabsContent value="my-workouts" className="mt-0 space-y-6">
+          {isLoadingUserPlans || startWorkoutMutation.isPending ? (
+            <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
+              {[1, 2, 3].map((i) => (
+                <Card key={i} className="animate-pulse rounded-3xl border-border/60">
+                  <CardContent className="h-64 p-6" />
+                </Card>
+              ))}
+            </div>
+          ) : userPlans && userPlans.length > 0 ? (
+            <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
+              {userPlans.map((workout: any) => (
+                <Card
+                  key={workout.id}
+                  className="group relative flex flex-col overflow-hidden rounded-3xl border-border/60 bg-card shadow-lg ring-1 ring-primary/5 transition-all duration-300 hover:-translate-y-0.5 hover:shadow-xl"
+                >
+                  <CardContent className="flex h-full flex-col p-6 sm:p-7">
+                    <span
+                      className={cn(
+                        "absolute right-5 top-5 z-10 rounded-full border px-3 py-1 text-xs font-semibold capitalize shadow-sm",
+                        difficultyPillClass(workout.difficulty)
+                      )}
+                    >
+                      {workout.difficulty}
+                    </span>
+                    <div className="relative mb-4 flex h-12 w-12 items-center justify-center rounded-2xl bg-primary/15 text-primary shadow-sm">
+                      <Dumbbell className="h-6 w-6" />
+                    </div>
+                    <h3 className="pr-16 text-xl font-bold leading-snug tracking-tight text-foreground">
+                      {workout.name}
+                    </h3>
+                    <p className="mt-2 line-clamp-2 text-sm leading-relaxed text-muted-foreground">
+                      {workout.description}
+                    </p>
+                    <div className="flex-1" />
+                    <div className="mb-4 mt-5 flex items-center justify-between gap-3 text-sm font-medium text-muted-foreground">
+                      <div className="flex items-center gap-1.5">
+                        <Timer className="h-4 w-4 shrink-0 text-primary" />
+                        <span>{workout.duration} min</span>
+                      </div>
+                      <div className="flex items-center gap-1.5">
+                        <Users className="h-4 w-4 shrink-0 text-primary" />
+                        <span>{workout.exercises?.length ?? 0} moves</span>
+                      </div>
+                    </div>
+                    <Button
+                      className="w-full rounded-2xl font-semibold shadow-md"
+                      onClick={() => handleSelectWorkout(workout)}
+                    >
+                      View plan
+                    </Button>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+          ) : (
+            <div className="rounded-3xl border border-dashed border-border bg-muted/20 px-6 py-14 text-center dark:bg-muted/10">
+              <Dumbbell className="mx-auto h-12 w-12 text-muted-foreground/50" />
+              <p className="mt-4 text-base font-medium text-foreground">No workout plans yet</p>
+              <p className="mx-auto mt-2 max-w-md text-sm leading-relaxed text-muted-foreground">
+                Plans from your account will list here. Use the Recommended tab after saving one from AI Coach, or check
+                back when templates are available.
+              </p>
+              <div className="mt-6 flex flex-wrap items-center justify-center gap-3">
+                <Button asChild variant="default" className="rounded-2xl">
+                  <Link href="/ai-coach">Open AI Coach</Link>
+                </Button>
+                <Dialog>
+                  <DialogTrigger asChild>
+                    <Button variant="outline" className="rounded-2xl">
+                      New workout
+                    </Button>
+                  </DialogTrigger>
+                  <DialogContent className="rounded-2xl sm:max-w-md">
+                    <DialogHeader>
+                      <DialogTitle>Create workout</DialogTitle>
+                      <DialogDescription>Custom builder is coming soon.</DialogDescription>
+                    </DialogHeader>
+                  </DialogContent>
+                </Dialog>
+              </div>
+            </div>
+          )}
         </TabsContent>
 
         <TabsContent value="recommended" className="mt-0 space-y-6">

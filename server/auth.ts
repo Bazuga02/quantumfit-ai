@@ -119,9 +119,4 @@ export function setupAuth(app: Express): void {
   app.post("/api/register", authRouteLimiter, register);
   app.post("/api/login", authRouteLimiter, login);
   app.post("/api/guest-login", authRouteLimiter, guestLogin);
-
-  // JWT is stateless — logout is handled client-side by clearing the token.
-  app.post("/api/logout", (_req, res) => {
-    res.sendStatus(200);
-  });
 }

@@ -1,5 +1,4 @@
 import { Router } from "express";
-import crypto from "crypto";
 import { storage as dbStorage } from "../storage.js";
 
 export const progressRouter = Router();
@@ -29,15 +28,6 @@ progressRouter.post("/progress-photos", async (req, res) => {
   } catch (error) {
     res.status(500).json({ message: "Failed to save progress photo" });
   }
-});
-
-progressRouter.post("/cloudinary-signature", (req, res) => {
-  const { timestamp, upload_preset } = req.body;
-  const apiSecret = process.env.CLOUDINARY_API_SECRET;
-  if (!apiSecret) return res.status(500).json({ error: "Missing Cloudinary API secret" });
-  const paramsToSign = `timestamp=${timestamp}&upload_preset=${upload_preset}${apiSecret}`;
-  const signature = crypto.createHash("sha1").update(paramsToSign).digest("hex");
-  res.json({ signature });
 });
 
 progressRouter.get("/trained-body-parts", async (req, res) => {

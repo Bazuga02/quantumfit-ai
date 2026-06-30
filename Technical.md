@@ -27,8 +27,7 @@ Below is technical documentation focused on **how things work** end-to-end.
   - `src/App.tsx`: Top-level routing, providers (React Query, theme, auth).
   - `src/pages/*.tsx`: Route-level screens (dashboard, workouts, nutrition, progress, AI coach, auth, settings, water).
   - `src/components/**`: UI components and feature modules (workout, nutrition, progress, water intake, layout).
-  - `src/lib/api.ts`: Generic `fetch` wrapper to backend (`VITE_API_URL`) with `credentials: 'include'`.
-  - `src/lib/queryClient.ts`: React Query setup.
+  - `src/lib/queryClient.ts`: `apiRequest`, React Query setup, Bearer JWT.
   - `src/lib/theme-provider.tsx`: Dark/light theme management.
   - `src/lib/protected-route.tsx`, `src/hooks/use-auth.tsx`: Client-side auth helpers.
 

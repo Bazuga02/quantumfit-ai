@@ -41,7 +41,11 @@ export default function SettingsPage() {
   // User settings update mutation
   const updateSettingsMutation = useMutation({
     mutationFn: async (data: any) => {
-      const res = await apiRequest("PATCH", "/api/user/settings", data);
+      const res = await apiRequest("PATCH", "/api/user", data);
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({ message: "Failed to update settings" }));
+        throw new Error(err.message || "Failed to update settings");
+      }
       return await res.json();
     },
     onSuccess: (updatedUser) => {
