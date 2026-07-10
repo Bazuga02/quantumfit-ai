@@ -8,3 +8,7 @@ vite.config.ts.*
 .env.local
 client/.env.local
 .vercel
+ARCHITECTURE.md
+AUTHENTICATION.md
+BACKEND.md
+FRONTEND.md

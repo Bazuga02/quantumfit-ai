@@ -9,6 +9,8 @@ import { cn } from "@/lib/utils";
 type NutritionSummaryProps = {
   /** Hide the recent-meals list (e.g. on /nutrition where meals are shown separately). */
   showRecentMeals?: boolean;
+  /** Hide the header log-meal action (e.g. when the page already has a log-meal dialog). */
+  showLogMealAction?: boolean;
 };
 
 function MacroBar({
@@ -42,7 +44,10 @@ function MacroBar({
   );
 }
 
-export function NutritionSummary({ showRecentMeals = true }: NutritionSummaryProps) {
+export function NutritionSummary({
+  showRecentMeals = true,
+  showLogMealAction = true,
+}: NutritionSummaryProps) {
   const { data, isLoading, error } = useQuery({
     queryKey: ["/api/nutrition-summary"],
     queryFn: async () => {
@@ -103,15 +108,17 @@ export function NutritionSummary({ showRecentMeals = true }: NutritionSummaryPro
             </span>
             Today
           </CardTitle>
-          <Link href="/nutrition/log">
-            <Button
-              variant="secondary"
-              size="sm"
-              className="shrink-0 rounded-xl border-0 bg-white/20 text-primary-foreground hover:bg-white/30"
-            >
-              Log meal
-            </Button>
-          </Link>
+          {showLogMealAction ? (
+            <Link href="/nutrition">
+              <Button
+                variant="secondary"
+                size="sm"
+                className="shrink-0 rounded-xl border-0 bg-white/20 text-primary-foreground hover:bg-white/30"
+              >
+                Log meal
+              </Button>
+            </Link>
+          ) : null}
         </div>
         <p className="mt-2 text-sm leading-relaxed text-primary-foreground/90">
           Calories and macros vs your goals for this day.

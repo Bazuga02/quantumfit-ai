@@ -60,8 +60,8 @@ const ProgressAnalysisSchema = z.object({
   recommendations: z.array(z.string()).default([]),
 });
 
-export type WorkoutRecommendation = z.infer<typeof WorkoutRecommendationSchema>;
-export type NutritionRecommendation = z.infer<typeof NutritionRecommendationSchema>;
+type WorkoutRecommendation = z.infer<typeof WorkoutRecommendationSchema>;
+type NutritionRecommendation = z.infer<typeof NutritionRecommendationSchema>;
 
 // --- Single helper: Groq chat + JSON parse ---
 

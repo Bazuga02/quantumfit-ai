@@ -1,9 +1,15 @@
+import path from "path";
+import { fileURLToPath } from "url";
+import tailwindcssAnimate from "tailwindcss-animate";
+
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
+
 /** @type {import('tailwindcss').Config} */
 export default {
   darkMode: ["class"],
   content: [
-    "./index.html",
-    "./src/**/*.{js,ts,jsx,tsx,css}",
+    path.join(__dirname, "index.html"),
+    path.join(__dirname, "src/**/*.{js,ts,jsx,tsx}"),
   ],
   theme: {
     extend: {
@@ -80,5 +86,5 @@ export default {
       },
     },
   },
-  plugins: [require("tailwindcss-animate"), require("@tailwindcss/typography")],
+  plugins: [tailwindcssAnimate],
 };

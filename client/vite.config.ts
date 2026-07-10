@@ -1,12 +1,18 @@
 import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
 import path from 'path'
+import { fileURLToPath } from 'url'
+
+const __dirname = path.dirname(fileURLToPath(import.meta.url))
 
 // https://vitejs.dev/config/
 export default defineConfig({
   root: __dirname,
   base: '/',
   plugins: [react()],
+  css: {
+    postcss: path.join(__dirname, 'postcss.config.js'),
+  },
   server: {
     watch: {
       ignored: ['**/dist/**', '**/node_modules/**'],

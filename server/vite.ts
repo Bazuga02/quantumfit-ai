@@ -20,6 +20,8 @@ export function log(message: string, source = "express") {
 }
 
 export async function setupVite(app: Express, server: Server) {
+  const clientRoot = path.resolve(__dirname, "../client");
+
   const serverOptions = {
     middlewareMode: true,
     hmr: { server },
@@ -27,7 +29,8 @@ export async function setupVite(app: Express, server: Server) {
   };
 
   const vite = await createViteServer({
-    configFile: path.resolve(__dirname, "../client/vite.config.ts"),
+    root: clientRoot,
+    configFile: path.join(clientRoot, "vite.config.ts"),
     customLogger: {
       ...viteLogger,
       error: (msg, options) => {
@@ -74,7 +77,7 @@ export async function setupVite(app: Express, server: Server) {
 }
 
 export function serveStatic(app: Express) {
-  const distPath = path.resolve(__dirname, "..", "dist", "public");
+  const distPath = path.resolve(__dirname, "..", "client", "dist");
 
   if (!fs.existsSync(distPath)) {
     throw new Error(

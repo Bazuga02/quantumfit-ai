@@ -1,8 +1,7 @@
 import { User, InsertUser, Measurement, InsertMeasurement, Exercise, WorkoutPlan, InsertWorkoutPlan, WorkoutPlanExercise, InsertWorkoutPlanExercise, Food, MealPlan, InsertMealPlan, Meal, InsertMeal, MealFood, InsertMealFood, WaterIntake, InsertWaterIntake } from "../shared/schema.js";
 import { db } from './db.js';
 import * as schema from '../shared/schema.js';
-import { eq, and, desc, gte, lt } from "drizzle-orm";
-import { sql } from "drizzle-orm";
+import { eq, and, desc, gte, lt, sql } from "drizzle-orm";
 
 // Add retry utility function
 const sleep = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
@@ -34,70 +33,7 @@ async function withRetry<T>(
   throw lastError;
 }
 
-export interface IStorage {
-  // User management
-  getUser(id: number): Promise<User | undefined>;
-  getUserByEmail(email: string): Promise<User | undefined>;
-  createUser(user: InsertUser): Promise<User>;
-  updateUser(id: number, data: Partial<User>): Promise<User | undefined>;
-  
-  // Measurements
-  getMeasurements(userId: number): Promise<Measurement[]>;
-  addMeasurement(measurement: InsertMeasurement): Promise<Measurement>;
-  
-  // Exercises
-  getExercises(): Promise<Exercise[]>;
-  getExerciseById(id: number): Promise<Exercise | undefined>;
-
-  // Workout plans
-  getWorkoutPlans(filter?: { userId?: number; isTemplate?: boolean }): Promise<WorkoutPlan[]>;
-  getWorkoutPlanById(id: number): Promise<WorkoutPlan | undefined>;
-  userOwnsWorkoutPlan(userId: number, planId: number): Promise<boolean>;
-  createWorkoutPlan(plan: InsertWorkoutPlan): Promise<WorkoutPlan>;
-  addExerciseToWorkoutPlan(workoutExercise: InsertWorkoutPlanExercise): Promise<WorkoutPlanExercise>;
-  getWorkoutPlanExercises(workoutPlanId: number): Promise<(WorkoutPlanExercise & { exercise: Exercise })[]>;
-  
-  // Food and nutrition
-  getFoods(category?: string): Promise<Food[]>;
-  getFoodById(id: number): Promise<Food | undefined>;
-  searchFoods(query: string): Promise<Food[]>;
-  
-  // Meal plans
-  getMealPlans(userId: number): Promise<MealPlan[]>;
-  getMealPlanById(id: number): Promise<MealPlan | undefined>;
-  createMealPlan(plan: InsertMealPlan): Promise<MealPlan>;
-  createMeal(meal: InsertMeal): Promise<Meal>;
-  getMealById(id: number): Promise<Meal | undefined>;
-  userOwnsMeal(userId: number, mealId: number): Promise<boolean>;
-  addFoodToMeal(mealFood: InsertMealFood): Promise<MealFood>;
-  getMealsForPlan(mealPlanId: number): Promise<Meal[]>;
-  getMealFoods(mealId: number): Promise<(MealFood & { food: Food })[]>;
-
-  // Water intake methods
-  getWaterIntakes(userId: number, date?: Date): Promise<WaterIntake[]>;
-  addWaterIntake(intake: InsertWaterIntake): Promise<WaterIntake>;
-  getTotalWaterIntake(userId: number, date?: Date): Promise<number>;
-
-  // Progress photos
-  getProgressPhotos(userId: number): Promise<schema.ProgressPhoto[]>;
-  addProgressPhoto(photo: schema.InsertProgressPhoto): Promise<schema.ProgressPhoto>;
-
-  // Trained body parts
-  getTrainedBodyParts(userId: number, date?: Date): Promise<schema.TrainedBodyPart[]>;
-  addTrainedBodyPart(entry: schema.InsertTrainedBodyPart): Promise<schema.TrainedBodyPart>;
-
-  getMealsForUserOnDate(userId: number, date: string): Promise<Meal[]>;
-
-  getTrainedBodyPartsInRange(userId: number, fromDate: Date, toDate: Date): Promise<schema.TrainedBodyPart[]>;
-
-  // AI recommendations
-  saveAiWorkoutRecommendation(userId: number, data: { title: string; description: string; exercises: { name: string; description: string; sets: string; reps: string; restTime: string }[] }): Promise<schema.AiWorkoutRecommendation>;
-  saveAiNutritionRecommendation(userId: number, data: { title: string; description: string; meals: { name: string; description: string; protein: string; carbs: string; fats: string; calories: string }[]; dailyTotals: { protein: string; carbs: string; fats: string; calories: string } }): Promise<schema.AiNutritionRecommendation>;
-  getAiWorkoutRecommendations(userId: number): Promise<schema.AiWorkoutRecommendation[]>;
-  getAiNutritionRecommendations(userId: number): Promise<schema.AiNutritionRecommendation[]>;
-}
-
-export class PostgresStorage implements IStorage {
+class PostgresStorage {
   async getUser(id: number): Promise<User | undefined> {
     try {
       const result = await db.select()

@@ -187,7 +187,7 @@ export default function NutritionPage() {
           <TabsContent value="summary" className="mt-0 space-y-8">
             <div className="grid gap-8 lg:grid-cols-12 lg:items-start">
               <div className="lg:col-span-5">
-                <NutritionSummary showRecentMeals={false} />
+                <NutritionSummary showRecentMeals={false} showLogMealAction={false} />
               </div>
 
               <div className="space-y-8 lg:col-span-7">
