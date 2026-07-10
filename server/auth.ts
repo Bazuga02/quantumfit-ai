@@ -4,10 +4,15 @@ import { storage } from "./storage.js";
 import { insertUserSchema, loginUserSchema } from "../shared/schema.js";
 import { z } from "zod";
 import bcrypt from "bcrypt";
-import jwt from "jsonwebtoken";
+import jwt, { type SignOptions } from "jsonwebtoken";
 import { toAuthUser } from "./types/auth.js";
 import { authRouteLimiter } from "./middleware/rate-limit.js";
-import { getGuestDisplayName, isGuestEmail, isGuestLoginEnabled } from "./guest-config.js";
+import {
+  getGuestDisplayName,
+  GUEST_JWT_EXPIRES_IN,
+  isGuestEmail,
+  isGuestLoginEnabled,
+} from "./guest-config.js";
 import type { User } from "../shared/schema.js";
 import { getJwtSecret } from "./jwt-secret.js";
 import { clearAuthCookie, setAuthCookie } from "./auth-cookie.js";
@@ -17,12 +22,14 @@ const JWT_EXPIRES_IN = "7d";
 function sendAuthResponse(
   user: User,
   res: Parameters<RequestHandler>[1],
-  status = 200
+  status = 200,
+  options?: { jwtExpiresIn?: string }
 ) {
+  const expiresIn = (options?.jwtExpiresIn ?? JWT_EXPIRES_IN) as SignOptions["expiresIn"];
   const token = jwt.sign(
     { id: user.id, email: user.email },
     getJwtSecret(),
-    { expiresIn: JWT_EXPIRES_IN }
+    { expiresIn }
   );
 
   const authUser = toAuthUser(user);
@@ -105,15 +112,27 @@ export function setupAuth(app: Express): void {
         password: hashedPassword,
       });
 
-      sendAuthResponse(user, res);
+      sendAuthResponse(user, res, 200, { jwtExpiresIn: GUEST_JWT_EXPIRES_IN });
     } catch (error) {
       console.error("Guest login error:", error);
       res.status(500).json({ message: "Guest login failed" });
     }
   };
 
-  const logout: RequestHandler = (_req, res) => {
+  const logout: RequestHandler = async (req, res) => {
+    const guestUserId =
+      req.user && isGuestEmail(req.user.email) ? req.user.id : undefined;
+
     clearAuthCookie(res);
+
+    if (guestUserId !== undefined) {
+      try {
+        await storage.deleteGuestUser(guestUserId);
+      } catch (error) {
+        console.error("Guest cleanup on logout failed:", error);
+      }
+    }
+
     res.status(200).json({ message: "Logged out" });
   };
 

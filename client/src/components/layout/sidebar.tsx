@@ -1,7 +1,6 @@
 import { useAuth } from "@/hooks/use-auth";
 import { NavLink } from "./nav-link";
 import {
-  Activity,
   LayoutDashboard,
   Dumbbell,
   Apple,
@@ -23,6 +22,8 @@ import waterAnimation from "@/components/layout/animation/water-intake.json";
 import progressAnimation from "@/components/layout/animation/progress.json";
 import aiAnimation from "@/components/layout/animation/ai.json";
 import settingsAnimation from "@/components/layout/animation/setting.json";
+import { AppLogo } from "@/components/layout/app-logo";
+import { isGuestUser } from "@/lib/guest-user";
 
 function userInitials(name: string): string {
   const parts = name.trim().split(/\s+/).filter(Boolean);
@@ -79,16 +80,8 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
       <div className="sidebar-scroll flex max-h-full min-h-0 flex-1 flex-col overflow-y-auto lg:h-full">
         {/* Brand */}
         <div className="flex h-16 shrink-0 items-center gap-3 border-b border-border/60 px-4">
-          <div className="flex min-w-0 flex-1 items-center gap-3">
-            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-primary to-primary/80 text-primary-foreground shadow-md ring-2 ring-primary/20">
-              <Activity className="h-5 w-5" aria-hidden />
-            </div>
-            <div className="min-w-0">
-              <p className="truncate text-sm font-bold tracking-tight text-foreground">QuantumFit</p>
-              <p className="truncate text-[11px] font-medium uppercase tracking-wider text-muted-foreground">
-                Training
-              </p>
-            </div>
+          <div className="flex min-w-0 flex-1 items-center">
+            <AppLogo size="md" />
           </div>
           <button
             type="button"
@@ -157,7 +150,9 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
               </Avatar>
               <div className="min-w-0 flex-1">
                 <p className="truncate text-sm font-semibold text-foreground">{user.name}</p>
-                <p className="truncate text-xs text-muted-foreground">{user.email}</p>
+                {!isGuestUser(user) ? (
+                  <p className="truncate text-xs text-muted-foreground">{user.email}</p>
+                ) : null}
               </div>
             </div>
           </div>

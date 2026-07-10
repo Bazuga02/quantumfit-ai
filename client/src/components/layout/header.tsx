@@ -1,6 +1,6 @@
 import { useAuth } from "@/hooks/use-auth";
 import { Link } from "wouter";
-import { Menu, Moon, Sun, Activity, ChevronDown } from "lucide-react";
+import { Menu, Moon, Sun, ChevronDown } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import {
@@ -25,6 +25,8 @@ function userInitials(name: string): string {
 }
 import { useTheme } from "@/lib/theme-provider";
 import { AnimatedRacecarBanner } from "@/components/layout/racecar-banner";
+import { AppLogo } from "@/components/layout/app-logo";
+import { isGuestUser } from "@/lib/guest-user";
 
 interface HeaderProps {
   onToggleSidebar: () => void;
@@ -57,12 +59,7 @@ export function Header({ onToggleSidebar }: HeaderProps) {
 
         {/* Logo (Mobile Only) */}
         <div className="lg:hidden flex items-center">
-          <div className="flex items-center">
-            <div className="bg-primary text-white p-1 rounded">
-              <Activity className="w-5 h-5" />
-            </div>
-            <span className="ml-2 text-lg font-bold">QuantumFit AI</span>
-          </div>
+          <AppLogo size="sm" />
         </div>
 
         <div className="flex items-center gap-3 relative w-full justify-end">
@@ -104,7 +101,9 @@ export function Header({ onToggleSidebar }: HeaderProps) {
                 <DropdownMenuLabel className="font-normal">
                   <div className="flex flex-col space-y-0.5">
                     <p className="truncate text-sm font-semibold text-foreground">{user.name}</p>
-                    <p className="truncate text-xs text-muted-foreground">{user.email}</p>
+                    {!isGuestUser(user) ? (
+                      <p className="truncate text-xs text-muted-foreground">{user.email}</p>
+                    ) : null}
                   </div>
                 </DropdownMenuLabel>
                 <DropdownMenuSeparator />

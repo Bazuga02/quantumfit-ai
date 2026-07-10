@@ -2,6 +2,7 @@ import { useEffect } from "react";
 import { useLocation } from "wouter";
 import { AuthForms } from "@/components/auth/auth-forms";
 import { useAuth } from "@/hooks/use-auth";
+import { AppLogo } from "@/components/layout/app-logo";
 import { Activity } from "lucide-react";
 
 export default function AuthPage() {
@@ -28,11 +29,8 @@ export default function AuthPage() {
       {/* Auth Form */}
       <div className="flex-1 flex items-center justify-center p-6 md:p-10">
         <div className="w-full max-w-md">
-          <div className="flex items-center mb-8">
-            <div className="bg-primary text-white p-1 rounded">
-              <Activity className="w-6 h-6" />
-            </div>
-            <span className="ml-2 text-2xl font-bold">QuantumFit AI</span>
+          <div className="mb-8">
+            <AppLogo size="lg" />
           </div>
           <AuthForms />
         </div>

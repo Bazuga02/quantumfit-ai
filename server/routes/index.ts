@@ -12,6 +12,7 @@ import { aiRouter } from "./ai.js";
 import { waterRouter } from "./water.js";
 import { nutritionSummaryRouter } from "./nutrition-summary.js";
 import { progressRouter } from "./progress.js";
+import { scheduleGuestCleanup } from "../guest-cleanup.js";
 
 const runAttachUser: RequestHandler = (req, res, next) => {
   void attachUser(req, res, next);
@@ -38,4 +39,6 @@ export async function registerRoutes(app: Express): Promise<void> {
   api.use(progressRouter);
 
   app.use("/api", api);
+
+  scheduleGuestCleanup();
 }

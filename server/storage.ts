@@ -1,7 +1,8 @@
 import { User, InsertUser, Measurement, InsertMeasurement, Exercise, WorkoutPlan, InsertWorkoutPlan, WorkoutPlanExercise, InsertWorkoutPlanExercise, Food, MealPlan, InsertMealPlan, Meal, InsertMeal, MealFood, InsertMealFood, WaterIntake, InsertWaterIntake } from "../shared/schema.js";
 import { db } from './db.js';
 import * as schema from '../shared/schema.js';
-import { eq, and, desc, gte, lt, sql } from "drizzle-orm";
+import { eq, and, desc, gte, lt, sql, like } from "drizzle-orm";
+import { GUEST_EMAIL_SUFFIX, isGuestEmail } from "./guest-config.js";
 
 // Add retry utility function
 const sleep = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
@@ -397,6 +398,88 @@ class PostgresStorage {
 
   async getAiNutritionRecommendations(userId: number) {
     return db.select().from(schema.aiNutritionRecommendations).where(eq(schema.aiNutritionRecommendations.userId, userId)).orderBy(desc(schema.aiNutritionRecommendations.createdAt));
+  }
+
+  /** Removes a guest user and all data tied to that account. */
+  async deleteGuestUser(userId: number): Promise<boolean> {
+    const user = await this.getUser(userId);
+    if (!user || !isGuestEmail(user.email)) {
+      return false;
+    }
+
+    const mealPlans = await db
+      .select({ id: schema.mealPlans.id })
+      .from(schema.mealPlans)
+      .where(eq(schema.mealPlans.userId, userId));
+
+    for (const plan of mealPlans) {
+      const planMeals = await db
+        .select({ id: schema.meals.id })
+        .from(schema.meals)
+        .where(eq(schema.meals.mealPlanId, plan.id));
+
+      for (const meal of planMeals) {
+        await db.delete(schema.mealFoods).where(eq(schema.mealFoods.mealId, meal.id));
+      }
+      await db.delete(schema.meals).where(eq(schema.meals.mealPlanId, plan.id));
+    }
+    await db.delete(schema.mealPlans).where(eq(schema.mealPlans.userId, userId));
+
+    const directMeals = await db
+      .select({ id: schema.meals.id })
+      .from(schema.meals)
+      .where(eq(schema.meals.userId, userId));
+
+    for (const meal of directMeals) {
+      await db.delete(schema.mealFoods).where(eq(schema.mealFoods.mealId, meal.id));
+    }
+    await db.delete(schema.meals).where(eq(schema.meals.userId, userId));
+
+    const workoutPlans = await db
+      .select({ id: schema.workoutPlans.id })
+      .from(schema.workoutPlans)
+      .where(eq(schema.workoutPlans.userId, userId));
+
+    for (const plan of workoutPlans) {
+      await db
+        .delete(schema.workoutPlanExercises)
+        .where(eq(schema.workoutPlanExercises.workoutPlanId, plan.id));
+    }
+    await db.delete(schema.workoutPlans).where(eq(schema.workoutPlans.userId, userId));
+
+    await db.delete(schema.measurements).where(eq(schema.measurements.userId, userId));
+    await db.delete(schema.waterIntakes).where(eq(schema.waterIntakes.userId, userId));
+    await db.delete(schema.progressPhotos).where(eq(schema.progressPhotos.userId, userId));
+    await db.delete(schema.trainedBodyParts).where(eq(schema.trainedBodyParts.userId, userId));
+    await db
+      .delete(schema.aiWorkoutRecommendations)
+      .where(eq(schema.aiWorkoutRecommendations.userId, userId));
+    await db
+      .delete(schema.aiNutritionRecommendations)
+      .where(eq(schema.aiNutritionRecommendations.userId, userId));
+
+    await db.delete(schema.users).where(eq(schema.users.id, userId));
+    return true;
+  }
+
+  /** Deletes guest accounts created before `olderThan`. */
+  async deleteStaleGuestUsers(olderThan: Date): Promise<number> {
+    const staleGuests = await db
+      .select({ id: schema.users.id })
+      .from(schema.users)
+      .where(
+        and(
+          like(schema.users.email, `%${GUEST_EMAIL_SUFFIX}`),
+          lt(schema.users.createdAt, olderThan)
+        )
+      );
+
+    let deleted = 0;
+    for (const guest of staleGuests) {
+      const removed = await this.deleteGuestUser(guest.id);
+      if (removed) deleted += 1;
+    }
+    return deleted;
   }
 }
 
