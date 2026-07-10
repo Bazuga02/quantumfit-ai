@@ -56,25 +56,33 @@ export function ProgressPhotoUpload({ onUpload }: { onUpload?: () => void }) {
     if (!file || !bodyPart) return;
     setUploading(true);
     try {
-      const cloudName = import.meta.env.VITE_CLOUDINARY_CLOUD_NAME;
-      const uploadPreset = "unsigned_upload"; // Use unsigned preset
-      // Upload directly to Cloudinary (no signature needed)
+      const sigRes = await apiRequest("POST", "/api/cloudinary-signature");
+      if (!sigRes.ok) {
+        const err = await sigRes.json();
+        throw new Error(err.message || "Failed to prepare upload");
+      }
+
+      const { signature, timestamp, api_key, cloud_name, folder } = await sigRes.json();
       const formData = new FormData();
       formData.append("file", file);
-      formData.append("upload_preset", uploadPreset);
-      const res = await fetch(`https://api.cloudinary.com/v1_1/${cloudName}/image/upload`, {
+      formData.append("api_key", api_key);
+      formData.append("timestamp", String(timestamp));
+      formData.append("signature", signature);
+      formData.append("folder", folder);
+
+      const res = await fetch(`https://api.cloudinary.com/v1_1/${cloud_name}/image/upload`, {
         method: "POST",
-        body: formData
+        body: formData,
       });
       const data = await res.json();
       if (!data.secure_url) {
         throw new Error("Upload failed: " + (data.error?.message || JSON.stringify(data)));
       }
-      // Save to backend
+
       await apiRequest("POST", "/api/progress-photos", {
         url: data.secure_url,
         body_part: bodyPart,
-        note
+        note,
       });
       setFile(null);
       setPreview(null);

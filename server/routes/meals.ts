@@ -6,8 +6,11 @@ import {
   insertMealFoodSchema,
 } from "../../shared/schema.js";
 import { storage as dbStorage } from "../storage.js";
+import { requireAuth } from "../middleware/require-auth.js";
 
 export const mealsRouter = Router();
+
+mealsRouter.use(requireAuth);
 
 mealsRouter.get("/meal-plans", async (req, res) => {
   try {
@@ -97,9 +100,20 @@ mealsRouter.post("/meal-plans/:id/meals", async (req, res) => {
 
 mealsRouter.post("/meals/:id/foods", async (req, res) => {
   try {
+    const mealId = parseInt(req.params.id, 10);
+    const ownsMeal = await dbStorage.userOwnsMeal(req.user!.id, mealId);
+
+    if (!ownsMeal) {
+      const meal = await dbStorage.getMealById(mealId);
+      if (!meal) {
+        return res.status(404).json({ message: "Meal not found" });
+      }
+      return res.status(403).json({ message: "Unauthorized access to this meal" });
+    }
+
     const data = insertMealFoodSchema.parse({
       ...req.body,
-      mealId: parseInt(req.params.id, 10),
+      mealId,
     });
 
     const mealFood = await dbStorage.addFoodToMeal(data);

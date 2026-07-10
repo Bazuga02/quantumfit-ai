@@ -1,4 +1,4 @@
-import { createContext, ReactNode, useContext, useEffect } from "react";
+import { createContext, ReactNode, useContext } from "react";
 import {
   useQuery,
   useMutation,
@@ -25,7 +25,6 @@ type LoginData = {
 
 type AuthResponse = {
   user: Omit<User, "password">;
-  token: string;
   isGuest?: boolean;
 };
 
@@ -41,21 +40,6 @@ export function useAuth() {
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const { toast } = useToast();
-  
-  // Check token validity on mount
-  useEffect(() => {
-    const token = localStorage.getItem('token');
-    const tokenExpiration = localStorage.getItem('tokenExpiration');
-    
-    if (token && tokenExpiration) {
-      const expirationTime = parseInt(tokenExpiration);
-      if (Date.now() >= expirationTime) {
-        // Token expired, remove it
-        localStorage.removeItem('token');
-        localStorage.removeItem('tokenExpiration');
-      }
-    }
-  }, []);
 
   const {
     data: user,
@@ -65,15 +49,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     queryKey: ["/api/user"],
     queryFn: getQueryFn({ on401: "returnNull" }),
     retry: false,
-    // Add staleTime to prevent unnecessary refetches
-    staleTime: 5 * 60 * 1000, // 5 minutes
+    staleTime: 5 * 60 * 1000,
   });
-
-  const storeAuthToken = (token: string) => {
-    const expirationTime = Date.now() + 7 * 24 * 60 * 60 * 1000;
-    localStorage.setItem("token", token);
-    localStorage.setItem("tokenExpiration", expirationTime.toString());
-  };
 
   const loginMutation = useMutation({
     mutationFn: async (credentials: LoginData) => {
@@ -82,13 +59,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         const error = await res.json();
         throw new Error(error.message || "Login failed");
       }
-      const data: AuthResponse = await res.json();
-
-      if (data.token) {
-        storeAuthToken(data.token);
-      }
-
-      return data;
+      return (await res.json()) as AuthResponse;
     },
     onSuccess: (data) => {
       queryClient.setQueryData(["/api/user"], data.user);
@@ -115,13 +86,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         const error = await res.json();
         throw new Error(error.message || "Guest login failed");
       }
-      const data: AuthResponse = await res.json();
-
-      if (data.token) {
-        storeAuthToken(data.token);
-      }
-
-      return data;
+      return (await res.json()) as AuthResponse;
     },
     onSuccess: (data) => {
       queryClient.setQueryData(["/api/user"], data.user);
@@ -146,13 +111,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         const error = await res.json();
         throw new Error(error.message || "Registration failed");
       }
-      const data: AuthResponse = await res.json();
-
-      if (data.token) {
-        storeAuthToken(data.token);
-      }
-
-      return data;
+      return (await res.json()) as AuthResponse;
     },
     onSuccess: (data) => {
       queryClient.setQueryData(["/api/user"], data.user);
@@ -172,8 +131,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const logoutMutation = useMutation({
     mutationFn: async () => {
-      localStorage.removeItem("token");
-      localStorage.removeItem("tokenExpiration");
+      const res = await apiRequest("POST", "/api/logout");
+      if (!res.ok) {
+        const error = await res.json();
+        throw new Error(error.message || "Logout failed");
+      }
     },
     onSuccess: () => {
       queryClient.setQueryData(["/api/user"], null);

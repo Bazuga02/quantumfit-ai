@@ -1,17 +1,16 @@
 import { Router } from "express";
 import { storage as dbStorage } from "../storage.js";
+import { requireAuth } from "../middleware/require-auth.js";
 
 export const waterRouter = Router();
 
+waterRouter.use(requireAuth);
+
 waterRouter.get("/water-intake", async (req, res) => {
   try {
-    if (!req.user) {
-      return res.status(401).json({ error: "Unauthorized" });
-    }
-
     const today = new Date();
-    const intakes = await dbStorage.getWaterIntakes(req.user.id, today);
-    const total = await dbStorage.getTotalWaterIntake(req.user.id, today);
+    const intakes = await dbStorage.getWaterIntakes(req.user!.id, today);
+    const total = await dbStorage.getTotalWaterIntake(req.user!.id, today);
 
     res.json({
       intakes,
@@ -25,17 +24,13 @@ waterRouter.get("/water-intake", async (req, res) => {
 
 waterRouter.post("/water-intake", async (req, res) => {
   try {
-    if (!req.user) {
-      return res.status(401).json({ error: "Unauthorized" });
-    }
-
     const { amount } = req.body;
     if (!amount || typeof amount !== "number" || amount <= 0) {
       return res.status(400).json({ error: "Invalid amount" });
     }
 
     const intake = await dbStorage.addWaterIntake({
-      userId: req.user.id,
+      userId: req.user!.id,
       amount,
     });
 

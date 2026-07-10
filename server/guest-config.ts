@@ -1,34 +1,14 @@
-export type GuestConfig = {
-  email: string;
-  password: string;
-  name: string;
-};
+const GUEST_EMAIL_SUFFIX = "@guest.quantumfit.local";
 
-/** Returns guest config when all env vars are set; otherwise null. */
-export function getGuestConfigOrNull(): GuestConfig | null {
-  const email = process.env.GUEST_EMAIL?.trim();
-  const password = process.env.GUEST_PASSWORD?.trim();
-  const name = process.env.GUEST_NAME?.trim();
-
-  if (!email || !password || !name) {
-    return null;
-  }
-
-  return { email, password, name };
+/** Guest login is enabled when a display name is configured. */
+export function isGuestLoginEnabled(): boolean {
+  return Boolean(process.env.GUEST_NAME?.trim());
 }
 
-/** Guest demo account — credentials from env only (server-side). */
-export function getGuestConfig(): GuestConfig {
-  const config = getGuestConfigOrNull();
-  if (!config) {
-    throw new Error(
-      "Guest account requires GUEST_EMAIL, GUEST_PASSWORD, and GUEST_NAME in environment"
-    );
-  }
-  return config;
+export function getGuestDisplayName(): string {
+  return process.env.GUEST_NAME?.trim() || "Guest";
 }
 
 export function isGuestEmail(email: string): boolean {
-  const config = getGuestConfigOrNull();
-  return config !== null && email === config.email;
+  return email.endsWith(GUEST_EMAIL_SUFFIX);
 }

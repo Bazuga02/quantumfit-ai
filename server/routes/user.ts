@@ -1,16 +1,15 @@
 import { Router } from "express";
 import { storage as dbStorage } from "../storage.js";
 import { toAuthUser } from "../types/auth.js";
+import { requireAuth } from "../middleware/require-auth.js";
 
 export const userRouter = Router();
 
+userRouter.use(requireAuth);
+
 userRouter.get("/user", async (req, res) => {
   try {
-    if (!req.user?.id) {
-      return res.status(401).json({ error: "Unauthorized" });
-    }
-
-    const fresh = await dbStorage.getUser(req.user.id);
+    const fresh = await dbStorage.getUser(req.user!.id);
     if (!fresh) {
       return res.status(401).json({ error: "Unauthorized" });
     }
@@ -24,10 +23,6 @@ userRouter.get("/user", async (req, res) => {
 
 userRouter.patch("/user", async (req, res) => {
   try {
-    if (!req.user?.id) {
-      return res.status(401).json({ message: "Unauthorized" });
-    }
-
     type UserUpdate = {
       name?: string;
       email?: string;
@@ -59,7 +54,7 @@ userRouter.patch("/user", async (req, res) => {
       return res.status(400).json({ message: "No valid fields to update" });
     }
 
-    const updatedUser = await dbStorage.updateUser(req.user.id, updateData);
+    const updatedUser = await dbStorage.updateUser(req.user!.id, updateData);
 
     if (!updatedUser) {
       return res.status(404).json({ message: "User not found" });

@@ -2,6 +2,7 @@ import { Router } from "express";
 import { z } from "zod";
 import { insertWorkoutPlanSchema, insertWorkoutPlanExerciseSchema } from "../../shared/schema.js";
 import { storage as dbStorage } from "../storage.js";
+import { requireAuth } from "../middleware/require-auth.js";
 
 export const workoutPlansRouter = Router();
 
@@ -9,6 +10,11 @@ workoutPlansRouter.get("/workout-plans", async (req, res) => {
   try {
     const isTemplate =
       req.query.isTemplate === "true" ? true : req.query.isTemplate === "false" ? false : undefined;
+
+    if (isTemplate !== true && !req.user?.id) {
+      return res.status(401).json({ message: "Unauthorized" });
+    }
+
     const userId = isTemplate ? undefined : req.user!.id;
     const plans = await dbStorage.getWorkoutPlans({ userId, isTemplate });
     res.json(plans);
@@ -17,10 +23,14 @@ workoutPlansRouter.get("/workout-plans", async (req, res) => {
   }
 });
 
-workoutPlansRouter.post("/workout-plans", async (req, res) => {
+workoutPlansRouter.post("/workout-plans", requireAuth, async (req, res) => {
   try {
-    const data = insertWorkoutPlanSchema.parse(req.body);
-    const plan = await dbStorage.createWorkoutPlan(data);
+    const parsed = insertWorkoutPlanSchema.parse(req.body);
+    const plan = await dbStorage.createWorkoutPlan({
+      ...parsed,
+      userId: req.user!.id,
+      isTemplate: false,
+    });
     res.status(201).json(plan);
   } catch (error) {
     if (error instanceof z.ZodError) {
@@ -30,11 +40,22 @@ workoutPlansRouter.post("/workout-plans", async (req, res) => {
   }
 });
 
-workoutPlansRouter.post("/workout-plans/:id/exercises", async (req, res) => {
+workoutPlansRouter.post("/workout-plans/:id/exercises", requireAuth, async (req, res) => {
   try {
+    const planId = parseInt(req.params.id, 10);
+    const ownsPlan = await dbStorage.userOwnsWorkoutPlan(req.user!.id, planId);
+
+    if (!ownsPlan) {
+      const plan = await dbStorage.getWorkoutPlanById(planId);
+      if (!plan) {
+        return res.status(404).json({ message: "Workout plan not found" });
+      }
+      return res.status(403).json({ message: "Unauthorized access to this workout plan" });
+    }
+
     const data = insertWorkoutPlanExerciseSchema.parse({
       ...req.body,
-      workoutPlanId: parseInt(req.params.id, 10),
+      workoutPlanId: planId,
     });
 
     const exercise = await dbStorage.addExerciseToWorkoutPlan(data);
@@ -47,7 +68,7 @@ workoutPlansRouter.post("/workout-plans/:id/exercises", async (req, res) => {
   }
 });
 
-workoutPlansRouter.post("/workout-plans/:id/start", async (req, res) => {
+workoutPlansRouter.post("/workout-plans/:id/start", requireAuth, async (req, res) => {
   try {
     const planId = parseInt(req.params.id, 10);
     const plan = await dbStorage.getWorkoutPlanById(planId);

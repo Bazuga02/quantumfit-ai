@@ -1,12 +1,14 @@
 import { Router } from "express";
 import { storage as dbStorage } from "../storage.js";
+import { requireAuth } from "../middleware/require-auth.js";
 
 export const nutritionSummaryRouter = Router();
 
+nutritionSummaryRouter.use(requireAuth);
+
 nutritionSummaryRouter.get("/nutrition-summary", async (req, res) => {
   try {
-    if (!req.user) return res.status(401).json({ message: "Unauthorized" });
-    const userId = req.user.id;
+    const userId = req.user!.id;
     const today = new Date();
     const todayStr = today.toISOString().split("T")[0];
 

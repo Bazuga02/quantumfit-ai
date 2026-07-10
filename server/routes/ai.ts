@@ -7,23 +7,28 @@ import {
 import { storage as dbStorage } from "../storage.js";
 import { aiGenerateLimiter } from "../middleware/rate-limit.js";
 import { GroqRateLimitError } from "../groq-rate-limiter.js";
+import { requireAuth } from "../middleware/require-auth.js";
 
 function handleAiError(res: import("express").Response, error: unknown, fallback: string) {
   if (error instanceof GroqRateLimitError) {
     return res.status(429).json({ message: error.message });
   }
-  const message = error instanceof Error ? error.message : fallback;
-  return res.status(500).json({ message: fallback, error: message });
+
+  console.error(fallback, error);
+  const body: { message: string; error?: string } = { message: fallback };
+  if (process.env.API_DEBUG === "1" && error instanceof Error) {
+    body.error = error.message;
+  }
+  return res.status(500).json(body);
 }
 
 export const aiRouter = Router();
 
+aiRouter.use(requireAuth);
+
 aiRouter.get("/ai/workout-recommendations", async (req, res) => {
   try {
-    if (!req.user?.id) {
-      return res.status(401).json({ message: "Unauthorized" });
-    }
-    const list = await dbStorage.getAiWorkoutRecommendations(req.user.id);
+    const list = await dbStorage.getAiWorkoutRecommendations(req.user!.id);
     res.json(list);
   } catch (error) {
     console.error("List workout recommendations error:", error);
@@ -33,10 +38,7 @@ aiRouter.get("/ai/workout-recommendations", async (req, res) => {
 
 aiRouter.get("/ai/nutrition-recommendations", async (req, res) => {
   try {
-    if (!req.user?.id) {
-      return res.status(401).json({ message: "Unauthorized" });
-    }
-    const list = await dbStorage.getAiNutritionRecommendations(req.user.id);
+    const list = await dbStorage.getAiNutritionRecommendations(req.user!.id);
     res.json(list);
   } catch (error) {
     console.error("List nutrition recommendations error:", error);
@@ -61,21 +63,17 @@ aiRouter.post("/ai/workout-recommendation", aiGenerateLimiter, async (req, res) 
 
     res.json(recommendation);
   } catch (error) {
-    console.error("Workout recommendation error:", error);
     handleAiError(res, error, "Failed to generate workout recommendation");
   }
 });
 
 aiRouter.post("/ai/workout-recommendation/save", async (req, res) => {
   try {
-    if (!req.user?.id) {
-      return res.status(401).json({ message: "You must be logged in to save" });
-    }
     const { title, description, exercises } = req.body;
     if (!title || !description || !Array.isArray(exercises)) {
       return res.status(400).json({ message: "title, description, and exercises are required" });
     }
-    const saved = await dbStorage.saveAiWorkoutRecommendation(req.user.id, {
+    const saved = await dbStorage.saveAiWorkoutRecommendation(req.user!.id, {
       title,
       description,
       exercises,
@@ -103,21 +101,17 @@ aiRouter.post("/ai/nutrition-recommendation", aiGenerateLimiter, async (req, res
 
     res.json(recommendation);
   } catch (error) {
-    console.error("Nutrition recommendation error:", error);
     handleAiError(res, error, "Failed to generate nutrition recommendation");
   }
 });
 
 aiRouter.post("/ai/nutrition-recommendation/save", async (req, res) => {
   try {
-    if (!req.user?.id) {
-      return res.status(401).json({ message: "You must be logged in to save" });
-    }
     const { title, description, meals, dailyTotals } = req.body;
     if (!title || !description || !Array.isArray(meals) || !dailyTotals) {
       return res.status(400).json({ message: "title, description, meals, and dailyTotals are required" });
     }
-    const saved = await dbStorage.saveAiNutritionRecommendation(req.user.id, {
+    const saved = await dbStorage.saveAiNutritionRecommendation(req.user!.id, {
       title,
       description,
       meals,
@@ -147,7 +141,6 @@ aiRouter.post("/ai/progress-analysis", aiGenerateLimiter, async (req, res) => {
 
     res.json(analysis);
   } catch (error) {
-    console.error("Progress analysis error:", error);
     handleAiError(res, error, "Failed to generate progress analysis");
   }
 });

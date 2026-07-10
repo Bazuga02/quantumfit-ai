@@ -52,6 +52,7 @@ export interface IStorage {
   // Workout plans
   getWorkoutPlans(filter?: { userId?: number; isTemplate?: boolean }): Promise<WorkoutPlan[]>;
   getWorkoutPlanById(id: number): Promise<WorkoutPlan | undefined>;
+  userOwnsWorkoutPlan(userId: number, planId: number): Promise<boolean>;
   createWorkoutPlan(plan: InsertWorkoutPlan): Promise<WorkoutPlan>;
   addExerciseToWorkoutPlan(workoutExercise: InsertWorkoutPlanExercise): Promise<WorkoutPlanExercise>;
   getWorkoutPlanExercises(workoutPlanId: number): Promise<(WorkoutPlanExercise & { exercise: Exercise })[]>;
@@ -66,6 +67,8 @@ export interface IStorage {
   getMealPlanById(id: number): Promise<MealPlan | undefined>;
   createMealPlan(plan: InsertMealPlan): Promise<MealPlan>;
   createMeal(meal: InsertMeal): Promise<Meal>;
+  getMealById(id: number): Promise<Meal | undefined>;
+  userOwnsMeal(userId: number, mealId: number): Promise<boolean>;
   addFoodToMeal(mealFood: InsertMealFood): Promise<MealFood>;
   getMealsForPlan(mealPlanId: number): Promise<Meal[]>;
   getMealFoods(mealId: number): Promise<(MealFood & { food: Food })[]>;
@@ -194,6 +197,12 @@ export class PostgresStorage implements IStorage {
     return plans[0];
   }
 
+  async userOwnsWorkoutPlan(userId: number, planId: number): Promise<boolean> {
+    const plan = await this.getWorkoutPlanById(planId);
+    if (!plan || plan.isTemplate) return false;
+    return plan.userId === userId;
+  }
+
   async createWorkoutPlan(plan: InsertWorkoutPlan): Promise<WorkoutPlan> {
     const [newPlan] = await db.insert(schema.workoutPlans).values(plan).returning();
     return newPlan;
@@ -263,6 +272,24 @@ export class PostgresStorage implements IStorage {
   async createMeal(meal: InsertMeal): Promise<Meal> {
     const [newMeal] = await db.insert(schema.meals).values(meal).returning();
     return newMeal;
+  }
+
+  async getMealById(id: number): Promise<Meal | undefined> {
+    const rows = await db.select()
+      .from(schema.meals)
+      .where(eq(schema.meals.id, id));
+    return rows[0];
+  }
+
+  async userOwnsMeal(userId: number, mealId: number): Promise<boolean> {
+    const meal = await this.getMealById(mealId);
+    if (!meal) return false;
+    if (meal.userId === userId) return true;
+    if (meal.mealPlanId != null) {
+      const plan = await this.getMealPlanById(meal.mealPlanId);
+      return plan?.userId === userId;
+    }
+    return false;
   }
 
   async addFoodToMeal(mealFood: InsertMealFood): Promise<MealFood> {

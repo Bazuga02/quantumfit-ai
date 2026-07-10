@@ -2,13 +2,15 @@ import { Router } from "express";
 import { z } from "zod";
 import { insertMeasurementSchema } from "../../shared/schema.js";
 import { storage as dbStorage } from "../storage.js";
+import { requireAuth } from "../middleware/require-auth.js";
 
 export const measurementsRouter = Router();
 
+measurementsRouter.use(requireAuth);
+
 measurementsRouter.get("/measurements", async (req, res) => {
   try {
-    if (!req.user) return res.status(401).json({ message: "Unauthorized" });
-    const measurements = await dbStorage.getMeasurements(req.user.id);
+    const measurements = await dbStorage.getMeasurements(req.user!.id);
     res.json(measurements);
   } catch (error) {
     res.status(500).json({ message: "Failed to fetch measurements" });
